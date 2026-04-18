@@ -19,7 +19,7 @@ created: 2026-04-18
   - [In Scope](#in-scope)
   - [Out of Scope](#out-of-scope)
 - [Implementation Phases](#implementation-phases)
-  - [Phase 1.1: Foundation](#phase-11-foundation)
+  - [Phase 1.1: Foundation & CLI skeleton](#phase-11-foundation--cli-skeleton)
     - [Tasks](#tasks)
     - [Success Criteria](#success-criteria)
   - [Phase 1.2: Parsers and artifact model](#phase-12-parsers-and-artifact-model)
@@ -28,187 +28,380 @@ created: 2026-04-18
   - [Phase 1.3: Config loader (HCL)](#phase-13-config-loader-hcl)
     - [Tasks](#tasks-2)
     - [Success Criteria](#success-criteria-2)
-  - [Phase 1.4: Rule engine and built-in rules](#phase-14-rule-engine-and-built-in-rules)
+  - [Phase 1.4: Engine core](#phase-14-engine-core)
     - [Tasks](#tasks-3)
     - [Success Criteria](#success-criteria-3)
-  - [Phase 1.5: Output formats and exit codes](#phase-15-output-formats-and-exit-codes)
+  - [Phase 1.5: Built-in rules (MVP)](#phase-15-built-in-rules-mvp)
     - [Tasks](#tasks-4)
     - [Success Criteria](#success-criteria-4)
-  - [Phase 1.6: Polish, docs, and release prep](#phase-16-polish-docs-and-release-prep)
+  - [Phase 1.6: Suppressions and filtering](#phase-16-suppressions-and-filtering)
     - [Tasks](#tasks-5)
     - [Success Criteria](#success-criteria-5)
+  - [Phase 1.7: Output formats and exit codes](#phase-17-output-formats-and-exit-codes)
+    - [Tasks](#tasks-6)
+    - [Success Criteria](#success-criteria-6)
+  - [Phase 1.8: Polish, docs, and release](#phase-18-polish-docs-and-release)
+    - [Tasks](#tasks-7)
+    - [Success Criteria](#success-criteria-7)
 - [File Changes](#file-changes)
 - [Testing Plan](#testing-plan)
 - [Dependencies](#dependencies)
+- [Open Questions](#open-questions)
 - [References](#references)
 <!--toc:end-->
 
 ## Objective
 
-Deliver an MVP `claudelint` binary that discovers Claude artifacts in a
-repo, parses them into typed structures, runs a built-in rule set loaded
-from `.claudelint.hcl`, and prints human-readable diagnostics.
+Deliver an MVP `claudelint` binary that:
 
-**Implements:** RFC-0001, DESIGN-0001, ADR-0001
+- discovers Claude artifacts in a repo (`CLAUDE.md`, skills, slash
+  commands, subagents, hooks, plugin manifests),
+- parses each into a typed `Artifact` value,
+- runs the built-in ruleset (shipped in-tree, versioned with the
+  binary) against those artifacts via an engine inspired by
+  `go/analysis` / `golangci-lint`,
+- reports diagnostics as text, JSON, or GitHub Actions annotations,
+- is driven by `.claudelint.hcl` (schema v1 per ADR-0001).
+
+Architecture follows DESIGN-0001's three-layer model: **Parsers →
+Engine → Rules**, with all orchestration complexity in the engine and
+each rule a small, pure `Check` function behind a common interface.
+
+**Implements:** RFC-0001, ADR-0001, DESIGN-0001
 
 ## Scope
 
 ### In Scope
 
 - `claudelint` CLI with `run`, `rules`, `init`, `version` subcommands
-  (bare `claudelint` aliases to `claudelint run`).
-- HCL config loader (schema v1) per ADR-0001.
-- Discovery of `CLAUDE.md`, skills, slash commands, subagents, hooks
-  (both dedicated JSON and inline in `settings.json`), plugin manifests.
-- ~15 built-in rules, shipped in-tree and versioned with the binary
-  (see DESIGN-0001 table).
+  (bare `claudelint` aliases to `run`).
+- HCL config loader (schema v1).
+- Typed artifact model with byte-accurate source positions.
+- Engine with registry, `Context`, and a concurrent per-artifact
+  runner.
+- All 14 built-in rules from the DESIGN-0001 MVP table, registered via
+  `init()` and versioned with the binary.
+- In-source `claudelint:ignore` suppressions (Markdown artifacts) and
+  config-level `enabled`/`severity`/`paths` overrides.
 - Text, JSON, and GitHub Actions output formats.
-- In-source `// claudelint:ignore` suppressions and config-level
-  disables/severity overrides.
-- `make ci` wiring and dogfooding this repo.
+- Dogfood config and CI wiring in this repo.
 
 ### Out of Scope
 
 - SARIF output (Phase 2).
-- Pre-commit hook (Phase 2).
-- `claudelint fix` auto-fix (later).
-- `claudelint convert` format conversion (Phase 3; gated on INV-0001).
-- Third-party / out-of-tree rules (explicit non-goal for v1 — rules
-  live in the binary).
+- Pre-commit hook packaging (Phase 2).
+- `claudelint fix` auto-fix — `Fix` is defined on `Diagnostic` but left
+  unpopulated in v1.
+- `claudelint convert` (Phase 3; gated on INV-0001).
+- Third-party / out-of-tree rules (explicit non-goal for v1).
+- Cross-artifact analysis (e.g. "skill referenced by plugin manifest
+  is missing"). See DESIGN-0001 Open Questions.
 
 ## Implementation Phases
 
-Each phase builds on the previous one. A phase is complete when all its
-tasks are checked off and its success criteria are met.
+Each phase builds on the previous. A phase is complete when every
+checkbox is ticked and every success-criterion line holds.
 
 ---
 
-### Phase 1.1: Foundation
+### Phase 1.1: Foundation & CLI skeleton
 
-Establish the skeleton: CLI, logging, module structure, and a no-op
-`lint` command that walks the repo and prints discovered file counts.
+Stand up the module, the three core type packages, and a minimal CLI
+that walks the repo and prints file counts — no rules wired yet.
 
 #### Tasks
 
-- [ ] Add `cmd/claudelint/main.go` with cobra root + subcommands
-      (`run` as primary; bare invocation aliases to `run`).
-- [ ] Add `internal/discovery/` with a walker that honors `.gitignore`
-      and classifies files into `ArtifactKind`.
-- [ ] Add `internal/diag/` with `Diagnostic`, `Severity`, `Range`.
-- [ ] Add `internal/reporter/text.go` producing human-readable output.
-- [ ] Wire `claudelint run` to discover + report `(0 diagnostics, N files)`.
-- [ ] Add `claudelint version` printing binary + ruleset version.
-- [ ] Write unit tests for discovery classification.
+- [ ] Create `cmd/claudelint/main.go` with cobra root; wire `run`,
+      `rules`, `init`, `version` subcommand stubs. Bare `claudelint`
+      aliases to `run`.
+- [ ] Create `internal/diag/` exporting `Diagnostic`, `Severity`
+      (`error`/`warning`/`info`), `Range`, `Position`, `Fix` (defined
+      but unused in v1).
+- [ ] Create `internal/artifact/` exporting `ArtifactKind` constants
+      (`KindClaudeMD`, `KindSkill`, `KindCommand`, `KindAgent`,
+      `KindHook`, `KindPlugin`) and the `Artifact` interface from
+      DESIGN-0001.
+- [ ] Create `internal/discovery/` with a filesystem walker that
+      classifies each path into an `ArtifactKind` using the patterns
+      in DESIGN-0001 §Background. Honor `.gitignore` (root + nested +
+      global) via a vetted ignore library.
+- [ ] Create `internal/reporter/text.go` with a minimal text
+      formatter.
+- [ ] Wire `claudelint run` end-to-end: discover → (stub) run →
+      report `"0 diagnostics, N files checked"`.
+- [ ] `claudelint version` prints both `Version` (binary, via
+      `-ldflags`) and `RulesetVersion` (constant baked into
+      `internal/rules`).
+- [ ] Unit tests: discovery classification over a fixture tree with
+      one example per `ArtifactKind` plus a negative (unrecognized)
+      case.
 
 #### Success Criteria
 
 - `go build ./...` succeeds.
-- `claudelint run .` prints discovered file counts on this repo.
-- Discovery tests cover every `ArtifactKind` with fixture inputs.
+- `claudelint run .` from this repo root prints `0 diagnostics, N
+  files checked` with `N > 0`.
+- `claudelint version` prints both versions.
+- Discovery tests pass and cover every `ArtifactKind`.
 
 ---
 
 ### Phase 1.2: Parsers and artifact model
 
-Turn discovered paths into typed artifacts.
+Turn discovered paths into typed artifacts with byte-accurate source
+positions.
 
 #### Tasks
 
-- [ ] Add `internal/artifact/` with interfaces and structs per
-      DESIGN-0001.
-- [ ] Markdown + YAML frontmatter parser preserving byte offsets.
-- [ ] JSON parser for hooks and plugin manifests with position info.
-- [ ] Skill parser that indexes companion files (`references/`,
-      `scripts/`).
-- [ ] `schema/parse` rule that reports parse failures.
-- [ ] Table-driven parser tests with `testdata/ok` and `testdata/bad`.
+- [ ] Add typed artifact structs in `internal/artifact/`: `ClaudeMD`,
+      `Skill`, `Command`, `Agent`, `Hook`, `Plugin`. Each embeds a
+      common `Base` with `path`, `source`, and a byte-offset line
+      index.
+- [ ] Implement the Markdown + YAML-frontmatter parser used by
+      `ClaudeMD`, `Skill`, `Command`, `Agent`. Must preserve byte
+      offsets for every frontmatter key and every heading/paragraph in
+      the body.
+- [ ] Implement the JSON parser for `Hook` and `Plugin`, preserving
+      line/column for every value. Support hooks declared both as
+      dedicated JSON files and inline under the `hooks` key of
+      `.claude/settings.json`.
+- [ ] `Skill` parser indexes companion files: `references/**`,
+      `scripts/**`, `templates/**`. Indexed entries record their
+      relative path and kind.
+- [ ] Define a `ParseError` type carrying path + `Range` so the engine
+      can synthesize a `schema/parse` diagnostic without the rule ever
+      needing to inspect raw bytes.
+- [ ] Table-driven parser tests per kind with `testdata/ok/` and
+      `testdata/bad/` directories, asserting on both parsed structure
+      and exact byte offsets for a sampling of fields.
 
 #### Success Criteria
 
-- Every artifact kind round-trips fixture inputs with accurate
-  line/column positions.
-- Malformed inputs produce a single `schema/parse` diagnostic and do
-  not crash the linter.
+- Each artifact kind round-trips its fixtures with exact byte-offset
+  positions for at least one checked field per kind.
+- Every `testdata/bad/` input yields exactly one `ParseError` with a
+  non-zero `Range` and does not panic.
+- `go test ./internal/artifact/...` coverage ≥ 90%.
 
 ---
 
 ### Phase 1.3: Config loader (HCL)
 
+Load `.claudelint.hcl` (schema v1), merge into a `ResolvedConfig` the
+engine consumes.
+
 #### Tasks
 
-- [ ] Add `internal/config/` using `hashicorp/hcl/v2`.
-- [ ] Implement schema v1 decoding: `claudelint`, `rule`, `rules`,
-      `ignore`, `output` blocks.
-- [ ] Version check: reject unknown top-level `version` values with a
-      clear upgrade message.
-- [ ] `claudelint init` scaffolder writing a commented default config.
-- [ ] Locate config by walking up from cwd; support `--config=PATH`.
-- [ ] Tests for every error path with line/column assertions.
+- [ ] Add `internal/config/` using `hashicorp/hcl/v2` + `gohcl`.
+- [ ] Decode the schema-v1 blocks in DESIGN-0001:
+  - [ ] `claudelint { version = "1" }` — hard fail on unknown version,
+        with an upgrade message naming the minimum binary version.
+  - [ ] `rule "<id>" { severity, enabled, options, paths }` — per-rule
+        override.
+  - [ ] `rules "<kind>" { ... }` — per-artifact-kind defaults fed into
+        per-rule options during resolution.
+  - [ ] `ignore { paths = [...] }` — glob list.
+  - [ ] `output { format = "text|json|github" }`.
+- [ ] Config discovery: walk up from cwd for `.claudelint.hcl`; honor
+      `--config=PATH` as an override.
+- [ ] Resolution: produce a `ResolvedConfig` that answers
+      `RuleEnabled(id)`, `RuleSeverity(id) Severity`,
+      `RuleOption(id, key) any`, `PathIgnored(p) bool` in O(1).
+- [ ] `claudelint init` scaffolder writes a commented default
+      `.claudelint.hcl` into cwd.
+- [ ] Error-path tests: every decode/validation error carries an HCL
+      diagnostic with correct file/line/column.
 
 #### Success Criteria
 
-- Invalid config files produce HCL-style diagnostics pointing at the
-  exact token.
 - `claudelint init` in an empty directory produces a config that
-  `claudelint run` accepts without diagnostics.
+  `claudelint run` accepts with zero diagnostics.
+- Every branch in the config error paths has a test that asserts
+  line+column.
+- `go test ./internal/config/...` coverage ≥ 90%.
 
 ---
 
-### Phase 1.4: Rule engine and built-in rules
+### Phase 1.4: Engine core
+
+Build the runner and the `Rule` / `Context` contract — with zero rules
+registered yet.
 
 #### Tasks
 
-- [ ] Add `internal/engine/` with rule registry and concurrent runner.
-- [ ] Implement the MVP rule list from DESIGN-0001.
-- [ ] Each rule lives in `internal/rules/<kind>/<id>.go` with a
-      table-driven test.
-- [ ] In-source `claudelint:ignore` suppression parser.
-- [ ] Config-level disables, severity overrides, and per-path globs.
-- [ ] `claudelint rules` prints the registry; `claudelint rules <id>`
-      prints rationale and default options.
+- [ ] Add `internal/rules/` exporting the `Rule` interface, `Context`
+      interface, `Register(Rule)`, `All() []Rule`, `Get(id string)
+      Rule`. (Registry lives here so rule subpackages never import the
+      engine — see Open Questions.)
+- [ ] Add `internal/engine/` with the runner:
+  - [ ] Consumes discovered+parsed artifacts and a `ResolvedConfig`.
+  - [ ] Resolves the enabled rule set by calling
+        `rules.All()` and filtering via config.
+  - [ ] Groups rules by `ArtifactKind`.
+  - [ ] Runs `(artifact, rule)` pairs through a bounded worker pool
+        sized to `GOMAXPROCS`.
+  - [ ] Synthesizes `schema/parse` diagnostics from `ParseError`s
+        without calling any rule's `Check`.
+  - [ ] Aggregates, sorts by `(path, line, col, ruleID)`, and dedupes
+        identical diagnostics.
+- [ ] Implement `Context`: resolved options (from config), rule ID,
+      and a leveled logger. No filesystem or network access.
+- [ ] Wire `claudelint rules` to list the registry; `claudelint rules
+      <id>` to print rationale + default options.
+- [ ] Engine tests with *stub* rules (not the real MVP rules yet),
+      including a deliberate data race test under `go test -race`.
 
 #### Success Criteria
 
-- Running `claudelint run .` on this repo produces zero errors.
-- Each rule has at least one `ok` and one `bad` fixture test.
-- Suppressions are honored and unknown IDs warn via `meta/unknown-rule`.
+- Engine with a stub rule returns expected diagnostics deterministically
+  across runs.
+- `go test -race ./internal/engine/...` is clean.
+- `claudelint rules` runs with an empty registry and prints
+  `"0 rules registered"`.
 
 ---
 
-### Phase 1.5: Output formats and exit codes
+### Phase 1.5: Built-in rules (MVP)
+
+Implement every rule from the DESIGN-0001 MVP table. Each is its own
+~50-LOC file in its own subpackage.
 
 #### Tasks
 
-- [ ] `--format=text|json|github` (SARIF deferred to Phase 2).
-- [ ] Exit non-zero on any `error`; `--max-warnings=N` flag.
-- [ ] `--quiet`, `--no-color`, `NO_COLOR` env honored.
+- [ ] `internal/rules/schema/parse.go` — pseudo-rule registered for
+      `claudelint rules` discoverability and suppression matching; not
+      invoked by the engine (see Phase 1.4).
+- [ ] `internal/rules/schema/frontmatterrequired.go` — `name` and
+      `description` present on skill, command, agent.
+- [ ] `internal/rules/skills/bodysize.go` — body word count ≤
+      configurable max.
+- [ ] `internal/rules/skills/triggerclarity.go` — `description`
+      contains an imperative trigger phrase.
+- [ ] `internal/rules/commands/allowedtoolsknown.go` — every tool in
+      `allowed-tools` is on the known-tool list.
+- [ ] `internal/rules/hooks/eventnameknown.go` — `event` is on the
+      known-event list.
+- [ ] `internal/rules/hooks/nounsafeshell.go` — command does not pipe
+      `curl ... | sh` (and similar patterns).
+- [ ] `internal/rules/hooks/timeoutpresent.go` — long-running hook
+      declares a `timeout`.
+- [ ] `internal/rules/claudemd/size.go` — file ≤ configurable line
+      count.
+- [ ] `internal/rules/claudemd/duplicatedirectives.go` — no two
+      directives contradict.
+- [ ] `internal/rules/plugin/manifestfields.go` — required manifest
+      fields present and well-typed.
+- [ ] `internal/rules/plugin/semver.go` — `version` is valid semver.
+- [ ] `internal/rules/style/noemoji.go` — off by default.
+- [ ] `internal/rules/security/secrets.go` — high-entropy token
+      detection with an allowlist.
+- [ ] Known-tool and known-event constants live in
+      `internal/artifact/knowndata.go` (single source of truth for the
+      rules that need them).
+- [ ] Wire every rule subpackage into the binary via blank imports in
+      `internal/rules/all/all.go`; `cmd/claudelint/main.go` blank-imports
+      `_ "claudelint/internal/rules/all"`.
+- [ ] Per-rule table-driven test with `testdata/ok/` and `testdata/bad/`
+      and a golden-JSON diagnostic file. Use `update-golden` flag for
+      regeneration.
 
 #### Success Criteria
 
-- JSON output is stable and documented; a golden-file test guards
-  against accidental changes.
-- GitHub Actions annotations render correctly in a smoke-test workflow.
+- `claudelint rules` lists all 14 rule IDs with correct default
+  severities.
+- `claudelint run .` on this repo produces zero `error`-severity
+  diagnostics.
+- Every rule has ≥1 ok fixture and ≥1 bad fixture with matching golden
+  output.
+- `go test ./internal/rules/...` coverage ≥ 85%.
 
 ---
 
-### Phase 1.6: Polish, docs, and release prep
+### Phase 1.6: Suppressions and filtering
 
 #### Tasks
 
-- [ ] Audit error messages for consistency (imperative, actionable).
-- [ ] Ensure `make ci` passes with zero warnings.
-- [ ] Test coverage ≥ 80% in `internal/...`.
-- [ ] Benchmark against `testdata/bench/` synthetic repo; fail CI on
-      regression > 20%.
-- [ ] Update `README.md` with install, quickstart, and rule index.
-- [ ] Dogfood on at least two external plugin repos; file issues for
-      findings.
-- [ ] Cut a `v0.1.0` release via `goreleaser`.
+- [ ] In-source suppression parser for Markdown artifacts, recognized
+      inside HTML comments: `<!-- claudelint:ignore=<id>[,<id>...] -->`
+      and `<!-- claudelint:ignore-file=<id> -->`. Applied to the same
+      line or the next non-blank line.
+- [ ] Config-level `rule "<id>" { enabled = false }` honored end-to-end.
+- [ ] Config-level `rule "<id>" { severity = "..." }` honored.
+- [ ] Config-level `rule "<id>" { paths = ["glob", ...] }` suppression
+      by path glob.
+- [ ] `meta/unknown-rule` warning emitted when a suppression or config
+      block names an ID that is not in the registry.
+- [ ] Hook and plugin JSON artifacts use config-level suppressions only
+      (see Open Questions); document this in `docs/` when writing
+      README.
+- [ ] Suppression tests: one per mechanism plus a matrix test that a
+      single rule can be disabled via any mechanism independently.
 
 #### Success Criteria
 
-- `make ci` passes.
-- `claudelint` ships as a single static binary via GitHub Releases and
+- All three suppression mechanisms honored; `meta/unknown-rule`
+  emitted for unknown IDs.
+- `--explain` (or verbose flag) prints which suppression matched each
+  silenced diagnostic.
+- Suppression logic has a matrix test covering every combination.
+
+---
+
+### Phase 1.7: Output formats and exit codes
+
+#### Tasks
+
+- [ ] `--format=text|json|github` flag on `run`.
+- [ ] Text formatter: colorized human output; honors `--no-color` and
+      `NO_COLOR` env.
+- [ ] JSON formatter: stable documented schema in `docs/` with a
+      golden-file test guarding stability.
+- [ ] GitHub Actions annotation formatter emitting `::error` /
+      `::warning` / `::notice` lines with `file=`, `line=`, `col=`.
+- [ ] `--quiet` suppresses non-error output; `--verbose` enables
+      suppression reasoning.
+- [ ] Exit codes: non-zero on any `error`; `--max-warnings=N` promotes
+      warning overflow to error (default: no limit).
+- [ ] E2E test in `cmd/claudelint`: invoke the binary against a
+      fixture repo and diff stdout/stderr against golden files for each
+      format.
+
+#### Success Criteria
+
+- Golden output tests green for text, JSON, and github formats.
+- Exit-code matrix test passes across {0 diagnostics, N warnings,
+  N errors, N warnings with `--max-warnings=0`}.
+- GitHub annotations render correctly in a smoke-test workflow in
+  `.github/workflows/`.
+
+---
+
+### Phase 1.8: Polish, docs, and release
+
+#### Tasks
+
+- [ ] Audit every user-facing error message for imperative, actionable
+      phrasing.
+- [ ] Add `testdata/bench/` synthetic 10k-file repo and benchmarks in
+      `internal/engine`; CI fails on > 20% regression from a baseline.
+- [ ] Coverage gate in CI: fail if any `internal/...` package drops
+      below 80%.
+- [ ] `make ci` passes with zero warnings across `golangci-lint`,
+      `markdownlint`, `yamllint`.
+- [ ] `make self-check` runs `claudelint run .` and fails the build on
+      any error.
+- [ ] Update `README.md` with install, quickstart, rule index (every
+      MVP rule with one example + one fix), and a link to the RFC.
+- [ ] Dogfood on at least two external Claude plugin repos; open GitHub
+      issues for the findings.
+- [ ] `.goreleaser.yml` publishes `darwin/{amd64,arm64}`,
+      `linux/{amd64,arm64}`, and `windows/amd64`.
+- [ ] Tag `v0.1.0`; verify `go install` picks up the release.
+
+#### Success Criteria
+
+- `make ci` and `make self-check` both pass.
+- `v0.1.0` binary published via GitHub Releases and installable via
   `go install`.
 - README documents every MVP rule with one example and one fix.
 
@@ -218,38 +411,132 @@ Turn discovered paths into typed artifacts.
 
 | File | Action | Description |
 |------|--------|-------------|
-| `cmd/claudelint/main.go` | Create | Cobra entrypoint + subcommand wiring |
-| `internal/config/*.go` | Create | HCL loader, schema v1 |
-| `internal/discovery/*.go` | Create | File walker + artifact classification |
-| `internal/artifact/*.go` | Create | Typed artifact model + parsers |
-| `internal/engine/*.go` | Create | Rule registry + runner |
-| `internal/rules/**/*.go` | Create | Built-in rules |
-| `internal/diag/*.go` | Create | Diagnostic and severity types |
-| `internal/reporter/*.go` | Create | text/json/github formatters |
-| `go.mod`, `go.sum` | Modify | Add `hashicorp/hcl/v2`, `spf13/cobra`, `goccy/go-yaml` (or `yaml.v3`) |
-| `README.md` | Modify | Replace TODO with install/usage |
-| `.goreleaser.yml` | Modify | Confirm main path and binary name |
-| `Makefile` | Modify | Add `self-check` target that runs `claudelint run` on this repo |
+| `cmd/claudelint/main.go` | Create | Cobra entrypoint; `run`, `rules`, `init`, `version` subcommands; blank-imports `internal/rules/all` |
+| `internal/diag/*.go` | Create | `Diagnostic`, `Severity`, `Range`, `Position`, `Fix` types |
+| `internal/artifact/*.go` | Create | `ArtifactKind`, `Artifact` interface, typed structs, parsers, known-data constants |
+| `internal/discovery/*.go` | Create | Filesystem walker + classification + `.gitignore` support |
+| `internal/config/*.go` | Create | HCL loader, schema v1 decoder, `ResolvedConfig` |
+| `internal/rules/rules.go` | Create | `Rule`, `Context`, `Register`, `All`, `Get` |
+| `internal/rules/<category>/<id>.go` | Create | Individual rule implementations (14 files) |
+| `internal/rules/all/all.go` | Create | Blank imports so every rule's `init()` runs |
+| `internal/engine/*.go` | Create | Worker-pool runner, diagnostic aggregator, suppression applier |
+| `internal/reporter/*.go` | Create | text, json, github formatters |
+| `go.mod`, `go.sum` | Modify | Add `hashicorp/hcl/v2`, `spf13/cobra`, YAML parser (see Open Q), ignore lib |
+| `README.md` | Modify | Replace TODO with install/usage + rule index |
+| `.goreleaser.yml` | Modify | Ensure main path + binary name + platforms |
+| `Makefile` | Modify | Add `self-check` target |
 | `.claudelint.hcl` | Create | Dogfood config |
+| `.github/workflows/*.yml` | Modify | Add `claudelint run` step; coverage gate; benchmark regression check |
+| `testdata/bench/**` | Create | Synthetic repo for benchmarks |
 
 ## Testing Plan
 
-- [ ] Unit tests for every exported function in `internal/...`.
-- [ ] Parser tests with golden byte-offset assertions.
-- [ ] Rule tests with `testdata/ok/` and `testdata/bad/` per rule.
-- [ ] Integration tests in `cmd/claudelint` that invoke the binary
-      against fixture repos and diff stdout/stderr.
-- [ ] Benchmarks in `testdata/bench/` with `go test -bench=.`.
-- [ ] Coverage gate in CI: fail if `internal/...` drops below 80%.
+- [ ] Unit tests for every exported symbol in `internal/...`.
+- [ ] Parser tests with byte-offset golden assertions.
+- [ ] Per-rule table-driven tests with `testdata/ok/` + `testdata/bad/`
+      + golden JSON diagnostics.
+- [ ] Engine tests with stub rules under `go test -race`.
+- [ ] E2E tests in `cmd/claudelint` invoking the binary and diffing
+      stdout/stderr against golden files for every output format.
+- [ ] Suppression matrix test across in-source + config + per-path.
+- [ ] Exit-code matrix test across diagnostic-severity scenarios.
+- [ ] Benchmark suite; CI regression gate of 20%.
+- [ ] Coverage gate in CI: 80% minimum per `internal/...` package.
 
 ## Dependencies
 
-- `github.com/hashicorp/hcl/v2`
-- `github.com/spf13/cobra`
-- `gopkg.in/yaml.v3` (or `github.com/goccy/go-yaml` for better error
-  positions)
+- `github.com/hashicorp/hcl/v2` — config (ADR-0001).
+- `github.com/spf13/cobra` — CLI.
+- YAML parser — **open** between `gopkg.in/yaml.v3` and
+  `github.com/goccy/go-yaml` (see Open Questions).
+- A vetted `.gitignore` parser — candidates:
+  `github.com/denormal/go-gitignore`, `github.com/sabhiram/go-gitignore`,
+  or `go-git`'s internal matcher.
 - Existing repo tooling: `mise`, `goreleaser`, `golangci-lint`,
   `markdownlint`, `yamllint`.
+
+## Open Questions
+
+These are decisions or ambiguities I noticed while aligning this
+implementation plan with DESIGN-0001. Flagging for review before
+coding starts.
+
+1. **Registry location.** DESIGN-0001's package-layout comment places
+   the registry in `internal/engine` ("rule registry + runner"), but
+   the example rule imports `claudelint/internal/rules` and calls
+   `rules.Register(...)`. This plan assumes the registry lives in
+   `internal/rules` (so individual rule files never import the
+   engine) and the engine imports `internal/rules` to enumerate and
+   dispatch. Confirm this direction and update DESIGN-0001 to match.
+
+2. **How rules get wired into the binary.** Go only runs `init()` in
+   imported packages, so each rule subpackage must be blank-imported
+   somewhere. This plan uses a single `internal/rules/all/all.go` with
+   blank imports, imported once by `cmd/claudelint/main.go`. The
+   alternative is blank-importing each subpackage directly from the
+   CLI main. The `all` package approach keeps `main.go` short and
+   lets tests blank-import the same aggregator. Confirm.
+
+3. **YAML parser choice.** `gopkg.in/yaml.v3` is the ecosystem default
+   but reports positions poorly. `github.com/goccy/go-yaml` gives
+   precise line/column on every token, which is essential since rules
+   report against frontmatter keys. Recommendation: `goccy/go-yaml`.
+   Confirm before pulling in the dependency.
+
+4. **`schema/parse` as a real `Rule` vs. engine-synthesized.** Rules
+   are pure functions over typed artifacts, but a parse failure means
+   no typed artifact exists. This plan treats `schema/parse` as a
+   *pseudo-rule*: registered (so `claudelint rules` shows it and
+   suppressions can target it) but never invoked — the engine emits
+   the diagnostic from the parse step directly. Confirm that framing
+   before implementing.
+
+5. **Ruleset version source.** DESIGN says `claudelint version` prints
+   both binary and ruleset versions. This plan proposes a
+   `RulesetVersion` constant in `internal/rules` bumped manually per
+   release; binary version is ldflag-injected. Alternative: derive
+   ruleset version from the hash of rule IDs, so accidental
+   additions/removals bump it. Pick one.
+
+6. **In-source suppressions for JSON artifacts.** Hook JSON and plugin
+   manifests have no comment syntax. Options: (a) Markdown-only
+   in-source suppressions, with JSON artifacts relying on config-level
+   disables (this plan's default); (b) support JSONC; (c) ship a
+   sidecar `.claudelint.ignore` file. Recommend (a) for v1 — document
+   clearly. Confirm.
+
+7. **`.gitignore` semantics.** Match `git status` (root + nested +
+   global `~/.config/git/ignore`) or just the repo root? This plan
+   assumes full `git status` semantics via a battle-tested library.
+   Confirm we want the stricter behavior.
+
+8. **`Fix` type without auto-fix.** DESIGN defines `Fix *Fix` on
+   `Diagnostic` but auto-fix is a v1 non-goal. Plan leaves the field
+   defined and always nil so the JSON schema is forward-compatible.
+   Alternative: omit `Fix` from v1 entirely and add it when `fix`
+   ships, accepting a JSON schema bump. Confirm.
+
+9. **`settings.json` + `settings.local.json` overlap.** Both can declare
+   hooks. This plan treats them as independent artifacts producing
+   independent diagnostics (claudelint does not merge them — that's a
+   runtime concern). Confirm this is desirable, or whether we want
+   `claude_md/duplicate-directives`-style "you have this hook declared
+   in both files" diagnostic.
+
+10. **Concurrent runner granularity.** DESIGN says "groups enabled
+    rules by `ArtifactKind` and runs them concurrently." That can mean
+    one worker per artifact (rules run serially within an artifact) or
+    a worker pool over `(artifact, rule)` pairs. This plan uses the
+    latter; it scales better on large repos but increases scheduling
+    overhead on tiny ones. Confirm.
+
+11. **Rule option validation.** Config lets users pass arbitrary
+    `options = { ... }` per rule. Who validates the option schema —
+    the rule itself on first `Check`, or a declarative option schema
+    the rule publishes up-front? Declarative is nicer for `claudelint
+    rules <id>` output but adds a field to the `Rule` interface.
+    Leaning toward a simple `DefaultOptions() map[string]any` method
+    and per-rule validation inside `Check`. Confirm.
 
 ## References
 
