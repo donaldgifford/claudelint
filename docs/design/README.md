@@ -28,4 +28,9 @@ docz create design "Your Design Title"
 - **Abandoned**: Design was not pursued
 
 <!-- BEGIN DOCZ AUTO-GENERATED -->
+## All DESIGNs
+
+| ID | Title | Status | Date | Author | Link |
+|----|-------|--------|------|--------|------|
+| DESIGN-0001 | Claudelint linter architecture and rule engine | Draft | 2026-04-18 | Donald Gifford | [0001-claudelint-linter-architecture-and-rule-engine.md](0001-claudelint-linter-architecture-and-rule-engine.md) |
 <!-- END DOCZ AUTO-GENERATED -->

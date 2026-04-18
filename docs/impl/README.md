@@ -28,4 +28,9 @@ docz create impl "Your Implementation Title"
 - **Cancelled**: Plan was abandoned
 
 <!-- BEGIN DOCZ AUTO-GENERATED -->
+## All IMPLs
+
+| ID | Title | Status | Date | Author | Link |
+|----|-------|--------|------|--------|------|
+| IMPL-0001 | Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks | Draft | 2026-04-18 | Donald Gifford | [0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md](0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md) |
 <!-- END DOCZ AUTO-GENERATED -->
