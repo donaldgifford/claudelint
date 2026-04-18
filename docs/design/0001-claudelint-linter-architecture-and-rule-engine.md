@@ -39,10 +39,38 @@ created: 2026-04-18
 
 ## Overview
 
-Detailed design for the claudelint core: artifact discovery, parsing,
-rule engine, diagnostics, and reporting. This document covers the MVP
-scope described in RFC-0001 and IMPL-0001. The format-conversion
-subcommand is described separately and gated on INV-0001.
+Detailed design for the claudelint core. The architecture is three
+layers with a single direction of dependency:
+
+```
+     Parsers  →  Engine  →  Rules
+   (bytes →    (orchestrates,  (tiny, pure
+    typed       schedules,      Check funcs
+    artifact)   reports)        behind one
+                                interface)
+```
+
+- **Parsers** turn bytes on disk into typed `Artifact` values.
+- **The engine** is where the complexity lives: config loading, artifact
+  discovery, rule scheduling, concurrency, diagnostic collection,
+  suppression handling, and reporting.
+- **Rules** are small. Each rule is a focused function behind a common
+  `Rule` interface — roughly "given this typed artifact, return any
+  diagnostics." Rules do no I/O, hold no state, and know nothing about
+  how the engine dispatches them.
+
+This is the same shape as `golangci-lint` / `staticcheck` /
+`go/analysis`: the runner is a substantial piece of code; an individual
+linter is often a few dozen lines. Adding a rule means implementing one
+interface and registering it — no engine changes required.
+
+Rules are **built-in to the binary and versioned with it**. v1 does
+not support third-party plugin rules; that is an explicit non-goal
+(see Open Questions for how we'd reconsider later).
+
+This document covers the MVP scope described in RFC-0001 and IMPL-0001.
+The format-conversion subcommand is described separately and gated on
+INV-0001.
 
 ## Goals and Non-Goals
 
@@ -50,7 +78,10 @@ subcommand is described separately and gated on INV-0001.
 
 - Single static Go binary runnable from CLI, pre-commit, and CI.
 - Deterministic, line-accurate diagnostics for every rule.
-- Rule authoring is simple: implement one interface, register in a map.
+- Rule authoring is simple: implement one interface, register in an
+  `init()`. No engine changes required to add a rule.
+- Rules ship built-in to the binary. A claudelint release pins exactly
+  the ruleset it shipped with.
 - Config and rules are versioned. Breaking changes require a new schema
   version, not silent behavior shifts.
 - Fast enough on large repos that developers leave it enabled (target:
@@ -60,6 +91,8 @@ subcommand is described separately and gated on INV-0001.
 
 - General-purpose Markdown linting (delegate to `markdownlint`).
 - Runtime behavioral analysis of plugins (we are static-only).
+- Third-party / plugin rules in v1. All rules live in-tree and are
+  released with the binary.
 - Lossless cross-ecosystem conversion. See INV-0001 — conversion is
   best-effort with explicit diagnostics for dropped fields.
 - Auto-fix in v1. Diagnostics may include fix hints but `claudelint fix`
@@ -101,6 +134,10 @@ internal/convert/        # (phase 3) format conversion
 
 ### Core interfaces
 
+The contract between the engine and rules is small on purpose. A rule
+implementor only has to understand `Artifact`, `Rule`, and
+`Diagnostic`. The engine owns everything else.
+
 ```go
 // ArtifactKind identifies what we're linting.
 type ArtifactKind string
@@ -115,19 +152,33 @@ const (
 )
 
 // Artifact is the parsed, typed view of a file on disk.
+// Produced by a Parser, consumed by Rules. Rules see only Artifact,
+// never raw bytes or paths except through this interface.
 type Artifact interface {
     Kind() ArtifactKind
     Path() string
     Source() []byte     // raw bytes, for position reporting
 }
 
-// Rule is the unit of analysis. Rules are pure: no I/O, no global state.
+// Rule is the unit of analysis. Rules are:
+//   - pure: no I/O, no global state, no cross-file awareness (v1)
+//   - small: typical rule ≤ 50 LOC plus a table-driven test
+//   - focused: one rule checks one property
+// Inspired by go/analysis.Analyzer and golangci-lint's linter contract.
 type Rule interface {
     ID() string              // e.g., "skills/require-name"
     Category() string        // schema | content | security | style
     DefaultSeverity() Severity
     AppliesTo() []ArtifactKind
     Check(ctx Context, a Artifact) []Diagnostic
+}
+
+// Context is everything a rule is allowed to see beyond the artifact:
+// resolved options for this rule, the rule's own ID, and a logger.
+// Kept deliberately narrow so rules stay testable.
+type Context interface {
+    Option(key string) any    // rule-specific options from HCL config
+    Logger() Logger
 }
 
 // Diagnostic is what the reporter prints.
@@ -141,6 +192,42 @@ type Diagnostic struct {
     Fix      *Fix        // optional machine-applicable suggestion
 }
 ```
+
+A minimal rule, end to end:
+
+```go
+// internal/rules/skills/requirename.go
+package skills
+
+import "claudelint/internal/rules"
+
+func init() { rules.Register(&requireName{}) }
+
+type requireName struct{}
+
+func (requireName) ID() string              { return "skills/require-name" }
+func (requireName) Category() string        { return "schema" }
+func (requireName) DefaultSeverity() Severity { return SeverityError }
+func (requireName) AppliesTo() []ArtifactKind { return []ArtifactKind{KindSkill} }
+
+func (requireName) Check(ctx Context, a Artifact) []Diagnostic {
+    s := a.(*artifact.Skill)
+    if s.Frontmatter.Name != "" {
+        return nil
+    }
+    return []Diagnostic{{
+        RuleID:   "skills/require-name",
+        Severity: SeverityError,
+        Path:     s.Path(),
+        Range:    s.FrontmatterRange,
+        Message:  `skill frontmatter is missing "name"`,
+    }}
+}
+```
+
+That's the whole surface area for a new rule: one file, one `init()`
+registration, a table-driven test next to it. The engine picks it up
+automatically.
 
 ### Execution flow
 
@@ -253,15 +340,23 @@ Suppression IDs must exist; unknown IDs are themselves a warning
 ### CLI
 
 ```
-claudelint                       # lint the cwd
-claudelint lint ./path           # lint a subtree
-claudelint lint --format=sarif   # machine output
-claudelint rules                 # list rules with defaults
-claudelint rules <id>            # show details and rationale
+claudelint                       # run against the cwd
+claudelint run ./path            # run against a subtree
+claudelint run --format=sarif    # machine output
+claudelint rules                 # list built-in rules with defaults
+claudelint rules <id>            # show rule details and rationale
 claudelint init                  # scaffold .claudelint.hcl
 claudelint convert ...           # (phase 3)
-claudelint version
+claudelint version               # binary + ruleset version
 ```
+
+`run` is deliberately chosen over `lint` — the tool will eventually do
+more than lint (e.g. `convert`), and `run` matches the mental model of
+"run the engine against these files." Bare `claudelint` is shorthand
+for `claudelint run`.
+
+`claudelint version` prints both the binary version and the ruleset
+version baked into it, so CI can pin against either.
 
 ### Library
 
@@ -282,7 +377,8 @@ No persistent storage. All state is in-memory per run.
 - **Config tests.** Every error path in the HCL loader has a test with a
   line/column assertion.
 - **End-to-end.** `go test ./cmd/claudelint` runs the binary against a
-  fixture repo and asserts against captured SARIF.
+  fixture repo and asserts against captured JSON output (SARIF once
+  Phase 2 lands).
 - **Benchmarks.** A synthetic 10k-file repo checked in under
   `testdata/bench/`; performance regressions fail CI.
 - **Dogfooding.** Run claudelint against its own repo in CI.
@@ -302,11 +398,17 @@ loader refuses unknown versions with a clear upgrade message.
 
 - Should rules be able to share state across artifacts (e.g., detect a
   skill referenced in a plugin manifest but missing from disk)? Current
-  design says no for v1; revisit if needed.
-- Do we want a plugin system for third-party rules? If yes, Go plugins
-  (`plugin.Open`) are fragile; RPC/subprocess or WASM are options.
-- How do we version the ruleset itself separately from the binary? A
-  `ruleset.version` string, or tie to binary version?
+  design says no for v1; revisit if needed. A clean way to add this
+  later is a `go/analysis`-style `Requires` list on `Rule`.
+- Third-party rules: deliberately out of scope for v1 (rules are
+  built-in and versioned with the binary). If demand appears, options
+  are RPC/subprocess rules or WASM modules — Go's `plugin.Open` is too
+  fragile for a distributed CLI. A plugin API would require stabilizing
+  the `Rule` / `Artifact` / `Diagnostic` surface first.
+- Ruleset versioning: tie to the binary version (simplest) or maintain
+  a separate `ruleset.version` string so CI can pin behavior
+  independently of binary upgrades. Leaning toward binary version for
+  v1 with `claudelint version` surfacing both fields.
 
 ## References
 

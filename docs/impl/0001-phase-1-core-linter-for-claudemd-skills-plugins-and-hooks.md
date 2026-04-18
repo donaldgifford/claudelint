@@ -55,11 +55,13 @@ from `.claudelint.hcl`, and prints human-readable diagnostics.
 
 ### In Scope
 
-- `claudelint` CLI with `lint`, `rules`, `init`, `version` subcommands.
+- `claudelint` CLI with `run`, `rules`, `init`, `version` subcommands
+  (bare `claudelint` aliases to `claudelint run`).
 - HCL config loader (schema v1) per ADR-0001.
 - Discovery of `CLAUDE.md`, skills, slash commands, subagents, hooks
   (both dedicated JSON and inline in `settings.json`), plugin manifests.
-- ~15 built-in rules (see DESIGN-0001 table).
+- ~15 built-in rules, shipped in-tree and versioned with the binary
+  (see DESIGN-0001 table).
 - Text, JSON, and GitHub Actions output formats.
 - In-source `// claudelint:ignore` suppressions and config-level
   disables/severity overrides.
@@ -71,7 +73,8 @@ from `.claudelint.hcl`, and prints human-readable diagnostics.
 - Pre-commit hook (Phase 2).
 - `claudelint fix` auto-fix (later).
 - `claudelint convert` format conversion (Phase 3; gated on INV-0001).
-- Third-party rule plugins.
+- Third-party / out-of-tree rules (explicit non-goal for v1 — rules
+  live in the binary).
 
 ## Implementation Phases
 
@@ -87,19 +90,20 @@ Establish the skeleton: CLI, logging, module structure, and a no-op
 
 #### Tasks
 
-- [ ] Add `cmd/claudelint/main.go` with cobra root + subcommands.
+- [ ] Add `cmd/claudelint/main.go` with cobra root + subcommands
+      (`run` as primary; bare invocation aliases to `run`).
 - [ ] Add `internal/discovery/` with a walker that honors `.gitignore`
       and classifies files into `ArtifactKind`.
 - [ ] Add `internal/diag/` with `Diagnostic`, `Severity`, `Range`.
 - [ ] Add `internal/reporter/text.go` producing human-readable output.
-- [ ] Wire `claudelint lint` to discover + report `(0 diagnostics, N files)`.
-- [ ] Add `claudelint version` printing build info.
+- [ ] Wire `claudelint run` to discover + report `(0 diagnostics, N files)`.
+- [ ] Add `claudelint version` printing binary + ruleset version.
 - [ ] Write unit tests for discovery classification.
 
 #### Success Criteria
 
 - `go build ./...` succeeds.
-- `claudelint lint .` prints discovered file counts on this repo.
+- `claudelint run .` prints discovered file counts on this repo.
 - Discovery tests cover every `ArtifactKind` with fixture inputs.
 
 ---
@@ -146,7 +150,7 @@ Turn discovered paths into typed artifacts.
 - Invalid config files produce HCL-style diagnostics pointing at the
   exact token.
 - `claudelint init` in an empty directory produces a config that
-  `claudelint lint` accepts without diagnostics.
+  `claudelint run` accepts without diagnostics.
 
 ---
 
@@ -165,7 +169,7 @@ Turn discovered paths into typed artifacts.
 
 #### Success Criteria
 
-- Running `claudelint lint .` on this repo produces zero errors.
+- Running `claudelint run .` on this repo produces zero errors.
 - Each rule has at least one `ok` and one `bad` fixture test.
 - Suppressions are honored and unknown IDs warn via `meta/unknown-rule`.
 
@@ -225,7 +229,7 @@ Turn discovered paths into typed artifacts.
 | `go.mod`, `go.sum` | Modify | Add `hashicorp/hcl/v2`, `spf13/cobra`, `goccy/go-yaml` (or `yaml.v3`) |
 | `README.md` | Modify | Replace TODO with install/usage |
 | `.goreleaser.yml` | Modify | Confirm main path and binary name |
-| `Makefile` | Modify | Add `lint-self` target that runs claudelint on this repo |
+| `Makefile` | Modify | Add `self-check` target that runs `claudelint run` on this repo |
 | `.claudelint.hcl` | Create | Dogfood config |
 
 ## Testing Plan
