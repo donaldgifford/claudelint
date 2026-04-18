@@ -1,0 +1,14 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: claudelint
+  description: Framework and tooling for linting, auditing, and formatting Claude plugins, skills, subagents, and more.
+  annotations:
+    github.com/project-slug: donaldgifford/claudelint
+    backstage.io/techdocs-ref: dir:.
+spec:
+  owner: homelab
+  type: tool
+  system: dev-tools
+  lifecycle: production
