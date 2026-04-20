@@ -37,8 +37,7 @@
       "Bash(git push *)",
       "Bash(git fetch *)",
       "Bash(git pull *)",
-      "Bash(gh run *)",
-      "Bash(/Users/donaldgifford/.claude/plugins/cache/claude-plugins-official/ralph-loop/1.0.0/scripts/setup-ralph-loop.sh:*)"
+      "Bash(gh run *)"
     ]
   }
 }
