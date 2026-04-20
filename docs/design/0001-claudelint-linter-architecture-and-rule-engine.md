@@ -25,6 +25,7 @@ created: 2026-04-18
   - [Execution flow](#execution-flow)
   - [Parsers](#parsers)
   - [Built-in rules (MVP shortlist)](#built-in-rules-mvp-shortlist)
+  - [Ruleset versioning](#ruleset-versioning)
   - [Config schema v1](#config-schema-v1)
   - [Suppression model](#suppression-model)
 - [API / Interface Changes](#api--interface-changes)
@@ -125,12 +126,24 @@ cmd/claudelint/          # CLI entrypoint (cobra)
 internal/config/         # HCL loader + schema v1
 internal/discovery/      # filesystem walker + artifact classification
 internal/artifact/       # typed artifact structs + parsers
-internal/rules/          # built-in rule implementations
-internal/engine/         # rule registry + runner
-internal/diag/           # Diagnostic type, severity, source positions
-internal/reporter/       # text, json, sarif, github-actions formatters
+internal/rules/          # Rule + Context interfaces, registry
+                         # (Register/All/Get), RulesetVersion +
+                         # RulesetFingerprint
+internal/rules/<kind>/   # built-in rule implementations
+                         # (one rule per file; e.g.
+                         # internal/rules/skills/bodysize.go)
+internal/rules/all/      # blank-imports every rule subpackage so
+                         # each rule's init() runs
+internal/engine/         # runner, worker pool, aggregation
+internal/diag/           # Diagnostic, Severity, Range, Position, Fix
+internal/reporter/       # text, json, github (sarif in phase 2)
 internal/convert/        # (phase 3) format conversion
 ```
+
+Dependency direction is strictly one-way: rule packages import
+`internal/rules` for the `Rule` interface and `Register`, and
+`internal/engine` imports `internal/rules` to enumerate and dispatch.
+Rule packages never import the engine.
 
 ### Core interfaces
 
@@ -169,6 +182,13 @@ type Rule interface {
     ID() string              // e.g., "skills/require-name"
     Category() string        // schema | content | security | style
     DefaultSeverity() Severity
+    // DefaultOptions returns the rule's option keys and default values.
+    // The engine fills in unspecified options from this map and uses
+    // the Go types of the default values to validate user-supplied
+    // options before Check is called. `claudelint rules <id>` prints
+    // this map so users can see available knobs. Return nil if the
+    // rule takes no options.
+    DefaultOptions() map[string]any
     AppliesTo() []ArtifactKind
     Check(ctx Context, a Artifact) []Diagnostic
 }
@@ -189,7 +209,9 @@ type Diagnostic struct {
     Range    Range       // line/col start+end; zero value means file-level
     Message  string      // short, imperative
     Detail   string      // long-form; may include fix hint
-    Fix      *Fix        // optional machine-applicable suggestion
+    Fix      *Fix        // v1 placeholder, always nil. JSON: omitempty.
+                         // Shape will be validated when `claudelint fix`
+                         // ships; kept now for forward JSON compat.
 }
 ```
 
@@ -235,17 +257,25 @@ automatically.
    from cwd until `.claudelint.hcl` is found, or accept `--config=PATH`.
 2. **Load config.** Parse HCL into an internal `Config` struct.
    Validate schema version. Apply rule overrides.
-3. **Discover.** Walk the filesystem honoring `.gitignore` and config
-   `ignore.paths`. Classify each file into an `ArtifactKind` using the
-   path/filename patterns in the Background section. Unrecognized files
-   are skipped silently.
+3. **Discover.** Walk the filesystem honoring full `git status`-style
+   ignore semantics — root `.gitignore`, nested `.gitignore` files,
+   `.git/info/exclude`, and the global `~/.config/git/ignore` — plus
+   config `ignore.paths`. Classify each file into an `ArtifactKind`
+   using the path/filename patterns in the Background section.
+   Unrecognized files are skipped silently.
 4. **Parse.** Each artifact type has a parser that returns a typed
-   struct. Parse errors become `error`-severity diagnostics for the
-   built-in `schema/parse` rule and cause the artifact to be skipped for
-   further rules.
-5. **Run rules.** The engine groups enabled rules by `ArtifactKind` and
-   runs them concurrently, up to `GOMAXPROCS`. Each rule sees one
-   artifact at a time (no cross-file state in v1).
+   struct. Parse errors become `error`-severity diagnostics under the
+   `schema/parse` rule ID and cause the artifact to be skipped for
+   further rules. `schema/parse` is a *pseudo-rule*: registered in the
+   registry so it appears in `claudelint rules` and can be targeted by
+   suppressions, but its `Check` method is never invoked — the engine
+   synthesizes the diagnostic directly from the `ParseError`.
+5. **Run rules.** The engine dispatches one goroutine per artifact
+   (bounded pool sized to `GOMAXPROCS`); within each goroutine, the
+   applicable rules for that artifact's `Kind` run serially. Each rule
+   sees one artifact at a time (no cross-file state in v1). Coarse
+   granularity keeps scheduling overhead low on repos with many small
+   artifacts; profile before changing.
 6. **Collect diagnostics.** Aggregate, sort by path/line, dedupe
    identical diagnostics.
 7. **Apply suppressions.** Drop diagnostics matched by
@@ -259,7 +289,7 @@ automatically.
 
 | Kind | Parser |
 |------|--------|
-| `claude_md` | Markdown parser with frontmatter extraction (`yaml.v3`). Body split into directive blocks by heading. |
+| `claude_md` | Markdown parser with frontmatter extraction. YAML frontmatter uses `github.com/goccy/go-yaml` for precise line/column positions on every key. Body split into directive blocks by heading. |
 | `skill` | Frontmatter (`name`, `description`, optional `allowed-tools`, `model`) + Markdown body. Companion files indexed. |
 | `command` | Frontmatter (`description`, `argument-hint`, `allowed-tools`) + body. |
 | `agent` | Frontmatter (`name`, `description`, `tools`) + system prompt body. |
@@ -290,6 +320,33 @@ line/column ranges, including inside Markdown bodies.
 
 Each rule lives in `internal/rules/<kind>/<id>.go` with a table-driven
 test in the same package. The rule registry is built via `init()`.
+
+### Ruleset versioning
+
+The ruleset is versioned independently of the binary, similar to how
+Go module pseudo-versions pair semver with a content hash:
+
+- `RulesetVersion` — a hand-bumped semver constant in
+  `internal/rules` (e.g. `"v1.2.0"`). Human-readable; goes in release
+  notes when rules are added, removed, or their defaults change.
+- `RulesetFingerprint` — a hash computed at `init()` time from the
+  sorted list of registered rule IDs plus each rule's default
+  severity and default options. Auto-updates whenever the ruleset
+  changes, even accidentally.
+
+A CI guardrail test recomputes the fingerprint and compares it
+against a checked-in `expected_fingerprint.txt`. Any drift fails CI
+with `"ruleset changed; bump RulesetVersion and update
+expected_fingerprint.txt"`. This catches the case where rules are
+added without bumping semver, or semver is bumped without a real
+change.
+
+`claudelint version` prints both:
+
+```
+claudelint v0.3.1
+ruleset    v1.2.0 (a1b2c3d4)
+```
 
 ### Config schema v1
 
@@ -325,12 +382,18 @@ output {
 
 ### Suppression model
 
-- **In-source:** a line matching `claudelint:ignore=<id>(,<id>)*` applies
-  to the same line, or to the next non-blank line if it is the only
-  content on its own line. Optional `claudelint:ignore-file=<id>`
-  applies to the whole file.
-- **Config:** `rule "<id>" { enabled = false }` disables globally.
-- **Per-path:** `rule "<id>" { paths = ["docs/**"] }` disables for a glob.
+- **In-source (Markdown artifacts only).** Recognized inside HTML
+  comments in Markdown-backed artifacts (`CLAUDE.md`, skills,
+  commands, agents):
+  `<!-- claudelint:ignore=<id>[,<id>...] -->` applies to the same line
+  or the next non-blank line; `<!-- claudelint:ignore-file=<id> -->`
+  applies to the whole file. JSON-backed artifacts (hooks, plugin
+  manifests) do **not** support in-source suppressions — JSON has no
+  standard comment syntax, and config-level path globs are strictly
+  more expressive for those files.
+- **Config (any artifact).** `rule "<id>" { enabled = false }` disables
+  globally; `{ severity = "..." }` overrides severity;
+  `{ paths = ["glob", ...] }` disables for a path glob.
 
 Suppression IDs must exist; unknown IDs are themselves a warning
 (`meta/unknown-rule`).
@@ -396,19 +459,27 @@ loader refuses unknown versions with a clear upgrade message.
 
 ## Open Questions
 
-- Should rules be able to share state across artifacts (e.g., detect a
-  skill referenced in a plugin manifest but missing from disk)? Current
-  design says no for v1; revisit if needed. A clean way to add this
-  later is a `go/analysis`-style `Requires` list on `Rule`.
-- Third-party rules: deliberately out of scope for v1 (rules are
+- **Cross-artifact rules (Phase 2).** v1 rules are strictly
+  per-artifact. A concrete case for cross-artifact analysis —
+  `hooks/duplicate-declaration` when the same event is declared in
+  both `settings.json` and `settings.local.json` — is deferred to
+  Phase 2. Likely shape when we add it: a sibling `CorpusRule`
+  interface with `Check(ctx, []Artifact) []Diagnostic`, registered the
+  same way, run serially after per-artifact rules. We want code
+  experience with the per-artifact engine before committing to the
+  shape.
+- **Third-party rules.** Deliberately out of scope for v1 (rules are
   built-in and versioned with the binary). If demand appears, options
   are RPC/subprocess rules or WASM modules — Go's `plugin.Open` is too
-  fragile for a distributed CLI. A plugin API would require stabilizing
-  the `Rule` / `Artifact` / `Diagnostic` surface first.
-- Ruleset versioning: tie to the binary version (simplest) or maintain
-  a separate `ruleset.version` string so CI can pin behavior
-  independently of binary upgrades. Leaning toward binary version for
-  v1 with `claudelint version` surfacing both fields.
+  fragile for a distributed CLI. A plugin API would require
+  stabilizing the `Rule` / `Artifact` / `Diagnostic` surface first.
+- **`.gitignore` library choice.** Full `git status` semantics are
+  required, but the specific library is an implementation detail to
+  decide in Phase 1.1. Candidates:
+  `github.com/sabhiram/go-gitignore` (widely used, small) or
+  `github.com/go-git/go-git/v5`'s matcher (heavier, more correct).
+  Pick during implementation based on correctness tests against
+  `git status` output on fixture repos.
 
 ## References
 
