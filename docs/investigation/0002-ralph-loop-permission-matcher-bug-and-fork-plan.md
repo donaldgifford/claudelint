@@ -22,6 +22,20 @@ created: 2026-04-20
 - [Findings](#findings)
   - [Observation 1 — The plugin's allowed-tools uses ${CLAUDEPLUGINROOT} plus colon-argument syntax](#observation-1--the-plugins-allowed-tools-uses-claudepluginroot-plus-colon-argument-syntax)
   - [Observation 2 — The error "pattern" is the raw fenced code block](#observation-2--the-error-pattern-is-the-raw-fenced-code-block)
+  - [Observation 3 — ${CLAUDEPLUGINROOT} is not expanded at permission-check time](#observation-3--claudepluginroot-is-not-expanded-at-permission-check-time)
+  - [Observation 4 — The two cached versions are functionally identical](#observation-4--the-two-cached-versions-are-functionally-identical)
+  - [Observation 5 — Version resolution alternates between runs](#observation-5--version-resolution-alternates-between-runs)
+  - [Observation 6 — No recent Claude Code changelog entry fixes this](#observation-6--no-recent-claude-code-changelog-entry-fixes-this)
+  - [Observation 7 — Adding a concrete allow-entry does not help](#observation-7--adding-a-concrete-allow-entry-does-not-help)
+- [Conclusion](#conclusion)
+- [Recommendation](#recommendation)
+  - [Fork plan](#fork-plan)
+    - [1. Remove the ` `! ` auto-exec block from the command body](#1-remove-the----auto-exec-block-from-the-command-body)
+    - [2. Pre-approve the setup script via a PreToolUse hook](#2-pre-approve-the-setup-script-via-a-pretooluse-hook)
+    - [3. Keep scripts/setup-ralph-loop.sh and hooks/stop-hook.sh](#3-keep-scriptssetup-ralph-loopsh-and-hooksstop-hooksh)
+    - [4. Re-name the command and plugin](#4-re-name-the-command-and-plugin)
+  - [Other actions](#other-actions)
+- [References](#references)
 <!--toc:end-->
 
 ## Question
@@ -110,19 +124,22 @@ on invocation:
 
 ### Observation 2 — The error "pattern" is the raw fenced code block
 
-Claude Code's permission-check error message shows:
+Claude Code's permission-check error message shows (indented code
+block to keep triple-backticks verbatim without tripping ToC
+generators):
 
-```
-Shell command permission check failed for pattern "```!
-"/Users/donaldgifford/.claude/plugins/cache/claude-plugins-official/ralph-loop/1.0.0/scripts/setup-ralph-loop.sh" "<args>"
-```": This command requires approval
-```
+    Shell command permission check failed for pattern "<BACKTICKS>!
+    "/Users/donaldgifford/.claude/plugins/cache/claude-plugins-official/ralph-loop/1.0.0/scripts/setup-ralph-loop.sh" "<args>"
+    <BACKTICKS>": This command requires approval
 
-The "pattern" starts with ` ```! ` (the markdown fence with bang) and
-ends with ` ``` `. That is the entire code-block content, not a
+Where `<BACKTICKS>` stands in for a literal triple-backtick
+(` ``` `). The "pattern" Claude Code is matching against starts with
+a triple-backtick-bang (the markdown fence with bang from the
+command's body) and ends with a closing triple-backtick. That is the
+entire code-block content from the command's `.md` file — not a
 stripped shell command. No pattern in `permissions.allow` that
 targets a script path can match a string that begins with
-` ```! `.
+triple-backtick-bang.
 
 ### Observation 3 — `${CLAUDE_PLUGIN_ROOT}` is not expanded at permission-check time
 
