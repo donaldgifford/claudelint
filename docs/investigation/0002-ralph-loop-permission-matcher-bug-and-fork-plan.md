@@ -35,6 +35,12 @@ created: 2026-04-20
     - [2. Pre-approve the setup script via a PreToolUse hook](#2-pre-approve-the-setup-script-via-a-pretooluse-hook)
     - [3. Keep scripts/setup-ralph-loop.sh and hooks/stop-hook.sh](#3-keep-scriptssetup-ralph-loopsh-and-hooksstop-hooksh)
     - [4. Re-name the command and plugin](#4-re-name-the-command-and-plugin)
+  - [Reference implementation — exact file contents](#reference-implementation--exact-file-contents)
+    - [.claude-plugin/plugin.json](#claude-pluginpluginjson)
+    - [commands/ralph-loop.md](#commandsralph-loopmd)
+    - [hooks/hooks.json](#hookshooksjson)
+    - [hooks/approve-setup.sh](#hooksapprove-setupsh)
+    - [Marketplace registration](#marketplace-registration)
   - [Other actions](#other-actions)
 - [References](#references)
   - [Upstream repositories](#upstream-repositories)
@@ -382,6 +388,198 @@ Use a new name (`ralph-loop` → `ralph` or `loop`, plugin slug
 `ralph-loop-fork`) so Claude Code doesn't collide with the official
 plugin during cached-version resolution. Advertise via the user's
 marketplace config.
+
+### Reference implementation — exact file contents
+
+Target layout inside the personal plugins repo
+(`donaldgifford-claude-skills`):
+
+    plugins/ralph-loop-fork/
+    ├── .claude-plugin/
+    │   └── plugin.json
+    ├── commands/
+    │   └── ralph-loop.md         # rewritten (no ```! block)
+    ├── hooks/
+    │   ├── hooks.json            # Stop hook + new PreToolUse hook
+    │   ├── stop-hook.sh          # verbatim copy from upstream
+    │   └── approve-setup.sh      # NEW: auto-approves setup script
+    ├── scripts/
+    │   └── setup-ralph-loop.sh   # verbatim copy from upstream
+    ├── LICENSE
+    └── README.md
+
+Files to **copy verbatim** from upstream
+`anthropics/claude-plugins-official/plugins/ralph-loop/`:
+
+- `scripts/setup-ralph-loop.sh`
+- `hooks/stop-hook.sh`
+- `LICENSE`
+
+Files to **create new or rewrite** — exact contents below.
+
+#### `.claude-plugin/plugin.json`
+
+```json
+{
+  "name": "ralph-loop-fork",
+  "version": "1.0.0",
+  "description": "Self-referential AI development loop. Fork of anthropics/claude-plugins-official ralph-loop that routes around the ```! shell-operator validator bug (see upstream #1315, #845).",
+  "author": {
+    "name": "Donald Gifford"
+  }
+}
+```
+
+#### `commands/ralph-loop.md`
+
+No ` ```! ` block. Instructs the LLM to invoke the setup script via
+the `Bash` tool. Claude Code expands `${CLAUDE_PLUGIN_ROOT}` and
+`$ARGUMENTS` in the prompt body before the LLM reads it, so the LLM
+sees a concrete command and calls `Bash` with it — bypassing the
+shell-operator validator that rejected the original ` ```! ` form.
+
+```markdown
+---
+description: "Start Ralph Loop in current session (fork that bypasses the upstream ```! permission bug)"
+argument-hint: "PROMPT [--max-iterations N] [--completion-promise TEXT]"
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-ralph-loop.sh:*)"]
+hide-from-slash-command-tool: "true"
+---
+
+# Ralph Loop Command
+
+Use the `Bash` tool to run exactly this command (arguments are
+already quoted for you):
+
+    "${CLAUDE_PLUGIN_ROOT}/scripts/setup-ralph-loop.sh" $ARGUMENTS
+
+After the setup script prints its initialization output, please
+begin working on the task. When you try to exit, the Ralph loop's
+`Stop` hook will feed the same prompt back to you for the next
+iteration. You will see your previous work in files and git history,
+allowing you to iterate and improve.
+
+CRITICAL RULE: If a completion promise is set, you may ONLY output
+it when the statement is completely and unequivocally TRUE. Do not
+output false promises to escape the loop, even if you think you're
+stuck or should exit for other reasons. The loop is designed to
+continue until genuine completion.
+```
+
+#### `hooks/hooks.json`
+
+Keeps the upstream `Stop` hook for the self-referential loop and
+adds a `PreToolUse` hook that auto-approves Bash invocations of the
+setup script — belt-and-suspenders for the permission path.
+
+```json
+{
+  "description": "Ralph Loop fork: Stop hook for self-referential loops; PreToolUse hook auto-approves the setup script.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/approve-setup.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### `hooks/approve-setup.sh`
+
+Reads the tool-call JSON from stdin, checks whether the `Bash`
+command is invoking our setup script (by expanded path), and emits a
+`permissionDecision: "allow"` decision when it is. Otherwise the
+hook stays silent so the user's normal permission rules continue to
+apply.
+
+```bash
+#!/usr/bin/env bash
+# hooks/approve-setup.sh
+#
+# PreToolUse hook for ralph-loop-fork. Auto-approves Bash invocations
+# of this plugin's own setup script. Passes through for every other
+# Bash command so user permission settings still apply.
+#
+# Requires `jq` on PATH (standard on macOS/Linux via Homebrew/apt).
+
+set -euo pipefail
+
+input="$(cat)"
+
+tool_name="$(printf '%s' "$input" | jq -r '.tool_name // ""')"
+command="$(printf '%s' "$input" | jq -r '.tool_input.command // ""')"
+
+# Only interested in Bash tool calls.
+if [[ "$tool_name" != "Bash" ]]; then
+  exit 0
+fi
+
+# Path we expect the setup script to live at, expanded at hook time.
+setup_script="${CLAUDE_PLUGIN_ROOT}/scripts/setup-ralph-loop.sh"
+
+# Match either `"/abs/path/setup-ralph-loop.sh" ...` or the unquoted
+# form; both are valid ways the LLM might invoke it.
+case "$command" in
+  "\"$setup_script\""*|"$setup_script"*)
+    cat <<JSON
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "allow",
+    "permissionDecisionReason": "ralph-loop-fork: auto-approving setup script invocation"
+  }
+}
+JSON
+    exit 0
+    ;;
+esac
+
+# Not our command — stay silent and let default permission flow run.
+exit 0
+```
+
+Make it executable (`chmod 755 hooks/approve-setup.sh`) and verify
+`stop-hook.sh` and `setup-ralph-loop.sh` keep their executable bits
+after publishing — upstream has ~10 open issues about shell scripts
+losing `+x` after marketplace sync (#1036, #1056, #1060, #1064,
+#1067, #1084, #1088, #1089, #1100, #992 …). Ship the fork with
+explicit `chmod +x` on those two scripts as the last step of
+publishing.
+
+#### Marketplace registration
+
+Add an entry to the user's `donaldgifford-claude-skills`
+marketplace manifest (typically `.claude-plugin/marketplace.json` or
+the equivalent `plugins` array):
+
+```json
+{
+  "name": "ralph-loop-fork",
+  "source": "plugins/ralph-loop-fork",
+  "description": "Fork of the official ralph-loop plugin that bypasses the upstream ```! permission-check bug (see INV-0002 in claudelint)."
+}
+```
+
+Install via `/plugin` after publishing to the user's marketplace; the
+slug becomes `ralph-loop-fork@donaldgifford-claude-skills` and the
+slash command becomes `/ralph-loop-fork:ralph-loop`.
 
 ### Other actions
 
