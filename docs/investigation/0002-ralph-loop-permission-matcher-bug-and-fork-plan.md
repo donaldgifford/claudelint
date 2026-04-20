@@ -27,6 +27,7 @@ created: 2026-04-20
   - [Observation 5 — Version resolution alternates between runs](#observation-5--version-resolution-alternates-between-runs)
   - [Observation 6 — No recent Claude Code changelog entry fixes this](#observation-6--no-recent-claude-code-changelog-entry-fixes-this)
   - [Observation 7 — Adding a concrete allow-entry does not help](#observation-7--adding-a-concrete-allow-entry-does-not-help)
+  - [Observation 8 — Upstream history: plugin was renamed, bug has multiple duplicate reports, fix PRs never merged](#observation-8--upstream-history-plugin-was-renamed-bug-has-multiple-duplicate-reports-fix-prs-never-merged)
 - [Conclusion](#conclusion)
 - [Recommendation](#recommendation)
   - [Fork plan](#fork-plan)
@@ -36,6 +37,13 @@ created: 2026-04-20
     - [4. Re-name the command and plugin](#4-re-name-the-command-and-plugin)
   - [Other actions](#other-actions)
 - [References](#references)
+  - [Upstream repositories](#upstream-repositories)
+  - [Open upstream issues (duplicate reports of our bug)](#open-upstream-issues-duplicate-reports-of-our-bug)
+  - [Proposed-but-unmerged upstream PRs](#proposed-but-unmerged-upstream-prs)
+  - [Merged fixes that did NOT solve the core problem](#merged-fixes-that-did-not-solve-the-core-problem)
+  - [Claude Code documentation](#claude-code-documentation)
+  - [Relevant Claude Code changelog entries](#relevant-claude-code-changelog-entries)
+  - [Local context](#local-context)
 <!--toc:end-->
 
 ## Question
@@ -209,26 +217,95 @@ because (a) the pattern being matched is the fenced block, not the
 script path, and (b) the invocation resolved to the
 `61c0597779bd` version directory, a different absolute path.
 
+### Observation 8 — Upstream history: plugin was renamed, bug has multiple duplicate reports, fix PRs never merged
+
+The plugin lives in two Anthropic repos with a confusing history:
+
+- `anthropics/claude-code` — was named `ralph-wiggum`; added to the
+  public monorepo 2025-11-16 (`68f90e05`). Received two fixes:
+  - **PR #16320** (2026-01-05, `5c92b97c`) — "move multi-line bash
+    from command to setup script." Addressed a related but different
+    failure mode: multi-line content in ` ```! ` blocks triggered
+    Claude Code's newline-based command-injection guard.
+  - **PR #16522** (2026-01-06, `c2022d36`) — "add `:*` to
+    allowed-tools pattern to permit arguments." Fixed
+    `Fixes #16398`.
+- `anthropics/claude-plugins-official` — the marketplace the user
+  actually installed from. The plugin here was **renamed from
+  `ralph-wiggum` → `ralph-loop`** on 2026-01-06 (`44328be`, PR #142)
+  "per legal guidance." Subsequent fixes include stop-hook bug
+  (`adfc379`), session isolation (`8644df9`), and the
+  `bash "${CLAUDE_PLUGIN_ROOT}/..."` hook-invocation wrapper
+  (`986deab`, 2026-03-28). The user's cached v1.0.0 includes all of
+  these fixes.
+
+Despite being current, the permission-failure bug we hit is still
+reproducible — because it is **a distinct, still-open bug** that the
+two merged fixes above did not address. Upstream tracking:
+
+- Open issue **#1315** (exact error we see, including the raw fenced
+  pattern in the error message): "(ralph-loop) Error: Shell command
+  permission check failed for pattern". Cites prior reports **#50,
+  #67, #69, #91** and notes "Fixed but never merged by #72, #98,
+  #117, #151, #1314" — at least 5 community PRs proposing fixes that
+  never landed.
+- Open issue **#136** "ralph-loop requires manual permission approval
+  despite allowed-tools definition" — identifies that the quoted path
+  in the command template doesn't match the unquoted `allowed-tools`
+  pattern.
+- Open issue **#845** (best root-cause analysis we found): confirms
+  that `` ```! `` triggers a **shell-operator validator** that is
+  separate from the `allowed-tools` matcher. The validator inspects
+  the *fully expanded command including `$ARGUMENTS`* and rejects
+  anything with characters that resemble shell operators (`.`, `(`,
+  `)`, `,`, etc.). Long natural-language prompts will nearly always
+  contain these. `allowed-tools` cannot suppress this validator.
+
+This last point supersedes our earlier hypothesis from the
+`claude-code-guide` agent that the matcher was literally matching
+against the fenced block. The actual failure chain is: `` ```! ``
+invokes a shell-operator safety check, the check flags the expanded
+`$ARGUMENTS` as containing operator-like characters, and the error
+message *quotes* the markdown block as the source context — which
+reads like the matcher is comparing against the block, but it's
+actually just echoing where the rejected command came from.
+
+Both framings lead to the same remediation: replace the ` ```! `
+block with LLM-driven `Bash` tool invocation, bypassing the shell-
+operator validator entirely.
+
 ## Conclusion
 
-**Answer:** Yes — this is a Claude Code harness bug (or pair of
-bugs), not a plugin bug that settings-level workarounds can solve:
+**Answer:** Yes — this is a known, unfixed Claude Code bug in the
+` ```! ` / `$ARGUMENTS` / allowed-tools interaction, with multiple
+duplicate reports and at least 5 proposed community PRs (#72, #98,
+#117, #151, #1314) that never merged. Adding allow-entries to
+`settings.json` cannot fix it because the failure happens in a
+shell-operator validator that runs *before* the `allowed-tools`
+matcher.
 
-1. The permission matcher evaluates raw `` ```!... ``` `` code-block
-   content as the "command pattern." Any `allowed-tools` or
-   `permissions.allow` entry written as a bare command (which is all
-   the documentation describes) cannot match a fenced block.
-2. `${CLAUDE_PLUGIN_ROOT}` in `allowed-tools` is never expanded, so
-   plugin-declared patterns that use it are dead.
+Precise failure chain (from upstream issue #845):
 
-The plugin's own configuration is consistent with what the
-documentation suggests should work. The permission-check behavior is
-inconsistent with it.
+1. User types `/ralph-loop:ralph-loop "<long prompt...>"`.
+2. Command markdown contains a ` ```! ` block calling the setup
+   script with `$ARGUMENTS`.
+3. Claude Code expands `$ARGUMENTS` into the block's text.
+4. A shell-operator safety validator scans the expanded text, sees
+   operator-like characters in the natural-language prompt (`.`,
+   `(`, `)`, `,`), and rejects the command with "requires approval."
+5. The error message shows the source markdown block as context —
+   which *looks* like the permission matcher is comparing against the
+   raw fenced block, but that interpretation is secondary.
 
-A fork can work around the bug without waiting on an upstream fix by
-eliminating both triggers: stop using `` ```! `` auto-execute in the
-command body, and stop relying on `${CLAUDE_PLUGIN_ROOT}` in
-`allowed-tools`.
+The plugin is current with all Anthropic-merged fixes; upgrading or
+downgrading the plugin does not help. Claude Code itself would need
+to change how ` ```! ` blocks interact with the operator validator.
+
+A fork can route around this without waiting on upstream by not
+using ` ```! ` at all — issue #845's own recommended fix — and
+letting the LLM invoke the setup script through the regular `Bash`
+tool, which goes through the normal allowed-tools matcher path that
+works.
 
 ## Recommendation
 
@@ -308,29 +385,74 @@ marketplace config.
 
 ### Other actions
 
-- **File an upstream issue** against
-  `claude-plugins-official/ralph-loop` describing Observations 1–7
-  and linking this doc. The plugin's `allowed-tools` pattern is dead
-  as written and the ` ```! ` body will fail on any user who has not
-  already approved it.
-- **File an upstream issue (or docs PR) against Claude Code** to
-  clarify that `${CLAUDE_PLUGIN_ROOT}` is not expanded in
-  `allowed-tools`, and that ` ```! ` blocks are matched in a
-  different codepath than the `Bash` tool. Pick one behavior and
-  document it.
-- **Do not attempt** any more allow-list workarounds in
-  `.claude/settings.json` — they cannot match the fenced block.
+- **Do not file a new upstream issue.** Upstream already has at
+  least three open reports of this exact behavior (#1315, #136, #845)
+  and five community PRs (#72, #98, #117, #151, #1314) that propose
+  fixes and have never merged. Adding to the pile adds noise, not
+  signal. Instead, upvote or comment on **#1315** (exact error match)
+  and **#845** (clearest root cause) if you want upstream progress.
+- **Do not attempt** further allow-list workarounds in
+  `.claude/settings.json` — the failure is in a shell-operator
+  validator that runs before the permission matcher; no allow entry
+  can suppress it.
+- **Do remove the explicit allow entry** we added earlier in this
+  repo once the fork is in place — it did not help, and it pins a
+  version-specific path that will rot.
 
 ## References
 
-- Official plugin (broken):
-  `https://github.com/anthropics/claude-plugins/tree/main/ralph-loop`
-  (or equivalent — see `~/.claude/plugins/marketplaces/`).
+### Upstream repositories
+
+- **`anthropics/claude-plugins-official/plugins/ralph-loop`** — the
+  marketplace version the user installed. Contains the bug.
+- **`anthropics/claude-code/plugins/ralph-wiggum`** — the monorepo
+  version (older name); has the earlier `:*` and multi-line fixes
+  but shares the underlying ` ```! ` validator bug.
+
+### Open upstream issues (duplicate reports of our bug)
+
+- `anthropics/claude-plugins-official#1315` — exact error match.
+- `anthropics/claude-plugins-official#845` — best root-cause
+  analysis; identifies the shell-operator validator as the failing
+  component and proposes the same fix we're using in the fork.
+- `anthropics/claude-plugins-official#136` — allowed-tools pattern
+  vs quoted command path mismatch.
+- `anthropics/claude-plugins-official#50`, `#67`, `#69`, `#91` —
+  prior duplicate reports cited in #1315.
+
+### Proposed-but-unmerged upstream PRs
+
+- `anthropics/claude-plugins-official#72`, `#98`, `#117`, `#151`,
+  `#1314` — all proposed fixes to this issue; none merged as of
+  2026-04-20.
+
+### Merged fixes that did NOT solve the core problem
+
+- `anthropics/claude-code#16320` — moved multi-line bash out of
+  ` ```! ` blocks (fixed a related but distinct newline-guard bug).
+- `anthropics/claude-code#16522` — added `:*` suffix to
+  `allowed-tools`.
+- `anthropics/claude-plugins-official#142` — rename `ralph-wiggum` →
+  `ralph-loop` per legal guidance.
+- `anthropics/claude-plugins-official` commit `986deab` — wrap hook
+  `.sh` invocations in `bash "..."`.
+
+### Claude Code documentation
+
+- Plugin authoring reference: `plugins-reference.md`.
+- Permissions reference: `permissions.md`.
+
+### Relevant Claude Code changelog entries
+
+- v2.1.113 — Bash permission matching hardening (not a fix for this
+  bug).
+- v2.1.90 — `disableSkillShellExecution` setting.
+- v2.1.85 — conditional hook `if` field improvements.
+
+### Local context
+
 - User's personal plugins repo (target for the fork):
   `donaldgifford-claude-skills` marketplace.
-- Claude Code plugin authoring reference: `plugins-reference.md`.
-- Claude Code permissions reference: `permissions.md`.
-- Changelog entries referenced above: v2.1.113, v2.1.90, v2.1.85.
 - Session transcript in which this was diagnosed (2026-04-20).
 - INV-0001 — claudelint format conversion investigation (unrelated
   but same doc type).
