@@ -6,6 +6,9 @@ import (
 	"os"
 
 	"github.com/donaldgifford/claudelint/internal/cli"
+	// Blank-import every rule subpackage so each rule's init()
+	// registers exactly once at binary startup.
+	_ "github.com/donaldgifford/claudelint/internal/rules/all"
 )
 
 // version is injected via -ldflags at build time.

@@ -303,52 +303,59 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
 
 #### Tasks
 
-- [ ] `internal/rules/schema/parse.go` — pseudo-rule: registered for
+- [x] `internal/rules/schema/parse.go` — pseudo-rule: registered for
       `claudelint rules` discoverability and suppression matching.
       `Check` is never called (parse errors mean no artifact exists);
       the engine synthesizes the diagnostic directly from the
       `ParseError` in Phase 1.4, using the rule's registered metadata
       for ID, default severity, and category.
-- [ ] `internal/rules/schema/frontmatterrequired.go` — `name` and
+- [x] `internal/rules/schema/frontmatterrequired.go` — `name` and
       `description` present on skill, command, agent.
-- [ ] `internal/rules/skills/bodysize.go` — body word count ≤
+- [x] `internal/rules/skills/bodysize.go` — body word count ≤
       configurable max.
-- [ ] `internal/rules/skills/triggerclarity.go` — `description`
+- [x] `internal/rules/skills/triggerclarity.go` — `description`
       contains an imperative trigger phrase.
-- [ ] `internal/rules/commands/allowedtoolsknown.go` — every tool in
+- [x] `internal/rules/commands/allowedtoolsknown.go` — every tool in
       `allowed-tools` is on the known-tool list.
-- [ ] `internal/rules/hooks/eventnameknown.go` — `event` is on the
+- [x] `internal/rules/hooks/eventnameknown.go` — `event` is on the
       known-event list.
-- [ ] `internal/rules/hooks/nounsafeshell.go` — command does not pipe
+- [x] `internal/rules/hooks/nounsafeshell.go` — command does not pipe
       `curl ... | sh` (and similar patterns).
-- [ ] `internal/rules/hooks/timeoutpresent.go` — long-running hook
+- [x] `internal/rules/hooks/timeoutpresent.go` — long-running hook
       declares a `timeout`.
-- [ ] `internal/rules/claudemd/size.go` — file ≤ configurable line
+- [x] `internal/rules/claudemd/size.go` — file ≤ configurable line
       count.
-- [ ] `internal/rules/claudemd/duplicatedirectives.go` — no two
-      directives contradict.
-- [ ] `internal/rules/plugin/manifestfields.go` — required manifest
+- [x] `internal/rules/claudemd/duplicatedirectives.go` — no two
+      directives contradict. *(v1 ships the "identical duplicate"
+      detector; semantic-contradiction detection stays out of scope.)*
+- [x] `internal/rules/plugin/manifestfields.go` — required manifest
       fields present and well-typed.
-- [ ] `internal/rules/plugin/semver.go` — `version` is valid semver.
-- [ ] `internal/rules/style/noemoji.go` — off by default.
-- [ ] `internal/rules/security/secrets.go` — high-entropy token
+- [x] `internal/rules/plugin/semver.go` — `version` is valid semver.
+- [x] `internal/rules/style/noemoji.go` — off by default.
+- [x] `internal/rules/security/secrets.go` — high-entropy token
       detection with an allowlist.
-- [ ] Known-tool and known-event constants live in
+- [x] Known-tool and known-event constants live in
       `internal/artifact/knowndata.go` (single source of truth for the
       rules that need them).
-- [ ] Wire every rule subpackage into the binary via blank imports in
+- [x] Wire every rule subpackage into the binary via blank imports in
       `internal/rules/all/all.go`; `cmd/claudelint/main.go` blank-imports
       `_ "claudelint/internal/rules/all"`.
 - [ ] Per-rule table-driven test with `testdata/ok/` and `testdata/bad/`
       and a golden-JSON diagnostic file. Use `update-golden` flag for
       regeneration.
-- [ ] Set `RulesetVersion` to `"v1.0.0"` in `internal/rules`; commit
+      *(Per-rule inline tests ship with phase 1.5; the `testdata/` and
+      golden-JSON shape lands with phase 1.7's JSON formatter work,
+      where golden-file harness infrastructure naturally belongs.)*
+- [x] Set `RulesetVersion` to `"v1.0.0"` in `internal/rules`; commit
       `internal/rules/expected_fingerprint.txt` containing the hash of
       the full MVP ruleset.
-- [ ] Add a test `TestRulesetFingerprint` that recomputes the
+- [x] Add a test `TestRulesetFingerprint` that recomputes the
       fingerprint at test time and fails if it does not match
       `expected_fingerprint.txt`, with the failure message telling the
       developer to bump `RulesetVersion` and update the expected file.
+      *(Lives in `internal/rules/all/fingerprint_test.go` so its test
+      binary sees the fully-registered ruleset uncontaminated by
+      registry-resetting unit tests in `internal/rules/`.)*
 
 #### Success Criteria
 

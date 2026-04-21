@@ -15,9 +15,9 @@ import (
 // RulesetVersion is the hand-bumped semver of the built-in ruleset,
 // independent of the binary version. It must be updated whenever a
 // rule is added, removed, or changes its default severity or default
-// options. The CI guardrail test added in phase 1.5 fails loudly if
-// the ruleset content drifts without a corresponding bump.
-const RulesetVersion = "v0.0.0"
+// options. The CI guardrail test TestRulesetFingerprint fails loudly
+// if the ruleset content drifts without a corresponding bump.
+const RulesetVersion = "v1.0.0"
 
 // RulesetFingerprint returns a short hex hash of the registered rules'
 // content. The hash covers:

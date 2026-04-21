@@ -40,9 +40,9 @@ func TestVersionCmdOutput(t *testing.T) {
 	}
 
 	got := stdout.String()
-	// Fingerprint is derived from the empty registry (phase 1.4
-	// behaviour before any rules register). Match prefix and shape.
-	if !strings.HasPrefix(got, "claudelint v1.2.3 (abc1234)\nruleset    v0.0.0 (") {
+	// RulesetVersion and fingerprint change over time; assert the
+	// shape but not the exact values.
+	if !strings.HasPrefix(got, "claudelint v1.2.3 (abc1234)\nruleset    v") {
 		t.Errorf("version output = %q, want prefix claudelint v1.2.3 ...", got)
 	}
 	if !strings.HasSuffix(got, ")\n") {
