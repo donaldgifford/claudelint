@@ -5,19 +5,31 @@ builds:
   - id: claudelint
     binary: claudelint
     main: ./cmd/claudelint
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
+    ignore:
+      # windows/arm64 rarely worth the extra matrix time for a CLI linter.
+      - goos: windows
+        goarch: arm64
     env:
       - CGO_ENABLED=0
 
 archives:
   - id: default
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    format: "tar.gz"
+    formats: ["tar.gz"]
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
     files:
       - none*
 

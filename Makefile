@@ -39,7 +39,8 @@ COVERAGE_OUT := coverage.out
 .PHONY: build
 .PHONY: test test-all test-coverage
 .PHONY: lint lint-fix fmt clean
-.PHONY: run run-local test-api ci check
+.PHONY: run run-local test-api ci check self-check
+.PHONY: bench profile
 .PHONY: release-check release-local
 
 ## Build Targets
@@ -72,6 +73,23 @@ test-report: ## Run tests with coverage report then open
 test-coverage: ## Run tests with coverage report
 	@ $(MAKE) --no-print-directory log-$@
 	@go test -v -race -coverprofile=$(COVERAGE_OUT) ./...
+
+COVERAGE_MIN ?= 55
+
+coverage-gate: ## Fail if any internal/ package covers less than $(COVERAGE_MIN)% (target: 80)
+	@ $(MAKE) --no-print-directory log-$@
+	@go test -cover ./internal/... 2>&1 | awk -v min=$(COVERAGE_MIN) '\
+		/coverage:/ { \
+			if ($$0 ~ /no statements/) next; \
+			pct = $$0; \
+			sub(/.*coverage: /, "", pct); \
+			sub(/% of statements.*/, "", pct); \
+			if (pct + 0 < min + 0) { \
+				printf "FAIL: %s at %s%% (min %s%%)\n", $$2, pct, min; \
+				bad = 1; \
+			} \
+		} \
+		END { exit bad }'
 
 
 ## Code Quality
@@ -126,6 +144,21 @@ ci: lint test build license-check ## Run CI pipeline (lint + test + build + lice
 check: lint test ## Quick pre-commit check (lint + test)
 	@ $(MAKE) --no-print-directory log-$@
 	@echo "✓ Pre-commit checks passed"
+
+self-check: build ## Run claudelint against its own repository (dogfood gate)
+	@ $(MAKE) --no-print-directory log-$@
+	@$(BIN_DIR)/$(PROJECT_NAME) run .
+
+bench: ## Run engine benchmarks
+	@ $(MAKE) --no-print-directory log-$@
+	@go test -run='^$$' -bench=. -benchmem ./internal/engine/...
+
+profile: build ## Capture pprof profiles for a claudelint run (outputs to ./build/profile)
+	@ $(MAKE) --no-print-directory log-$@
+	@mkdir -p $(BUILD_DIR)/profile
+	@$(BIN_DIR)/$(PROJECT_NAME) run --profile=$(BUILD_DIR)/profile . || true
+	@echo "✓ Profiles written to $(BUILD_DIR)/profile/"
+	@echo "  Inspect with: go tool pprof $(BUILD_DIR)/profile/cpu.pprof"
 
 # =============================================================================
 # Release Targets

@@ -1,0 +1,8 @@
+{
+  "name": "example",
+  "version": "1.2.3",
+  "description": "example plugin",
+  "commands": ["review", "summarize"],
+  "skills": ["writer"],
+  "agents": ["scribe"]
+}

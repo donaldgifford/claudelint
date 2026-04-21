@@ -11,5 +11,33 @@
     "skill-creator@donaldgifford-claude-skills": true,
     "todo-comments@donaldgifford-claude-skills": true,
     "docz@donaldgifford-claude-skills": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(docz show *)",
+      "Bash(docz *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git checkout *)",
+      "Bash(git commit *)",
+      "Bash(make help *)",
+      "Bash(make *)",
+      "Bash(python3 -m json.tool)",
+      "Bash(go version *)",
+      "Bash(go mod *)",
+      "Bash(go build *)",
+      "Bash(go vet *)",
+      "Bash(docker buildx *)",
+      "Bash(go get *)",
+      "Bash(go doc *)",
+      "Bash(go test *)",
+      "Bash(git reset *)",
+      "Bash(go tool *)",
+      "Bash(govulncheck ./...)",
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(gh run *)"
+    ]
   }
 }
