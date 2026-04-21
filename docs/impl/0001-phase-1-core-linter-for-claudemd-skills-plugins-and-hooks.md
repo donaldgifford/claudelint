@@ -175,7 +175,7 @@ positions.
 - [ ] `Skill` parser indexes companion files: `references/**`,
       `scripts/**`, `templates/**`. Indexed entries record their
       relative path and kind.
-- [ ] Define a `ParseError` type carrying path + `Range` so the engine
+- [x] Define a `ParseError` type carrying path + `Range` so the engine
       can synthesize a `schema/parse` diagnostic without the rule ever
       needing to inspect raw bytes.
 - [ ] Table-driven parser tests per kind with `testdata/ok/` and
