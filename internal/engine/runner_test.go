@@ -38,14 +38,17 @@ func (s *stubRule) Check(ctx rules.Context, a artifact.Artifact) []diag.Diagnost
 }
 
 // fakeArtifact implements artifact.Artifact without requiring a parse.
+// source is optional; leave nil when the suppressor doesn't need to
+// scan file contents.
 type fakeArtifact struct {
-	path string
-	kind artifact.ArtifactKind
+	path   string
+	kind   artifact.ArtifactKind
+	source []byte
 }
 
 func (f *fakeArtifact) Kind() artifact.ArtifactKind { return f.kind }
 func (f *fakeArtifact) Path() string                { return f.path }
-func (*fakeArtifact) Source() []byte                { return nil }
+func (f *fakeArtifact) Source() []byte              { return f.source }
 
 func TestRunNoRulesNoArtifacts(t *testing.T) {
 	rules.Reset()

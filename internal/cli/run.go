@@ -54,7 +54,7 @@ func runLint(cmd *cobra.Command, opts runOptions, args []string) error {
 	}
 	var rc *config.ResolvedConfig
 	if loadRes != nil {
-		rc = config.Resolve(loadRes.File)
+		rc = config.Resolve(loadRes.File).WithPath(loadRes.Path)
 	} else {
 		rc = config.Resolve(nil)
 	}

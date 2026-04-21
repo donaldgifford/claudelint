@@ -375,20 +375,20 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
 
 #### Tasks
 
-- [ ] In-source suppression parser for Markdown artifacts, recognized
+- [x] In-source suppression parser for Markdown artifacts, recognized
       inside HTML comments: `<!-- claudelint:ignore=<id>[,<id>...] -->`
       and `<!-- claudelint:ignore-file=<id> -->`. Applied to the same
       line or the next non-blank line.
-- [ ] Config-level `rule "<id>" { enabled = false }` honored end-to-end.
-- [ ] Config-level `rule "<id>" { severity = "..." }` honored.
-- [ ] Config-level `rule "<id>" { paths = ["glob", ...] }` suppression
+- [x] Config-level `rule "<id>" { enabled = false }` honored end-to-end.
+- [x] Config-level `rule "<id>" { severity = "..." }` honored.
+- [x] Config-level `rule "<id>" { paths = ["glob", ...] }` suppression
       by path glob.
-- [ ] `meta/unknown-rule` warning emitted when a suppression or config
+- [x] `meta/unknown-rule` warning emitted when a suppression or config
       block names an ID that is not in the registry.
-- [ ] Hook and plugin JSON artifacts use config-level suppressions
+- [x] Hook and plugin JSON artifacts use config-level suppressions
       only (JSON has no standard comment syntax). Document this in the
       README with an example of config-level `paths` suppression.
-- [ ] Suppression tests: one per mechanism plus a matrix test that a
+- [x] Suppression tests: one per mechanism plus a matrix test that a
       single rule can be disabled via any mechanism independently.
 
 #### Success Criteria

@@ -79,6 +79,7 @@ func New(cfg *config.ResolvedConfig, opts ...Option) *Runner {
 // diagnostics without any rule.Check being called.
 func (r *Runner) Run(arts []artifact.Artifact, parseErrs []*artifact.ParseError) *Result {
 	diags := make([]diag.Diagnostic, 0, 2*len(arts))
+	diags = append(diags, r.unknownRuleDiagnostics()...)
 	for _, pe := range parseErrs {
 		diags = append(diags, r.synthesizeParseDiagnostic(pe))
 	}
@@ -89,6 +90,36 @@ func (r *Runner) Run(arts []artifact.Artifact, parseErrs []*artifact.ParseError)
 
 	sortAndDedupe(&diags)
 	return &Result{Diagnostics: diags, Files: len(arts) + len(parseErrs)}
+}
+
+// MetaUnknownRuleID is emitted when user configuration references a
+// rule ID that is not in the registry. A warning-severity signal is
+// enough — typos in config should not silently disable rules, but
+// they also should not hard-fail a run.
+const MetaUnknownRuleID = "meta/unknown-rule"
+
+// unknownRuleDiagnostics emits one warning per unknown rule ID the
+// user mentioned in config. Without this the typo would produce the
+// silent worst-case outcome: the intended rule keeps running and the
+// misspelled override is discarded.
+func (r *Runner) unknownRuleDiagnostics() []diag.Diagnostic {
+	names := r.cfg.ConfiguredRuleIDs()
+	if len(names) == 0 {
+		return nil
+	}
+	var out []diag.Diagnostic
+	for _, id := range names {
+		if rules.Get(id) != nil {
+			continue
+		}
+		out = append(out, diag.Diagnostic{
+			RuleID:   MetaUnknownRuleID,
+			Severity: diag.SeverityWarning,
+			Path:     r.cfg.Path(),
+			Message:  "configuration references unknown rule " + `"` + id + `"`,
+		})
+	}
+	return out
 }
 
 // runRules dispatches rule.Check across arts with a bounded
@@ -139,6 +170,7 @@ func (r *Runner) runRules(arts []artifact.Artifact) []diag.Diagnostic {
 // applicable is already filtered to rules whose AppliesTo includes
 // a.Kind() and whose ID is enabled in config.
 func (r *Runner) runOne(a artifact.Artifact, applicable []rules.Rule) []diag.Diagnostic {
+	sup := newSuppressor(a)
 	var out []diag.Diagnostic
 	for _, rule := range applicable {
 		if !ruleAppliesToKind(rule, a.Kind()) {
@@ -153,7 +185,12 @@ func (r *Runner) runOne(a artifact.Artifact, applicable []rules.Rule) []diag.Dia
 		for i := range diags {
 			r.finalizeDiagnostic(&diags[i], rule, a.Kind())
 		}
-		out = append(out, diags...)
+		for i := range diags {
+			if sup.suppressed(&diags[i]) {
+				continue
+			}
+			out = append(out, diags[i])
+		}
 	}
 	return out
 }

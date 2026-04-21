@@ -2,6 +2,7 @@ package config
 
 import (
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/donaldgifford/claudelint/internal/diag"
@@ -17,14 +18,16 @@ import (
 // is enabled at its default severity, no paths are ignored, and
 // options come from Rule.DefaultOptions().
 type ResolvedConfig struct {
-	output       string
-	ignorePaths  []string
-	ruleEnabled  map[string]bool
-	ruleSeverity map[string]diag.Severity
-	ruleOptions  map[string]map[string]any
-	rulePaths    map[string][]string // per-rule path-suppression globs
-	kindSeverity map[string]diag.Severity
-	kindOptions  map[string]map[string]any
+	path              string
+	output            string
+	ignorePaths       []string
+	ruleEnabled       map[string]bool
+	ruleSeverity      map[string]diag.Severity
+	ruleOptions       map[string]map[string]any
+	rulePaths         map[string][]string // per-rule path-suppression globs
+	kindSeverity      map[string]diag.Severity
+	kindOptions       map[string]map[string]any
+	configuredRuleIDs []string // sorted, deduped IDs that appear in rule "<id>" blocks
 }
 
 // Resolve builds a ResolvedConfig from a *File. It is safe to pass a
@@ -58,7 +61,12 @@ func Resolve(f *File) *ResolvedConfig {
 			rc.kindOptions[rk.Kind] = ctyValueToMap(rk.Options)
 		}
 	}
+	seen := make(map[string]struct{}, len(f.Rules))
 	for _, r := range f.Rules {
+		if _, ok := seen[r.ID]; !ok {
+			seen[r.ID] = struct{}{}
+			rc.configuredRuleIDs = append(rc.configuredRuleIDs, r.ID)
+		}
 		if r.Enabled != nil {
 			rc.ruleEnabled[r.ID] = *r.Enabled
 		}
@@ -72,7 +80,31 @@ func Resolve(f *File) *ResolvedConfig {
 			rc.rulePaths[r.ID] = append(rc.rulePaths[r.ID], r.Paths...)
 		}
 	}
+	sort.Strings(rc.configuredRuleIDs)
 	return rc
+}
+
+// WithPath records the absolute path of the .claudelint.hcl that
+// produced this ResolvedConfig. Returns the receiver so the CLI can
+// chain `config.Resolve(lr.File).WithPath(lr.Path)`. When no config
+// was loaded, callers should leave the path empty.
+func (rc *ResolvedConfig) WithPath(p string) *ResolvedConfig {
+	rc.path = p
+	return rc
+}
+
+// Path returns the absolute path of the config file that produced this
+// ResolvedConfig, or "" when no config file was loaded. The engine uses
+// it as the Path field on meta/unknown-rule diagnostics so users can
+// jump straight to the misspelled ID.
+func (rc *ResolvedConfig) Path() string { return rc.path }
+
+// ConfiguredRuleIDs returns every rule ID that appears in a `rule "<id>"`
+// block in the loaded config, sorted and deduplicated. The engine
+// cross-checks these against the registry to emit meta/unknown-rule
+// warnings for typos.
+func (rc *ResolvedConfig) ConfiguredRuleIDs() []string {
+	return rc.configuredRuleIDs
 }
 
 // RuleEnabled reports whether the rule identified by id is enabled.
