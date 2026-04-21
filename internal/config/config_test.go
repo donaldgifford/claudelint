@@ -295,3 +295,32 @@ func TestPathIgnoredSimpleGlob(t *testing.T) {
 		t.Errorf("simple glob should not match unrelated path")
 	}
 }
+
+func TestPathIgnoredDoubleStar(t *testing.T) {
+	cases := []struct {
+		glob string
+		path string
+		want bool
+	}{
+		{"testdata/**", "testdata/x.md", true},
+		{"testdata/**", "testdata/a/b/c.md", true},
+		{"testdata/**", "src/x.md", false},
+		{"**/testdata/**", "testdata/x.md", true},
+		{"**/testdata/**", "cmd/foo/testdata/x.md", true},
+		{"**/testdata/**", "src/x.md", false},
+		{"vendor/**", "vendor/a/b", true},
+		{"vendor/**", "src/vendor", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.glob+"/"+tc.path, func(t *testing.T) {
+			rc := Resolve(&File{
+				Claudelint: &Claudelint{Version: "1"},
+				Ignore:     &IgnoreBlock{Paths: []string{tc.glob}},
+			})
+			if got := rc.PathIgnored(tc.path); got != tc.want {
+				t.Errorf("PathIgnored(%q) with glob %q = %v, want %v",
+					tc.path, tc.glob, got, tc.want)
+			}
+		})
+	}
+}

@@ -24,14 +24,17 @@ claudelint {
 #   }
 # }
 
-# Global path-glob exclusions (applied to every rule).
-#
-# ignore {
-#   paths = [
-#     "vendor/**",
-#     "node_modules/**",
-#   ]
-# }
+# Global path-glob exclusions (applied to every rule). Test fixtures
+# intentionally contain broken artifacts (missing name, etc.) — exclude
+# them so `make self-check` exits clean.
+ignore {
+  paths = [
+    "testdata/**",
+    "**/testdata/**",
+    "vendor/**",
+    "node_modules/**",
+  ]
+}
 
 # Output format: "text" (default), "json", or "github".
 #

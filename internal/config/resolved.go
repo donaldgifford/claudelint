@@ -168,9 +168,9 @@ func (rc *ResolvedConfig) PathIgnoredForRule(id, p string) bool {
 func (rc *ResolvedConfig) Output() string { return rc.output }
 
 // matchAny reports whether any glob in globs matches path p using
-// filepath.Match after normalizing p to slashes. `**` is not expanded
-// here; if users need recursive matches they can use path/** (phase
-// 1.6 upgrades this to gitignore-style globs).
+// filepath.Match after normalizing p to slashes. `**` is expanded
+// below to support the common prefix/**, **/suffix, and **/mid/**
+// patterns gitignore-style tooling exposes.
 func matchAny(globs []string, p string) bool {
 	if len(globs) == 0 {
 		return false
@@ -178,7 +178,7 @@ func matchAny(globs []string, p string) bool {
 	p = filepath.ToSlash(p)
 	for _, g := range globs {
 		if strings.Contains(g, "**") {
-			if simpleDoubleStarMatch(g, p) {
+			if doubleStarMatch(g, p) {
 				return true
 			}
 			continue
@@ -202,14 +202,44 @@ func mustSeverity(s string) diag.Severity {
 	return sev
 }
 
-// simpleDoubleStarMatch supports the common `prefix/**`, `**/suffix`,
-// and `**` cases by splitting on the first `**` and comparing
-// prefix/suffix with strings.HasPrefix / strings.HasSuffix. Phase 1.6
-// replaces this with a gitignore-aware matcher.
-func simpleDoubleStarMatch(glob, p string) bool {
-	parts := strings.SplitN(glob, "**", 2)
-	if len(parts) != 2 {
-		return false
+// doubleStarMatch is a minimal gitignore-style `**` matcher. It
+// splits the glob on every `**` and requires each segment to appear,
+// in order, in the path. The leading segment must start at position
+// zero; the trailing segment must reach the end. Middle segments only
+// need to exist somewhere. Leading/trailing slashes on segments are
+// stripped so `**/testdata/**` matches both `testdata/x` and
+// `a/b/testdata/x`.
+func doubleStarMatch(glob, p string) bool {
+	parts := strings.Split(glob, "**")
+	// `a**b` → ["a", "b"]; `**/x/**` → ["", "/x/", ""].
+	remaining := p
+	for i, part := range parts {
+		trimmed := strings.Trim(part, "/")
+		switch {
+		case i == 0:
+			// Leading anchor — must prefix the path.
+			if trimmed == "" {
+				continue
+			}
+			if !strings.HasPrefix(remaining, trimmed) {
+				return false
+			}
+			remaining = remaining[len(trimmed):]
+			remaining = strings.TrimPrefix(remaining, "/")
+		case i == len(parts)-1:
+			// Trailing anchor — must suffix what's left.
+			if trimmed == "" {
+				return true
+			}
+			return strings.HasSuffix(remaining, trimmed)
+		default:
+			idx := strings.Index(remaining, trimmed)
+			if idx < 0 {
+				return false
+			}
+			remaining = remaining[idx+len(trimmed):]
+			remaining = strings.TrimPrefix(remaining, "/")
+		}
 	}
-	return strings.HasPrefix(p, parts[0]) && strings.HasSuffix(p, parts[1])
+	return true
 }

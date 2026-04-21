@@ -49,7 +49,8 @@ type runOptions struct {
 	noColor     bool
 	quiet       bool
 	verbose     bool
-	maxWarnings int // -1 means "unlimited" (the default)
+	maxWarnings int    // -1 means "unlimited" (the default)
+	profileDir  string // empty disables profiling
 }
 
 // newRunCmd returns the `run` subcommand. It walks every target path,
@@ -71,6 +72,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.quiet, "quiet", false, "print only error-severity diagnostics and the trailing summary")
 	cmd.Flags().BoolVar(&opts.verbose, "verbose", false, "print the loaded config path and every in-source-suppressed diagnostic")
 	cmd.Flags().IntVar(&opts.maxWarnings, "max-warnings", -1, "fail the run if warnings exceed N (default: unlimited)")
+	cmd.Flags().StringVar(&opts.profileDir, "profile", "", "write cpu.pprof, heap.pprof, block.pprof, mutex.pprof to this directory")
 	return cmd
 }
 
@@ -78,6 +80,19 @@ func runLint(cmd *cobra.Command, opts runOptions, args []string) error {
 	if err := validateFormat(opts.format); err != nil {
 		return err
 	}
+	if opts.profileDir != "" {
+		session, err := startProfileSession(opts.profileDir)
+		if err != nil {
+			return fmt.Errorf("start profiling: %w", err)
+		}
+		defer closeProfileSession(cmd.ErrOrStderr(), session)
+	}
+	return runLintCore(cmd, opts, args)
+}
+
+// runLintCore is the profile-free happy path, split out so runLint's
+// cyclomatic complexity stays under the project limit.
+func runLintCore(cmd *cobra.Command, opts runOptions, args []string) error {
 	targets := args
 	if len(targets) == 0 {
 		targets = []string{"."}
@@ -103,6 +118,7 @@ func runLint(cmd *cobra.Command, opts runOptions, args []string) error {
 	if err != nil {
 		return err
 	}
+	cands = filterIgnoredPaths(cands, rc)
 
 	arts, parseErrs := parseAll(cands)
 	res := engine.New(rc).Run(arts, parseErrs)
@@ -125,6 +141,15 @@ func runLint(cmd *cobra.Command, opts runOptions, args []string) error {
 	return nil
 }
 
+// closeProfileSession flushes the pprof files and reports any failure
+// to stderr. Called from defer — we can't return the error, and a
+// failed stderr write is terminal anyway, so best-effort is fine.
+func closeProfileSession(w io.Writer, s *profileSession) {
+	if err := s.Close(); err != nil {
+		_, _ = fmt.Fprintf(w, "claudelint: profiling close: %v\n", err) //nolint:errcheck // best-effort defer write
+	}
+}
+
 // validateFormat keeps the --format flag strict: an unknown value is
 // a usage error, not a silent fallback to text.
 func validateFormat(f string) error {
@@ -143,6 +168,20 @@ func resolveConfig(lr *config.LoadResult) *config.ResolvedConfig {
 		return config.Resolve(nil)
 	}
 	return config.Resolve(lr.File).WithPath(lr.Path)
+}
+
+// filterIgnoredPaths drops candidates that match any top-level
+// `ignore.paths` glob in config. Discovery already honors .gitignore;
+// this is the config-level counterpart.
+func filterIgnoredPaths(cands []discovery.Candidate, rc *config.ResolvedConfig) []discovery.Candidate {
+	out := cands[:0]
+	for i := range cands {
+		if rc.PathIgnored(cands[i].Path) {
+			continue
+		}
+		out = append(out, cands[i])
+	}
+	return out
 }
 
 // discoverAll expands every user-supplied target into Candidates.
