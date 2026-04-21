@@ -114,7 +114,7 @@ that walks the repo and prints file counts — no rules wired yet.
 - [x] Create `cmd/claudelint/main.go` with cobra root; wire `run`,
       `rules`, `init`, `version` subcommand stubs. Bare `claudelint`
       aliases to `run`.
-- [ ] Create `internal/diag/` exporting `Diagnostic`, `Severity`
+- [x] Create `internal/diag/` exporting `Diagnostic`, `Severity`
       (`error`/`warning`/`info`), `Range`, `Position`, `Fix`. `Fix` is
       defined but always nil in v1; JSON tag is `omitempty` so it does
       not appear in v1 output.
