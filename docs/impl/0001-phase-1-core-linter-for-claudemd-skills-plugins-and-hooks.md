@@ -181,9 +181,13 @@ positions.
       lookups with byte offsets. `Hook.Entries` flattens settings
       files into (event, matcher, command, timeout) tuples; dedicated
       `.claude/hooks/*.json` files produce a one-entry list.)*
-- [ ] `Skill` parser indexes companion files: `references/**`,
+- [x] `Skill` parser indexes companion files: `references/**`,
       `scripts/**`, `templates/**`. Indexed entries record their
       relative path and kind.
+      *(Indexing lives in `IndexSkillCompanions`, called by discovery/
+      engine wiring after a successful `ParseSkill`; indexing is
+      separated so in-memory tests of `ParseSkill` do not need a
+      filesystem fixture.)*
 - [x] Define a `ParseError` type carrying path + `Range` so the engine
       can synthesize a `schema/parse` diagnostic without the rule ever
       needing to inspect raw bytes.
