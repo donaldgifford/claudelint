@@ -453,8 +453,9 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
       in the Makefile target comment.
 - [x] `make ci` passes with zero warnings from `golangci-lint`.
 - [x] `make self-check` runs `claudelint run .` and fails on any error.
-- [x] Updated `README.md` with install, quickstart, rule index, exit
-      codes, suppression docs, profile docs, and a link to the RFC.
+- [x] Updated `README.md` with install, quickstart, rule index with
+      per-rule examples and fixes, exit codes, suppression docs,
+      profile docs, and a link to the RFC.
 - [ ] Dogfood on at least two external Claude plugin repos; open GitHub
       issues for the findings. (Deferred: manual, out-of-session step.)
 - [x] `.goreleaser.yml` publishes darwin/{amd64,arm64},

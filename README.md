@@ -127,28 +127,157 @@ Every rule is built into the binary. The fingerprint under
 have their ID / category / severity / options changed — a CI guardrail
 fails if the drift is not acknowledged.
 
-| ID                              | Category | Default  | Applies to                  | What it checks |
-|---------------------------------|----------|----------|-----------------------------|----------------|
-| `schema/parse`                  | schema   | error    | every kind                  | Synthetic: emitted by the engine when a file cannot be parsed (bad YAML frontmatter, invalid JSON). |
-| `schema/frontmatter-required`   | schema   | error    | skill, command, agent       | Required frontmatter keys are present and non-empty. |
-| `skills/trigger-clarity`        | content  | warning  | skill                       | `description:` includes a "Use when …" trigger phrase so Claude can match the skill on intent. |
-| `skills/body-size`              | content  | warning  | skill                       | SKILL.md body is under `max_words` (default 2000). |
-| `claude_md/duplicate-directives`| content  | warning  | `CLAUDE.md`                 | No repeated directive lines. |
-| `claude_md/size`                | content  | warning  | `CLAUDE.md`                 | Length stays within `max_bytes` (default 30 000). |
-| `commands/allowed-tools-known`  | schema   | error    | command                     | `allowed-tools:` entries are valid Claude tool names. |
-| `hooks/event-name-known`        | schema   | error    | hook                        | Event name matches a known Claude hook event. |
-| `hooks/timeout-present`         | content  | warning  | hook                        | Every hook entry has an explicit timeout. |
-| `hooks/no-unsafe-shell`         | security | warning  | hook                        | Flags `eval`, unquoted variables, and other shell smells inside `command:`. |
-| `plugin/manifest-fields`        | schema   | error    | plugin                      | Plugin manifest has `name`, `version`, etc. |
-| `plugin/semver`                 | schema   | warning  | plugin                      | `version:` is a valid semver. |
-| `security/secrets`              | security | error    | every kind                  | Flags long high-entropy tokens and known secret prefixes (AWS, GitHub, Slack, etc.). |
-| `style/no-emoji`                | style    | info     | every kind                  | Reports emoji in source; surfaces where rule authors want plain text. |
+| ID                              | Category | Default  | Applies to                  |
+|---------------------------------|----------|----------|-----------------------------|
+| `schema/parse`                  | schema   | error    | every kind                  |
+| `schema/frontmatter-required`   | schema   | error    | skill, command, agent       |
+| `skills/trigger-clarity`        | content  | warning  | skill                       |
+| `skills/body-size`              | content  | warning  | skill                       |
+| `claude_md/duplicate-directives`| content  | warning  | `CLAUDE.md`                 |
+| `claude_md/size`                | content  | warning  | `CLAUDE.md`                 |
+| `commands/allowed-tools-known`  | schema   | error    | command                     |
+| `hooks/event-name-known`        | schema   | error    | hook                        |
+| `hooks/timeout-present`         | content  | warning  | hook                        |
+| `hooks/no-unsafe-shell`         | security | warning  | hook                        |
+| `plugin/manifest-fields`        | schema   | error    | plugin                      |
+| `plugin/semver`                 | schema   | warning  | plugin                      |
+| `security/secrets`              | security | error    | every kind                  |
+| `style/no-emoji`                | style    | info     | every kind                  |
 
 Inspect any rule's metadata with:
 
 ```bash
 claudelint rules <id>
 ```
+
+### Rule reference
+
+#### `schema/parse`
+
+Synthetic rule — emitted by the engine when an artifact cannot be
+parsed (YAML frontmatter truncated, JSON manifest invalid, etc.). It
+cannot be disabled, only downgraded with `severity`.
+
+**Bad**:
+
+    ---
+    name: my-skill
+    ```                         # frontmatter fence never closes
+
+**Fix**: close the frontmatter fence with `---`.
+
+#### `schema/frontmatter-required`
+
+Each artifact kind declares required frontmatter keys; the rule fires
+when any required key is missing or empty.
+
+**Bad** (skill without `name`):
+
+    ---
+    description: does a thing
+    ---
+
+**Fix**: add `name: my-skill` to the frontmatter.
+
+#### `skills/trigger-clarity`
+
+Skills need a "Use when …" trigger phrase in the description so the
+model can match on intent.
+
+**Bad**: `description: formats code.`
+**Fix**: `description: Use when the user wants Go code formatted.`
+
+#### `skills/body-size`
+
+Guardrail against runaway SKILL.md files. Default limit is 2000 words.
+Override per-rule:
+
+    rule "skills/body-size" { options = { max_words = 3000 } }
+
+#### `claude_md/duplicate-directives`
+
+`CLAUDE.md` files sometimes accumulate duplicate rules as teams merge
+guidance. The rule flags identical lines appearing more than once.
+
+**Fix**: consolidate or delete the duplicate.
+
+#### `claude_md/size`
+
+Default cap is 30 000 bytes; override with:
+
+    rule "claude_md/size" { options = { max_bytes = 50000 } }
+
+#### `commands/allowed-tools-known`
+
+Slash-command manifests declare `allowed-tools`; the rule checks every
+entry is a valid Claude tool name from the shipping set.
+
+**Bad**: `allowed-tools: [WriteFil]` (typo)
+**Fix**: `allowed-tools: [Write]`.
+
+#### `hooks/event-name-known`
+
+Hook config events must match one of the known Claude hook events
+(`PreToolUse`, `PostToolUse`, `Stop`, etc.).
+
+**Bad**: `on: PretoolUse` (wrong case / typo)
+**Fix**: `on: PreToolUse`.
+
+#### `hooks/timeout-present`
+
+Every hook entry should declare a timeout so a runaway hook cannot
+hang the session.
+
+**Bad**:
+
+    hooks:
+      - on: PreToolUse
+        command: lint-check
+
+**Fix**: add `timeout: 5s` to the entry.
+
+#### `hooks/no-unsafe-shell`
+
+Flags `eval`, unquoted `$VAR`, and other shell smells inside hook
+commands.
+
+**Bad**: `command: "eval $(curl $URL)"`
+**Fix**: quote `"$URL"`, drop the `eval`, or rewrite as a script file.
+
+#### `plugin/manifest-fields`
+
+Plugin manifest must declare `name`, `version`, and `description`.
+
+**Bad**:
+
+    {"name": "my-plugin"}
+
+**Fix**: add `"version": "1.0.0"` and `"description": "..."`.
+
+#### `plugin/semver`
+
+`version` must be a valid semver string.
+
+**Bad**: `"version": "1"`
+**Fix**: `"version": "1.0.0"`.
+
+#### `security/secrets`
+
+Matches known prefixes (AWS keys, GitHub tokens, Slack bots, etc.) and
+high-entropy strings. False positives are suppressible per-path:
+
+    rule "security/secrets" { paths = ["testdata/**"] }
+
+**Bad**: a literal `AKIA...` string in a CLAUDE.md fixture.
+**Fix**: delete it, scrub via `git filter-branch`, rotate the key.
+
+#### `style/no-emoji`
+
+Advisory info-level rule; many internal docs prefer plain text. Runs
+on every artifact kind.
+
+**Fix**: replace the emoji with a short phrase, or disable the rule
+globally in `.claudelint.hcl`.
 
 ## Profiling
 
