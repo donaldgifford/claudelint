@@ -34,5 +34,8 @@ go.work.sum
 # Build directories
 build/
 
+# Goreleaser snapshot output (created by `make release-local`)
+dist/
+
 # donald-loop runtime state
 .claude/donald-loop.local.md
