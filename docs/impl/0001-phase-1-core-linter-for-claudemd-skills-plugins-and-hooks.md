@@ -159,7 +159,7 @@ positions.
 
 #### Tasks
 
-- [ ] Add typed artifact structs in `internal/artifact/`: `ClaudeMD`,
+- [x] Add typed artifact structs in `internal/artifact/`: `ClaudeMD`,
       `Skill`, `Command`, `Agent`, `Hook`, `Plugin`. Each embeds a
       common `Base` with `path`, `source`, and a byte-offset line
       index.
