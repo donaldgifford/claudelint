@@ -7,6 +7,10 @@
 package cli
 
 import (
+	"errors"
+	"fmt"
+	"io"
+
 	"github.com/spf13/cobra"
 )
 
@@ -17,11 +21,24 @@ type BuildInfo struct {
 	Commit  string
 }
 
-// Execute runs the root command with the given build info. It returns
-// any error cobra surfaces so main can print it and set a non-zero exit
-// code.
-func Execute(info BuildInfo) error {
-	return newRootCmd(info).Execute()
+// Execute runs the root command with the given build info and returns
+// a process exit code. It is the entry point main uses: exit 0 on
+// clean runs, exit 1 when diagnostics failed the run, exit 2 on usage
+// / config / I/O errors. stderr receives the human-readable error
+// text for the exit 2 path.
+func Execute(info BuildInfo, stderr io.Writer) int {
+	err := newRootCmd(info).Execute()
+	if err == nil {
+		return exitSuccess
+	}
+	if errors.Is(err, errDiagnostics) {
+		return exitHasErrors
+	}
+	if _, werr := fmt.Fprintln(stderr, err); werr != nil {
+		// Stderr write failure is terminal; nothing useful to do.
+		return exitUsage
+	}
+	return exitUsage
 }
 
 // newRootCmd assembles the claudelint command tree. Bare `claudelint`

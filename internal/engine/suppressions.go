@@ -3,6 +3,7 @@ package engine
 import (
 	"bytes"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
@@ -77,21 +78,21 @@ func newSuppressor(a artifact.Artifact) *suppressor {
 	return s
 }
 
-// suppressed reports whether d is silenced for the artifact a.
-// Callers already filter by Path, so this function only consults the
-// artifact-local suppressor.
-func (s *suppressor) suppressed(d *diag.Diagnostic) bool {
+// suppressed reports whether d is silenced for the artifact, along
+// with a short human-readable reason (empty when not suppressed). The
+// reason is surfaced by --verbose so users can see which marker fired.
+func (s *suppressor) suppressed(d *diag.Diagnostic) (bool, string) {
 	if _, ok := s.perFile[d.RuleID]; ok {
-		return true
+		return true, "in-source ignore-file marker"
 	}
 	if line := d.Range.Start.Line; line > 0 {
 		if set, ok := s.perLine[line]; ok {
 			if _, hit := set[d.RuleID]; hit {
-				return true
+				return true, "in-source ignore marker on line " + strconv.Itoa(line)
 			}
 		}
 	}
-	return false
+	return false, ""
 }
 
 // supportsInSourceSuppression reports whether in-source suppression

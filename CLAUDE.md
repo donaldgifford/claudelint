@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Implementation has begun. `go.mod` is initialized (`github.com/donaldgifford/claudelint`, Go 1.26.1). Phase 1.1 is in progress — the cobra CLI skeleton is wired (`run`, `rules`, `init`, `version` subcommand stubs; bare `claudelint` aliases to `run`). The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
+Implementation has progressed through Phase 1.7. `go.mod` is initialized (`github.com/donaldgifford/claudelint`, Go 1.26.1). The full MVP ruleset is registered, the concurrent runner is in place, all three suppression mechanisms are wired, and `run` supports `--format=text|json|github`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, and exit codes (0/1/2). Only Phase 1.8 (pprof profiling, benchmark CI gate, coverage gate, goreleaser, v0.1.0 tag) remains. The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
 
 - `docs/rfc/0001-*.md` — the proposal (why claudelint exists, scope, phases)
 - `docs/adr/0001-*.md` — HCL chosen as the config format

@@ -2,7 +2,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/donaldgifford/claudelint/internal/cli"
@@ -18,8 +17,6 @@ var (
 )
 
 func main() {
-	if err := cli.Execute(cli.BuildInfo{Version: version, Commit: commit}); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	code := cli.Execute(cli.BuildInfo{Version: version, Commit: commit}, os.Stderr)
+	os.Exit(code)
 }

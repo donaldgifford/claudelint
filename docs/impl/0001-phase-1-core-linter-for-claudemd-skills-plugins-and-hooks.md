@@ -393,11 +393,11 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
 
 #### Success Criteria
 
-- All three suppression mechanisms honored; `meta/unknown-rule`
+- [x] All three suppression mechanisms honored; `meta/unknown-rule`
   emitted for unknown IDs.
-- `--explain` (or verbose flag) prints which suppression matched each
-  silenced diagnostic.
-- Suppression logic has a matrix test covering every combination.
+- [x] `--verbose` flag prints which in-source suppression matched each
+  silenced diagnostic and the loaded config path.
+- [x] Suppression logic has a matrix test covering every combination.
 
 ---
 
@@ -405,18 +405,18 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
 
 #### Tasks
 
-- [ ] `--format=text|json|github` flag on `run`.
-- [ ] Text formatter: colorized human output; honors `--no-color` and
+- [x] `--format=text|json|github` flag on `run`.
+- [x] Text formatter: colorized human output; honors `--no-color` and
       `NO_COLOR` env.
-- [ ] JSON formatter: stable documented schema in `docs/` with a
+- [x] JSON formatter: stable documented schema in `docs/` with a
       golden-file test guarding stability.
-- [ ] GitHub Actions annotation formatter emitting `::error` /
+- [x] GitHub Actions annotation formatter emitting `::error` /
       `::warning` / `::notice` lines with `file=`, `line=`, `col=`.
-- [ ] `--quiet` suppresses non-error output; `--verbose` enables
+- [x] `--quiet` suppresses non-error output; `--verbose` enables
       suppression reasoning.
-- [ ] Exit codes: non-zero on any `error`; `--max-warnings=N` promotes
+- [x] Exit codes: non-zero on any `error`; `--max-warnings=N` promotes
       warning overflow to error (default: no limit).
-- [ ] E2E test in `cmd/claudelint`: invoke the binary against a
+- [x] E2E test in `cmd/claudelint`: invoke the binary against a
       fixture repo and diff stdout/stderr against golden files for each
       format.
 

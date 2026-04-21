@@ -18,12 +18,24 @@ import (
 // other rule.
 const ParseSchemaRuleID = "schema/parse"
 
-// Result is the runner's output: the aggregated Diagnostic list plus
-// the number of artifacts that were inspected. Reporter.Summary maps
-// 1:1 onto this shape.
+// Result is the runner's output: the aggregated Diagnostic list, any
+// in-source-suppressed diagnostics (surfaced by --verbose), and the
+// number of artifacts that were inspected. Reporter.Summary maps onto
+// the Diagnostics+Files fields; verbose CLI output consults Suppressed.
 type Result struct {
 	Diagnostics []diag.Diagnostic
+	Suppressed  []SuppressedDiagnostic
 	Files       int
+}
+
+// SuppressedDiagnostic carries a diagnostic that a rule produced but
+// that was silenced by an in-source marker, plus a human-readable
+// reason. Config-level suppression (enabled=false, per-rule paths) is
+// NOT represented here because those mechanisms prevent the diagnostic
+// from ever being produced.
+type SuppressedDiagnostic struct {
+	Diagnostic diag.Diagnostic
+	Reason     string
 }
 
 // Runner orchestrates rule execution. Construct one per invocation;
@@ -84,12 +96,19 @@ func (r *Runner) Run(arts []artifact.Artifact, parseErrs []*artifact.ParseError)
 		diags = append(diags, r.synthesizeParseDiagnostic(pe))
 	}
 
+	var suppressed []SuppressedDiagnostic
 	if len(arts) > 0 {
-		diags = append(diags, r.runRules(arts)...)
+		d, sup := r.runRules(arts)
+		diags = append(diags, d...)
+		suppressed = sup
 	}
 
 	sortAndDedupe(&diags)
-	return &Result{Diagnostics: diags, Files: len(arts) + len(parseErrs)}
+	return &Result{
+		Diagnostics: diags,
+		Suppressed:  suppressed,
+		Files:       len(arts) + len(parseErrs),
+	}
 }
 
 // MetaUnknownRuleID is emitted when user configuration references a
@@ -126,15 +145,15 @@ func (r *Runner) unknownRuleDiagnostics() []diag.Diagnostic {
 // goroutine pool. One goroutine handles one artifact; rules that
 // apply run serially within that goroutine. See DESIGN-0001 §execution-flow
 // for the rationale behind per-artifact granularity.
-func (r *Runner) runRules(arts []artifact.Artifact) []diag.Diagnostic {
+func (r *Runner) runRules(arts []artifact.Artifact) ([]diag.Diagnostic, []SuppressedDiagnostic) {
 	applicable := r.applicableRules()
 	if len(applicable) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	type result struct {
-		path  string
-		diags []diag.Diagnostic
+		diags      []diag.Diagnostic
+		suppressed []SuppressedDiagnostic
 	}
 
 	jobs := make(chan artifact.Artifact, len(arts))
@@ -145,7 +164,8 @@ func (r *Runner) runRules(arts []artifact.Artifact) []diag.Diagnostic {
 		go func() {
 			defer wg.Done()
 			for a := range jobs {
-				out <- result{path: a.Path(), diags: r.runOne(a, applicable)}
+				d, sup := r.runOne(a, applicable)
+				out <- result{diags: d, suppressed: sup}
 			}
 		}()
 	}
@@ -159,19 +179,22 @@ func (r *Runner) runRules(arts []artifact.Artifact) []diag.Diagnostic {
 		close(out)
 	}()
 
-	var collected []diag.Diagnostic
-	for r := range out {
-		collected = append(collected, r.diags...)
+	var diags []diag.Diagnostic
+	var suppressed []SuppressedDiagnostic
+	for res := range out {
+		diags = append(diags, res.diags...)
+		suppressed = append(suppressed, res.suppressed...)
 	}
-	return collected
+	return diags, suppressed
 }
 
 // runOne evaluates every applicable rule against a single artifact.
 // applicable is already filtered to rules whose AppliesTo includes
 // a.Kind() and whose ID is enabled in config.
-func (r *Runner) runOne(a artifact.Artifact, applicable []rules.Rule) []diag.Diagnostic {
+func (r *Runner) runOne(a artifact.Artifact, applicable []rules.Rule) ([]diag.Diagnostic, []SuppressedDiagnostic) {
 	sup := newSuppressor(a)
 	var out []diag.Diagnostic
+	var suppressed []SuppressedDiagnostic
 	for _, rule := range applicable {
 		if !ruleAppliesToKind(rule, a.Kind()) {
 			continue
@@ -186,13 +209,17 @@ func (r *Runner) runOne(a artifact.Artifact, applicable []rules.Rule) []diag.Dia
 			r.finalizeDiagnostic(&diags[i], rule, a.Kind())
 		}
 		for i := range diags {
-			if sup.suppressed(&diags[i]) {
+			if hit, reason := sup.suppressed(&diags[i]); hit {
+				suppressed = append(suppressed, SuppressedDiagnostic{
+					Diagnostic: diags[i],
+					Reason:     reason,
+				})
 				continue
 			}
 			out = append(out, diags[i])
 		}
 	}
-	return out
+	return out, suppressed
 }
 
 // applicableRules returns the enabled, non-path-ignored rules in
