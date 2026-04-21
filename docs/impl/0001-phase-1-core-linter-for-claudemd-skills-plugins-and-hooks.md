@@ -130,7 +130,7 @@ that walks the repo and prints file counts — no rules wired yet.
       `.git/info/exclude` are layered in by the walker.)*
 - [x] Create `internal/reporter/text.go` with a minimal text
       formatter.
-- [ ] Wire `claudelint run` end-to-end: discover → (stub) run →
+- [x] Wire `claudelint run` end-to-end: discover → (stub) run →
       report `"0 diagnostics, N files checked"`.
 - [ ] `claudelint version` prints the binary `Version` (via
       `-ldflags`) plus `RulesetVersion` (semver constant in

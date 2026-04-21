@@ -52,7 +52,9 @@ func TestBareInvocationAliasesToRun(t *testing.T) {
 	var stdout bytes.Buffer
 	root.SetOut(&stdout)
 	root.SetErr(&stdout)
-	root.SetArgs(nil)
+	// Point at an empty temp dir so the run has nothing to walk but
+	// still reaches the reporter's summary line.
+	root.SetArgs([]string{"run", t.TempDir()})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("Execute() = %v, want nil", err)
