@@ -33,3 +33,6 @@ go.work.sum
 
 # Build directories
 build/
+
+# donald-loop runtime state
+.claude/donald-loop.local.md

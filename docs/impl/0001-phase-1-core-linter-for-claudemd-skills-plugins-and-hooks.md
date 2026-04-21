@@ -111,7 +111,7 @@ that walks the repo and prints file counts — no rules wired yet.
 
 #### Tasks
 
-- [ ] Create `cmd/claudelint/main.go` with cobra root; wire `run`,
+- [x] Create `cmd/claudelint/main.go` with cobra root; wire `run`,
       `rules`, `init`, `version` subcommand stubs. Bare `claudelint`
       aliases to `run`.
 - [ ] Create `internal/diag/` exporting `Diagnostic`, `Severity`

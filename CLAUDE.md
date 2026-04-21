@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Pre-code. The repo currently contains docs, CI scaffolding, tooling config, and a stub `cmd/claudelint/main.go`. There is no `go.mod` yet. The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
+Implementation has begun. `go.mod` is initialized (`github.com/donaldgifford/claudelint`, Go 1.26.1). Phase 1.1 is in progress — the cobra CLI skeleton is wired (`run`, `rules`, `init`, `version` subcommand stubs; bare `claudelint` aliases to `run`). The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
 
 - `docs/rfc/0001-*.md` — the proposal (why claudelint exists, scope, phases)
 - `docs/adr/0001-*.md` — HCL chosen as the config format
@@ -26,6 +26,8 @@ Parsers → Engine → Rules
 - **Rules** (`internal/rules/<kind>/`) are small (~50 LOC), pure, focused, and implement one `Rule` interface from `internal/rules`. Each rule file runs `Register()` in `init()`. `internal/rules/all/` blank-imports every subpackage so registration happens.
 
 Rule packages must not import the engine. Rules are **built-in to the binary and versioned with it** — no third-party plugin rules in v1. The linted artifact kinds are `KindClaudeMD`, `KindSkill`, `KindCommand`, `KindAgent`, `KindHook`, `KindPlugin`.
+
+Cobra subcommands live in `internal/cli/` (one file per command). `cmd/claudelint/main.go` is deliberately thin: it only translates `-ldflags` version/commit into a `cli.BuildInfo` and calls `cli.Execute`. This keeps the CLI testable without spawning a process.
 
 Key decisions already locked in (see IMPL-0001 "Resolved Decisions"):
 
