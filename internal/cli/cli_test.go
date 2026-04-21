@@ -40,7 +40,7 @@ func TestVersionCmdOutput(t *testing.T) {
 	}
 
 	got := stdout.String()
-	want := "claudelint v1.2.3 (abc1234) rules v0.0.0 (unset)\n"
+	want := "claudelint v1.2.3 (abc1234)\nruleset    v0.0.0 (unset)\n"
 	if got != want {
 		t.Errorf("version output = %q, want %q", got, want)
 	}

@@ -132,10 +132,12 @@ that walks the repo and prints file counts — no rules wired yet.
       formatter.
 - [x] Wire `claudelint run` end-to-end: discover → (stub) run →
       report `"0 diagnostics, N files checked"`.
-- [ ] `claudelint version` prints the binary `Version` (via
+- [x] `claudelint version` prints the binary `Version` (via
       `-ldflags`) plus `RulesetVersion` (semver constant in
       `internal/rules`) and `RulesetFingerprint` (auto-computed hash;
       see Phase 1.5), in the form `v1.2.0 (a1b2c3d4)`.
+      *(Phase 1.5 will replace the `"unset"` placeholder with the
+      auto-computed hash once the registry is in place.)*
 - [x] Unit tests: discovery classification over a fixture tree with
       one example per `ArtifactKind` plus a negative (unrecognized)
       case.
