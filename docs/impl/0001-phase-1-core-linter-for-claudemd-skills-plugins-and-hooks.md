@@ -128,7 +128,7 @@ that walks the repo and prints file counts — no rules wired yet.
       global) via a vetted ignore library.
       *(Library pick: `github.com/sabhiram/go-gitignore`. Global and
       `.git/info/exclude` are layered in by the walker.)*
-- [ ] Create `internal/reporter/text.go` with a minimal text
+- [x] Create `internal/reporter/text.go` with a minimal text
       formatter.
 - [ ] Wire `claudelint run` end-to-end: discover → (stub) run →
       report `"0 diagnostics, N files checked"`.
