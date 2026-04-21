@@ -118,7 +118,7 @@ that walks the repo and prints file counts — no rules wired yet.
       (`error`/`warning`/`info`), `Range`, `Position`, `Fix`. `Fix` is
       defined but always nil in v1; JSON tag is `omitempty` so it does
       not appear in v1 output.
-- [ ] Create `internal/artifact/` exporting `ArtifactKind` constants
+- [x] Create `internal/artifact/` exporting `ArtifactKind` constants
       (`KindClaudeMD`, `KindSkill`, `KindCommand`, `KindAgent`,
       `KindHook`, `KindPlugin`) and the `Artifact` interface from
       DESIGN-0001.
