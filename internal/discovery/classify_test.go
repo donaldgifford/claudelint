@@ -26,6 +26,14 @@ func TestClassify(t *testing.T) {
 		{"skill", ".claude/skills/writer/SKILL.md", true, artifact.KindSkill},
 		{"plugin-embedded skill", "plugin/a/.claude/skills/x/SKILL.md", true, artifact.KindSkill},
 
+		// Plugin-distribution layouts (no .claude/ parent).
+		{"plugin-root skill", "skills/go/SKILL.md", true, artifact.KindSkill},
+		{"plugin-root command", "commands/review.md", true, artifact.KindCommand},
+		{"plugin-root agent", "agents/refactor.md", true, artifact.KindAgent},
+		{"plugin-root hook", "hooks/pre.json", true, artifact.KindHook},
+		{"plugin-versioned skill", "go-development/2.0.1/skills/go/SKILL.md", true, artifact.KindSkill},
+		{"plugin-versioned command", "go-development/2.0.1/commands/review.md", true, artifact.KindCommand},
+
 		{
 			"skill companion file is not a skill artifact",
 			".claude/skills/writer/references/style.md", false, "",

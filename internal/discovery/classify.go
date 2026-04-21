@@ -59,11 +59,16 @@ func Classify(relPath string) (artifact.ArtifactKind, bool) {
 		return k, true
 	}
 
-	claudeIdx := claudeSegmentIndex(p)
-	if claudeIdx < 0 {
-		return "", false
+	// Paths under a .claude/ segment are the canonical repo layout.
+	if claudeIdx := claudeSegmentIndex(p); claudeIdx >= 0 {
+		return classifyClaudeSub(p[claudeIdx+len(".claude/"):])
 	}
-	return classifyClaudeSub(p[claudeIdx+len(".claude/"):])
+	// Fallback: plugin-distribution layouts put skills/, commands/,
+	// agents/, and hooks/ directly at the plugin root (no .claude/
+	// parent). Match the last plugin-style segment so repos that
+	// happen to use those directory names incidentally still classify
+	// correctly when the path shape matches.
+	return classifyPluginLayout(p)
 }
 
 // classifyRoot handles files whose classification depends only on
@@ -91,6 +96,48 @@ func classifyClaudeSub(sub string) (artifact.ArtifactKind, bool) {
 		if strings.HasPrefix(sub, r.prefix) && strings.HasSuffix(sub, r.suffix) {
 			return r.kind, true
 		}
+	}
+	return "", false
+}
+
+// classifyPluginLayout handles Claude plugin distribution layouts.
+// Plugin tarballs root their content as `<plugin>/{skills,commands,
+// agents,hooks}/...`, without a `.claude/` parent. For these we match
+// on the last occurrence of the plugin-style segment so the path
+// `go-development/2.0.1/skills/go/SKILL.md` still resolves to a
+// KindSkill. Only the leaf shape matters; anything above the segment
+// is treated as repo-local noise.
+func classifyPluginLayout(p string) (artifact.ArtifactKind, bool) {
+	for _, r := range claudeSubRules {
+		if r.exact {
+			continue
+		}
+		// Find the last occurrence of "/<prefix>" and treat the
+		// remainder as the sub path. Leading match (no slash) also
+		// counts — a plugin tarball extracted to its own directory
+		// may place the kind directory at the very top.
+		rest, ok := trailingSubPath(p, r.prefix)
+		if !ok {
+			continue
+		}
+		if strings.HasSuffix(rest, r.suffix) {
+			return r.kind, true
+		}
+	}
+	return "", false
+}
+
+// trailingSubPath returns (sub, true) when prefix appears in p either
+// at the start or immediately after a slash, and sub is the text from
+// prefix onward. When multiple occurrences match, the deepest one
+// wins so nested plugin-in-plugin layouts still classify correctly.
+func trailingSubPath(p, prefix string) (string, bool) {
+	needle := "/" + prefix
+	if idx := strings.LastIndex(p, needle); idx >= 0 {
+		return p[idx+1:], true
+	}
+	if strings.HasPrefix(p, prefix) {
+		return p, true
 	}
 	return "", false
 }

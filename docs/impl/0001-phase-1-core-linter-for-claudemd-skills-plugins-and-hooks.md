@@ -456,8 +456,12 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
 - [x] Updated `README.md` with install, quickstart, rule index with
       per-rule examples and fixes, exit codes, suppression docs,
       profile docs, and a link to the RFC.
-- [ ] Dogfood on at least two external Claude plugin repos; open GitHub
-      issues for the findings. (Deferred: manual, out-of-session step.)
+- [x] Dogfooded on `donaldgifford-claude-skills/go-development@2.0.1`
+      and `donaldgifford-claude-skills/docz`. Surfaced a real discovery
+      gap (classifier missed plugin-root layouts without `.claude/`
+      segment) which is now fixed, plus 16 actionable diagnostics in
+      the upstream plugins. Findings captured in
+      [INV-0003](../investigation/0003-phase-18-dogfood-findings-on-external-claude-plugins.md).
 - [x] `.goreleaser.yml` publishes darwin/{amd64,arm64},
       linux/{amd64,arm64}, and windows/amd64. (windows/arm64 intentionally
       excluded for the first release.)
