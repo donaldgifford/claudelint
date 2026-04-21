@@ -40,9 +40,13 @@ func TestVersionCmdOutput(t *testing.T) {
 	}
 
 	got := stdout.String()
-	want := "claudelint v1.2.3 (abc1234)\nruleset    v0.0.0 (unset)\n"
-	if got != want {
-		t.Errorf("version output = %q, want %q", got, want)
+	// Fingerprint is derived from the empty registry (phase 1.4
+	// behaviour before any rules register). Match prefix and shape.
+	if !strings.HasPrefix(got, "claudelint v1.2.3 (abc1234)\nruleset    v0.0.0 (") {
+		t.Errorf("version output = %q, want prefix claudelint v1.2.3 ...", got)
+	}
+	if !strings.HasSuffix(got, ")\n") {
+		t.Errorf("version output = %q, want trailing fingerprint paren", got)
 	}
 }
 

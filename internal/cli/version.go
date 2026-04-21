@@ -27,7 +27,7 @@ func newVersionCmd(info BuildInfo) *cobra.Command {
 				cmd.OutOrStdout(),
 				"claudelint %s (%s)\nruleset    %s (%s)\n",
 				info.Version, info.Commit,
-				rules.RulesetVersion, rules.RulesetFingerprint,
+				rules.RulesetVersion, rules.RulesetFingerprint(),
 			)
 			return err
 		},

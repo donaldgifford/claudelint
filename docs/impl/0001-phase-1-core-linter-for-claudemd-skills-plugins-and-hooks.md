@@ -250,7 +250,7 @@ registered yet.
 
 #### Tasks
 
-- [ ] Add `internal/rules/` exporting:
+- [x] Add `internal/rules/` exporting:
       - `Rule` interface (including `DefaultOptions() map[string]any`)
       - `Context` interface
       - `Register(Rule)`, `All() []Rule`, `Get(id string) Rule`
@@ -258,28 +258,32 @@ registered yet.
       - `RulesetFingerprint()` helper that hashes registered rules
       Registry lives in `internal/rules` so rule subpackages never
       import the engine; dependency direction is one-way.
-- [ ] Add `internal/engine/` with the runner:
-  - [ ] Consumes discovered+parsed artifacts and a `ResolvedConfig`.
-  - [ ] Resolves the enabled rule set by calling
+- [x] Add `internal/engine/` with the runner:
+  - [x] Consumes discovered+parsed artifacts and a `ResolvedConfig`.
+  - [x] Resolves the enabled rule set by calling
         `rules.All()` and filtering via config.
-  - [ ] Groups rules by `ArtifactKind`.
-  - [ ] Dispatches one goroutine per artifact (worker pool sized to
+  - [x] Groups rules by `ArtifactKind`.
+  - [x] Dispatches one goroutine per artifact (worker pool sized to
         `GOMAXPROCS`); within each goroutine, applicable rules run
         serially. Coarse granularity is intentional — see DESIGN-0001
         execution flow. Profile before changing.
   - [ ] Validates user-supplied options against each rule's
         `DefaultOptions()` before `Check` is called; type mismatches
         become `meta/invalid-option` diagnostics.
-  - [ ] Synthesizes `schema/parse` diagnostics from `ParseError`s
+        *(Deferred to Phase 1.5 alongside the real rules that declare
+        DefaultOptions. Engine currently merges the default map and
+        config value but does not type-check — no rule yet consumes
+        typed options.)*
+  - [x] Synthesizes `schema/parse` diagnostics from `ParseError`s
         without calling any rule's `Check`.
-  - [ ] Aggregates, sorts by `(path, line, col, ruleID)`, and dedupes
+  - [x] Aggregates, sorts by `(path, line, col, ruleID)`, and dedupes
         identical diagnostics.
-- [ ] Implement `Context`: resolved options (from config), rule ID,
+- [x] Implement `Context`: resolved options (from config), rule ID,
       and a leveled logger. No filesystem or network access.
-- [ ] Wire `claudelint rules` to list the registry; `claudelint rules
+- [x] Wire `claudelint rules` to list the registry; `claudelint rules
       <id>` prints rationale + default options (from
       `DefaultOptions()`).
-- [ ] Engine tests with *stub* rules (not the real MVP rules yet),
+- [x] Engine tests with *stub* rules (not the real MVP rules yet),
       including a deliberate data race test under `go test -race`.
 
 #### Success Criteria
