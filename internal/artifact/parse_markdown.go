@@ -28,6 +28,46 @@ type markdownDoc struct {
 	fm map[string]any
 }
 
+// findCloseFence locates the YAML frontmatter close fence ("---"
+// starting a line). It returns the slice indices for the YAML body
+// start, body end, and close-fence end — exclusive of the trailing
+// newline. found is false when no close fence exists, which the
+// caller treats as an unterminated frontmatter parse error.
+//
+// Two close-fence forms are recognized:
+//
+//  1. "---\n...\n---[\n]" — the normal case.
+//  2. "---\n---[\n]" — an empty frontmatter where the close follows
+//     the opener immediately. The search below would otherwise miss
+//     this because "\n---" appears only before the opener, not inside
+//     the (empty) body.
+func findCloseFence(src []byte, openEnd int) (bodyStart, bodyEnd, fenceEnd int, found bool) {
+	bodyStart = openEnd
+
+	// Immediate close: opener followed by "---" (with or without a
+	// trailing newline) at openEnd.
+	if openEnd+3 <= len(src) && bytes.Equal(src[openEnd:openEnd+3], []byte("---")) {
+		if openEnd+3 == len(src) || src[openEnd+3] == '\n' {
+			fenceEnd = openEnd + 3
+			if fenceEnd < len(src) {
+				fenceEnd++ // consume trailing \n
+			}
+			return openEnd, openEnd, fenceEnd, true
+		}
+	}
+
+	idx := bytes.Index(src[openEnd:], []byte("\n---"))
+	if idx < 0 {
+		return 0, 0, 0, false
+	}
+	bodyEnd = openEnd + idx
+	fenceEnd = bodyEnd + len("\n---")
+	if fenceEnd < len(src) && src[fenceEnd] == '\n' {
+		fenceEnd++
+	}
+	return bodyStart, bodyEnd, fenceEnd, true
+}
+
 // parseMarkdown splits src into its frontmatter block and body, parses
 // the YAML frontmatter with goccy/go-yaml, and populates Frontmatter.
 // Keys with byte-accurate ranges.
@@ -46,21 +86,13 @@ func parseMarkdown(path string, src []byte) (*markdownDoc, *ParseError) {
 	}
 
 	openEnd := len(frontmatterFence)
-	closeStart := bytes.Index(src[openEnd:], []byte("\n---"))
-	if closeStart < 0 {
+	fmBodyStart, fmBodyEnd, closeFenceEnd, found := findCloseFence(src, openEnd)
+	if !found {
 		return nil, &ParseError{
 			Path:    path,
 			Range:   base.ResolveRange(0, openEnd),
 			Message: "unterminated YAML frontmatter (no closing ---)",
 		}
-	}
-
-	// The close fence is "\n---" followed by either EOF or "\n".
-	fmBodyStart := openEnd
-	fmBodyEnd := openEnd + closeStart
-	closeFenceEnd := fmBodyEnd + len("\n---")
-	if closeFenceEnd < len(src) && src[closeFenceEnd] == '\n' {
-		closeFenceEnd++
 	}
 
 	fmSrc := src[fmBodyStart:fmBodyEnd]

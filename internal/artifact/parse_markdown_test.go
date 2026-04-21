@@ -140,6 +140,98 @@ func TestParseClaudeMDNoFrontmatter(t *testing.T) {
 	}
 }
 
+func TestYAMLValueTypes(t *testing.T) {
+	src := []byte(`---
+str: hello
+num: 42
+flt: 3.14
+flag: true
+empty: null
+nested:
+  inner: value
+list:
+  - a
+  - b
+---
+`)
+	doc, err := parseMarkdown("x.md", src)
+	if err != nil {
+		t.Fatalf("parseMarkdown = %v", err)
+	}
+	if got := doc.fm["str"]; got != "hello" {
+		t.Errorf("str = %v", got)
+	}
+	// Numeric / bool values are captured as their native Go type via
+	// yamlValue; no coercion happens at this layer.
+	if got, ok := doc.fm["num"].(uint64); !ok || got != 42 {
+		t.Errorf("num = %v/%T", doc.fm["num"], doc.fm["num"])
+	}
+	if got, ok := doc.fm["flt"].(float64); !ok || got != 3.14 {
+		t.Errorf("flt = %v/%T", doc.fm["flt"], doc.fm["flt"])
+	}
+	if got, ok := doc.fm["flag"].(bool); !ok || got != true {
+		t.Errorf("flag = %v/%T", doc.fm["flag"], doc.fm["flag"])
+	}
+	if got := doc.fm["empty"]; got != nil {
+		t.Errorf("empty = %v, want nil", got)
+	}
+	nested, ok := doc.fm["nested"].(map[string]any)
+	if !ok || nested["inner"] != "value" {
+		t.Errorf("nested = %v", doc.fm["nested"])
+	}
+	list, ok := doc.fm["list"].([]any)
+	if !ok || len(list) != 2 {
+		t.Errorf("list = %v", doc.fm["list"])
+	}
+}
+
+func TestAsStringAndListEdgeCases(t *testing.T) {
+	doc := &markdownDoc{fm: map[string]any{
+		"nope":        42, // non-string
+		"scalar":      "one",
+		"real_list":   []any{"a", "b"},
+		"single_list": "x", // coerced
+		"weird":       42,  // not a string list either
+	}}
+	if doc.asString("missing") != "" {
+		t.Errorf("asString missing should be empty")
+	}
+	if doc.asString("nope") != "" {
+		t.Errorf("asString non-string should be empty")
+	}
+	if got := doc.asStringList("missing"); got != nil {
+		t.Errorf("asStringList missing = %v, want nil", got)
+	}
+	if got := doc.asStringList("single_list"); len(got) != 1 || got[0] != "x" {
+		t.Errorf("asStringList single = %v", got)
+	}
+	if got := doc.asStringList("weird"); got != nil {
+		t.Errorf("asStringList non-list non-string = %v, want nil", got)
+	}
+}
+
+func TestParseMarkdownNonMappingFrontmatter(t *testing.T) {
+	src := []byte("---\n- just\n- a\n- list\n---\nbody\n")
+	_, perr := parseMarkdown("x.md", src)
+	if perr == nil {
+		t.Fatal("expected ParseError for non-mapping frontmatter")
+	}
+	if !strings.Contains(perr.Message, "mapping") {
+		t.Errorf("message = %q, want contains 'mapping'", perr.Message)
+	}
+}
+
+func TestParseMarkdownEmptyFrontmatter(t *testing.T) {
+	src := []byte("---\n---\nbody\n")
+	doc, perr := parseMarkdown("x.md", src)
+	if perr != nil {
+		t.Fatalf("parseMarkdown empty frontmatter = %v", perr)
+	}
+	if len(doc.Frontmatter.Keys) != 0 {
+		t.Errorf("empty frontmatter should have no Keys, got %v", keysOf(doc.Frontmatter.Keys))
+	}
+}
+
 func keysOf(m map[string]diag.Range) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {

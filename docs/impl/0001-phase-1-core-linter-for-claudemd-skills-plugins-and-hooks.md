@@ -191,7 +191,7 @@ positions.
 - [x] Define a `ParseError` type carrying path + `Range` so the engine
       can synthesize a `schema/parse` diagnostic without the rule ever
       needing to inspect raw bytes.
-- [ ] Table-driven parser tests per kind with `testdata/ok/` and
+- [x] Table-driven parser tests per kind with `testdata/ok/` and
       `testdata/bad/` directories, asserting on both parsed structure
       and exact byte offsets for a sampling of fields.
 
