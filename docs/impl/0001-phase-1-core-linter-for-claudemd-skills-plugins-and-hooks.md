@@ -173,10 +173,14 @@ positions.
       inside the Body are deferred — no MVP rule depends on them and
       adding a full Markdown AST would bring in another dependency. A
       future phase will add goldmark if rules need sub-body positions.)*
-- [ ] Implement the JSON parser for `Hook` and `Plugin`, preserving
+- [x] Implement the JSON parser for `Hook` and `Plugin`, preserving
       line/column for every value. Support hooks declared both as
       dedicated JSON files and inline under the `hooks` key of
       `.claude/settings.json`.
+      *(Library pick: `github.com/buger/jsonparser` for in-place
+      lookups with byte offsets. `Hook.Entries` flattens settings
+      files into (event, matcher, command, timeout) tuples; dedicated
+      `.claude/hooks/*.json` files produce a one-entry list.)*
 - [ ] `Skill` parser indexes companion files: `references/**`,
       `scripts/**`, `templates/**`. Indexed entries record their
       relative path and kind.

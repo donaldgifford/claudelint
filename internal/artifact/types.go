@@ -76,13 +76,33 @@ type Agent struct {
 // Kind implements Artifact.
 func (*Agent) Kind() ArtifactKind { return KindAgent }
 
-// Hook is a Claude Code hook declaration, either from a dedicated
-// .claude/hooks/*.json file or embedded in the "hooks" key of
-// .claude/settings{,.local}.json. Fields reflect the public Claude
-// Code hook schema; ranges track byte offsets for every parsed value.
+// Hook is a Claude Code hook artifact: either a dedicated
+// .claude/hooks/*.json file or the "hooks" stanza inside
+// .claude/settings{,.local}.json. One file usually carries multiple
+// hook entries (one per event × matcher), so the artifact is a
+// container over []HookEntry.
+//
+// Embedded mode (inside settings.json) is distinguished by Embedded
+// == true; rules that only apply to one shape can switch on it.
 type Hook struct {
 	Base
 
+	// Embedded is true when the source file is a settings.json (i.e.
+	// the hooks are reached via the "hooks" key) rather than a
+	// dedicated file in .claude/hooks/.
+	Embedded bool
+
+	// Entries is the list of concrete hook declarations. For
+	// dedicated hook files this is always length 1; for settings
+	// files it is the flattened cross-product of events × matchers ×
+	// hook commands.
+	Entries []HookEntry
+}
+
+// HookEntry is one individual hook command with its event, matcher,
+// and timeout. Every field carries its parsed byte-offset range so
+// rules can point diagnostics at the precise JSON value.
+type HookEntry struct {
 	// Event is the hook event name (PreToolUse, PostToolUse, Stop, …).
 	Event      string
 	EventRange diag.Range
@@ -95,9 +115,8 @@ type Hook struct {
 	Command      string
 	CommandRange diag.Range
 
-	// Timeout is parsed as a raw integer of seconds; zero means
-	// "not declared". Rules check Timeout == 0 for the
-	// hooks/timeout-present lint.
+	// Timeout is the declared timeout in seconds. Zero means "not
+	// declared"; rules use Timeout == 0 for hooks/timeout-present.
 	Timeout      int
 	TimeoutRange diag.Range
 }
