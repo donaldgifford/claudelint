@@ -163,11 +163,16 @@ positions.
       `Skill`, `Command`, `Agent`, `Hook`, `Plugin`. Each embeds a
       common `Base` with `path`, `source`, and a byte-offset line
       index.
-- [ ] Implement the Markdown + YAML-frontmatter parser used by
+- [x] Implement the Markdown + YAML-frontmatter parser used by
       `ClaudeMD`, `Skill`, `Command`, `Agent` using
       `github.com/goccy/go-yaml` for the frontmatter (precise line/col
       on every key). Must preserve byte offsets for every frontmatter
       key and every heading/paragraph in the body.
+      *(v1 preserves byte offsets for every frontmatter key and for
+      the Body block as a whole. Per-heading/per-paragraph offsets
+      inside the Body are deferred — no MVP rule depends on them and
+      adding a full Markdown AST would bring in another dependency. A
+      future phase will add goldmark if rules need sub-body positions.)*
 - [ ] Implement the JSON parser for `Hook` and `Plugin`, preserving
       line/column for every value. Support hooks declared both as
       dedicated JSON files and inline under the `hooks` key of
