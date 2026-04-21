@@ -212,24 +212,25 @@ engine consumes.
 
 #### Tasks
 
-- [ ] Add `internal/config/` using `hashicorp/hcl/v2` + `gohcl`.
-- [ ] Decode the schema-v1 blocks in DESIGN-0001:
-  - [ ] `claudelint { version = "1" }` — hard fail on unknown version,
+- [x] Add `internal/config/` using `hashicorp/hcl/v2` + `gohcl`.
+- [x] Decode the schema-v1 blocks in DESIGN-0001:
+  - [x] `claudelint { version = "1" }` — hard fail on unknown version,
         with an upgrade message naming the minimum binary version.
-  - [ ] `rule "<id>" { severity, enabled, options, paths }` — per-rule
+  - [x] `rule "<id>" { severity, enabled, options, paths }` — per-rule
         override.
-  - [ ] `rules "<kind>" { ... }` — per-artifact-kind defaults fed into
+  - [x] `rules "<kind>" { ... }` — per-artifact-kind defaults fed into
         per-rule options during resolution.
-  - [ ] `ignore { paths = [...] }` — glob list.
-  - [ ] `output { format = "text|json|github" }`.
-- [ ] Config discovery: walk up from cwd for `.claudelint.hcl`; honor
-      `--config=PATH` as an override.
-- [ ] Resolution: produce a `ResolvedConfig` that answers
+  - [x] `ignore { paths = [...] }` — glob list.
+  - [x] `output { format = "text|json|github" }`.
+- [x] Config discovery: walk up from cwd for `.claudelint.hcl`; honor
+      `--config=PATH` as an override. *(override wiring on the `run`
+      command comes in Phase 1.4 when config flows into the engine.)*
+- [x] Resolution: produce a `ResolvedConfig` that answers
       `RuleEnabled(id)`, `RuleSeverity(id) Severity`,
       `RuleOption(id, key) any`, `PathIgnored(p) bool` in O(1).
-- [ ] `claudelint init` scaffolder writes a commented default
+- [x] `claudelint init` scaffolder writes a commented default
       `.claudelint.hcl` into cwd.
-- [ ] Error-path tests: every decode/validation error carries an HCL
+- [x] Error-path tests: every decode/validation error carries an HCL
       diagnostic with correct file/line/column.
 
 #### Success Criteria
