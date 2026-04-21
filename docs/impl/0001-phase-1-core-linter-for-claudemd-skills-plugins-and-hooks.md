@@ -122,10 +122,12 @@ that walks the repo and prints file counts — no rules wired yet.
       (`KindClaudeMD`, `KindSkill`, `KindCommand`, `KindAgent`,
       `KindHook`, `KindPlugin`) and the `Artifact` interface from
       DESIGN-0001.
-- [ ] Create `internal/discovery/` with a filesystem walker that
+- [x] Create `internal/discovery/` with a filesystem walker that
       classifies each path into an `ArtifactKind` using the patterns
       in DESIGN-0001 §Background. Honor `.gitignore` (root + nested +
       global) via a vetted ignore library.
+      *(Library pick: `github.com/sabhiram/go-gitignore`. Global and
+      `.git/info/exclude` are layered in by the walker.)*
 - [ ] Create `internal/reporter/text.go` with a minimal text
       formatter.
 - [ ] Wire `claudelint run` end-to-end: discover → (stub) run →
@@ -134,7 +136,7 @@ that walks the repo and prints file counts — no rules wired yet.
       `-ldflags`) plus `RulesetVersion` (semver constant in
       `internal/rules`) and `RulesetFingerprint` (auto-computed hash;
       see Phase 1.5), in the form `v1.2.0 (a1b2c3d4)`.
-- [ ] Unit tests: discovery classification over a fixture tree with
+- [x] Unit tests: discovery classification over a fixture tree with
       one example per `ArtifactKind` plus a negative (unrecognized)
       case.
 

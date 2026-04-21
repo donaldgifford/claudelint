@@ -33,6 +33,7 @@ Key decisions already locked in (see IMPL-0001 "Resolved Decisions"):
 
 - HCL v2 (`hashicorp/hcl/v2`) for config
 - `github.com/goccy/go-yaml` for YAML (precise line/column)
+- `github.com/sabhiram/go-gitignore` for `.gitignore` matching; discovery layers root + nested + global + `.git/info/exclude` on top
 - Cobra for the CLI; subcommands are `run`, `rules`, `init`, `version`, `convert` (convert is Phase 3, gated on INV-0001)
 - Concurrent runner, worker pool sized to `GOMAXPROCS`
 - Ruleset versioning: semver constant + auto-computed fingerprint hash, with a CI guardrail test
