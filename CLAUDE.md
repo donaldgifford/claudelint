@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Implementation of the Phase 1 MVP is complete end-to-end. `go.mod` is initialized (`github.com/donaldgifford/claudelint`, Go 1.26.1). The full MVP ruleset is registered, the concurrent runner is in place, all three suppression mechanisms are wired, and `run` supports `--format=text|json|github`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `make self-check`, `make coverage-gate`, `make bench`, and `make profile` are all wired. Two Phase 1.8 items remain as human-driven steps: dogfooding on external repos and tagging `v0.1.0`. The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
+Phase 1 MVP is shipped. PR #6 merged to `main` (commit `24dff7e`) and `v0.0.1` was auto-tagged via the release workflow. The full MVP ruleset is registered, the concurrent runner is in place, all three suppression mechanisms are wired, and `run` supports `--format=text|json|github`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `make self-check`, `make coverage-gate`, `make bench`, and `make profile` are all wired. Dogfooding happened during 1.8 (see INV-0003). The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
 
 - `docs/rfc/0001-*.md` — the proposal (why claudelint exists, scope, phases)
 - `docs/adr/0001-*.md` — HCL chosen as the config format
@@ -78,5 +78,7 @@ Use `Skill` with the `docz:*` skills for doc lifecycle work rather than reinvent
 ## Git / PR conventions
 
 - Branch prefixes drive auto-labeling (`.github/labeler.yml`): `feat/`, `fix/`, `chore/`, `docs/`, `bug/`. Use the `git-workflow:branch` skill.
-- `make release TAG=v1.0.0` tags + pushes; GitHub Actions + goreleaser handle the rest.
+- **Releases are label-driven, not manual.** `.github/workflows/release.yml` runs `jefflinse/pr-semver-bump` on every push to `main`; the merged PR's label (`major` / `minor` / `patch` / `dont-release`) determines the version bump and tag. Do **not** run `git tag` or `make release TAG=...` by hand — it would race the workflow. (`RELEASE.md` predates this and is stale for Phase 1; keep that in mind when reading it.)
 - Release assets are defined in `.goreleaser.yml`; `.codecov.yml` gates coverage reporting.
+- **No Docker distribution in Phase 1.** The docker-build CI job and the `docker:` release job were removed (they referenced a nonexistent `docker-bake.hcl`). If Docker comes back in a later phase, a real `docker-bake.hcl` + `Dockerfile` need to land first.
+- **GPG release signing:** the `GPG_PRIVATE_KEY` repo secret must be the output of `gpg --armor --export-secret-keys <keyid>` (begins with `-----BEGIN PGP PRIVATE KEY BLOCK-----`). The public-export variant imports cleanly but fails at sign-time with `gpg: skipped "***": No secret key`. `GPG_FINGERPRINT` is also required.
