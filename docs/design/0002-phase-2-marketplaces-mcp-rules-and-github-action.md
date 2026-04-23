@@ -31,6 +31,7 @@ created: 2026-04-23
   - [3. GitHub Action](#3-github-action)
     - [Distribution shape](#distribution-shape)
     - [Inputs / outputs](#inputs--outputs)
+    - [Supplementary: Docker container for non-GitHub CI](#supplementary-docker-container-for-non-github-ci)
     - [Integration with GitHub code scanning](#integration-with-github-code-scanning)
 - [API / Interface Changes](#api--interface-changes)
   - [CLI](#cli)
@@ -40,7 +41,7 @@ created: 2026-04-23
 - [Testing Strategy](#testing-strategy)
 - [Migration / Rollout Plan](#migration--rollout-plan)
 - [Related / Deferred from RFC-0001 Phase 2](#related--deferred-from-rfc-0001-phase-2)
-- [Open Questions](#open-questions)
+- [Resolved Decisions](#resolved-decisions)
 - [References](#references)
 <!--toc:end-->
 
@@ -118,8 +119,10 @@ array — each entry has a `source` field that drives layout:
   plugin components sit at the repo root alongside `.claude-plugin/`.
 - `source: "./plugins/foo"` — traditional layout; plugin lives in a
   subdirectory.
-- `source: "<git-url>"` — external; out of scope for linting (we only
-  lint local files).
+- `source: "<git-url>"` — external; we do **not** fetch or lint the
+  target, but we emit a `marketplace/external-source-skipped` info
+  diagnostic so users see the entry was noticed. Fetching remotes may
+  become an opt-in option in a future phase.
 
 A new artifact type `Marketplace` carries:
 
@@ -170,6 +173,7 @@ conventions):
 | `marketplace/plugin-name-unique` | error | duplicate `plugins[].name` values |
 | `marketplace/plugin-name-matches-dir` | warn | `plugins[].name` does not match the directory basename of `source` (UX guardrail) |
 | `marketplace/author-required` | info | `author` missing (not fatal — many public marketplaces omit it) |
+| `marketplace/external-source-skipped` | info | `plugins[].source` is a git URL — noticed but not fetched; opt-in remote fetch may arrive later |
 
 ### 2. MCP rule package
 
@@ -299,6 +303,34 @@ A two-job example consumer workflow lives in the action's README:
     upload-sarif: true
 ```
 
+#### Supplementary: Docker container for non-GitHub CI
+
+For users on GitLab CI, Jenkins, CircleCI, or local Docker runs, we
+publish a container image alongside the binary release:
+
+- Image: `ghcr.io/donaldgifford/claudelint:<tag>` and `:latest`.
+- Built by goreleaser as a `dockers:` target during the same release
+  run that produces the binaries (single source of truth for version +
+  commit ldflags).
+- Entrypoint: `/usr/local/bin/claudelint`, default command: `run .`.
+- Consumers run it as:
+
+  ```
+  docker run --rm -v "$PWD:/workspace" -w /workspace \
+    ghcr.io/donaldgifford/claudelint:v0.2.0 run --format=github .
+  ```
+
+The container is **not a prerequisite** for the composite Action — the
+Action still downloads the binary directly for speed. The container
+exists purely to give non-GitHub users a one-liner. `README.md` grows
+a "Running in CI" section with recipes for the common non-GitHub
+runners.
+
+Reintroducing Docker here reverses the Phase 1 decision to ship
+binaries only. The Phase 1 rationale was "no `docker-bake.hcl`, no
+plan." Phase 2 now has a plan — a minimal `Dockerfile` under
+`build/docker/` invoked by goreleaser, no bake file needed.
+
 #### Integration with GitHub code scanning
 
 `format: sarif` emits SARIF 2.1.0 written to
@@ -375,14 +407,16 @@ Structure mirrors `internal/reporter/json.go`; reuses the same
 2. Land `rules/mcp/` + `KindMCPServer`. Add `.mcp.json` to the default
    discovery globs.
 3. Add `internal/reporter/sarif.go` and the `--format=sarif` CLI flag.
-4. Stand up `donaldgifford/claudelint-action` (separate repo) pointing
+4. Add the `dockers:` target to `.goreleaser.yml` + `build/docker/Dockerfile`.
+   Verify `make release-local` produces a working image.
+5. Cut `claudelint v0.2.0` (minor bump) — new rules are additive;
+   existing configs continue to work. Release run must now produce
+   both signed binaries and the container image on GHCR.
+6. Stand up `donaldgifford/claudelint-action` (separate repo) pointing
    at claudelint `v0.2.0`. Tag `v1.0.0` + move `v1` after the Action's
    own E2E passes against the claudelint fixture repo.
-5. Dogfood on the Anthropic marketplace + two of Donald's own plugin
+7. Dogfood on the Anthropic marketplace + two of Donald's own plugin
    repos before announcing.
-6. Cut `claudelint v0.2.0` (minor bump) — new rules are additive;
-   existing configs continue to work; users opt in by setting the
-   default in their workflow or config.
 
 ## Related / Deferred from RFC-0001 Phase 2
 
@@ -402,27 +436,28 @@ disposition:
 - **Pre-commit hook** → **deferred**. Low effort but adds a maintenance
   surface; wait for a real user ask before shipping.
 
-## Open Questions
+## Resolved Decisions
 
-1. **Marketplace external sources** — do we lint `plugins[].source`
-   entries that point at external git URLs? Current plan: no, but emit
-   an `info` diagnostic that says "external source skipped" so users
-   know we didn't silently ignore it. Worth validating with real
-   marketplaces.
-2. **MCP `command` resolution on different OSes** — `mcp/command-exists-on-path`
-   is intentionally a *warning*, not an error, because CI runners
-   may not have the same tools installed as user machines. Is that
-   the right default?
-3. **Action distribution — composite vs Docker** — composite is
-   proposed for startup speed, but Docker gives hermetic builds. If
-   the binary-download step turns out to be flaky (rate limits, GPG
-   verification failures), we may need to fall back to Docker. Test
-   during rollout step 4.
-4. **SARIF `partialFingerprints`** — should we emit stable hashes per
-   diagnostic so GitHub deduplicates findings across runs? Yes in
-   principle, but computing a hash that is stable across trivial
-   whitespace changes is non-trivial. Propose: ship without
-   fingerprints in v0.2.0, add in v0.3.0 once we see real noise.
+The four original Open Questions were resolved during design review
+(2026-04-23):
+
+1. **Marketplace external sources →** skip by default; emit a
+   `marketplace/external-source-skipped` info diagnostic per external
+   entry so users see we noticed them. Opt-in remote fetching may be
+   revisited in a later phase if there's demand.
+2. **`mcp/command-exists-on-path` severity →** `warn`, no narrowing to
+   "known runners only." Users who want stricter can bump the rule to
+   `error` in config.
+3. **Action distribution →** composite Action is the primary path
+   (fast startup, no pull penalty). **In addition**, publish a Docker
+   container image (`ghcr.io/donaldgifford/claudelint`) as a
+   supplementary distribution for non-GitHub CI (GitLab, Jenkins,
+   local Docker) and for users who want hermetic runs. This reverses
+   the Phase 1 "no Docker" decision, but the plan is now concrete —
+   goreleaser `dockers:` target + a minimal `Dockerfile`, no bake file.
+4. **SARIF `partialFingerprints` →** defer. v0.2.0 ships without
+   fingerprints; reassess in v0.3.0 once we see whether line-shift
+   noise is a real problem for adopters.
 
 ## References
 
