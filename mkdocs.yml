@@ -9,6 +9,7 @@ nav:
     - Design:
         - Overview: design/README.md
         - 'DESIGN-0001: Claudelint linter architecture and rule engine': design/0001-claudelint-linter-architecture-and-rule-engine.md
+        - 'DESIGN-0002: Phase 2 — marketplaces, MCP rules, and GitHub Action': design/0002-phase-2-marketplaces-mcp-rules-and-github-action.md
     - Implementation Plans:
         - Overview: impl/README.md
         - 'IMPL-0001: Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks': impl/0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md
