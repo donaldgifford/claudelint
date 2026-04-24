@@ -115,17 +115,17 @@ or rule changes yet — this phase only extends the artifact layer.
   `internal/artifact/artifact.go`.
 - [x] Add `Marketplace` and `MarketplacePlugin` structs to
   `internal/artifact/types.go` per DESIGN-0002 §1.
-- [ ] Implement `ParseMarketplace(path string, src []byte) (Marketplace, error)`
+- [x] Implement `ParseMarketplace(path string, src []byte) (Marketplace, error)`
   in a new `internal/artifact/parse_marketplace.go`, mirroring
   `ParsePlugin` in `parse_json.go`. Use `buger/jsonparser` to capture
   byte offsets for `plugins[].source`.
-- [ ] Resolve each `plugins[].source` relative to the repo root; set
+- [x] Resolve each `plugins[].source` relative to the repo root; set
   `Resolved = ""` for external (git URL) sources.
-- [ ] Add frontmatter-free fixtures under
-  `internal/artifact/testdata/ok/marketplaces/` (single, traditional,
-  flat layouts) and `testdata/bad/` (malformed JSON, missing
-  `plugins`, non-string `source`).
-- [ ] Add `internal/artifact/parse_marketplace_test.go` — table-driven
+- [x] Add frontmatter-free fixtures under
+  `internal/artifact/testdata/ok/marketplaces/` (flat, traditional,
+  mixed-external layouts) and `testdata/bad/` (malformed JSON,
+  missing `plugins`, non-string `source`).
+- [x] Add `internal/artifact/parse_marketplace_test.go` — table-driven
   tests covering each fixture and byte-offset assertions.
 
 #### Success Criteria

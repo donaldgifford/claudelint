@@ -1,0 +1,11 @@
+{
+  "name": "claude-skills",
+  "version": "1.0.0",
+  "author": "Donald Gifford",
+  "plugins": [
+    {
+      "name": "claude-skills",
+      "source": "./"
+    }
+  ]
+}
