@@ -113,7 +113,7 @@ or rule changes yet — this phase only extends the artifact layer.
 
 - [x] Add `KindMarketplace` to the `ArtifactKind` enum in
   `internal/artifact/artifact.go`.
-- [ ] Add `Marketplace` and `MarketplacePlugin` structs to
+- [x] Add `Marketplace` and `MarketplacePlugin` structs to
   `internal/artifact/types.go` per DESIGN-0002 §1.
 - [ ] Implement `ParseMarketplace(path string, src []byte) (Marketplace, error)`
   in a new `internal/artifact/parse_marketplace.go`, mirroring

@@ -144,6 +144,47 @@ type Plugin struct {
 // Kind implements Artifact.
 func (*Plugin) Kind() ArtifactKind { return KindPlugin }
 
+// Marketplace is a plugin-marketplace manifest
+// (.claude-plugin/marketplace.json). It carries the manifest-level
+// fields plus the parsed plugins[] entries; discovery reads Plugins
+// to drive the walker into each local plugin root.
+type Marketplace struct {
+	Base
+
+	Name         string
+	NameRange    diag.Range
+	Version      string
+	VersionRange diag.Range
+	Author       string
+	AuthorRange  diag.Range
+
+	// Plugins is the parsed plugins[] array, in manifest order.
+	Plugins []MarketplacePlugin
+}
+
+// Kind implements Artifact.
+func (*Marketplace) Kind() ArtifactKind { return KindMarketplace }
+
+// MarketplacePlugin is one entry in a marketplace manifest's plugins[]
+// array. Resolved is the repo-relative path for local sources; it is
+// the empty string for external (git URL) entries, which rules treat
+// as "skip with info".
+type MarketplacePlugin struct {
+	// Name is the plugins[].name field verbatim.
+	Name      string
+	NameRange diag.Range
+
+	// Source is the plugins[].source field verbatim ("./",
+	// "./plugins/foo", "github:owner/repo", etc.).
+	Source      string
+	SourceRange diag.Range
+
+	// Resolved is the repo-relative path the source resolves to, or
+	// "" if the source is external or cannot be resolved. Always
+	// slash-separated.
+	Resolved string
+}
+
 // Compile-time proof that every concrete type satisfies Artifact.
 var (
 	_ Artifact = (*ClaudeMD)(nil)
@@ -152,4 +193,5 @@ var (
 	_ Artifact = (*Agent)(nil)
 	_ Artifact = (*Hook)(nil)
 	_ Artifact = (*Plugin)(nil)
+	_ Artifact = (*Marketplace)(nil)
 )
