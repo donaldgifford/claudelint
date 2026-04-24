@@ -26,6 +26,8 @@ func (*noUnsafeShell) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMCPServer}
 }
 
+func (*noUnsafeShell) HelpURI() string { return rules.DefaultHelpURI("mcp/no-unsafe-shell") }
+
 func (r *noUnsafeShell) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
 	if !ok {

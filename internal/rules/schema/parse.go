@@ -29,6 +29,9 @@ func (*parseRule) AppliesTo() []artifact.ArtifactKind {
 
 // Check is a no-op. Engine.Run never dispatches to it; it exists only
 // to satisfy the Rule interface.
+
+func (*parseRule) HelpURI() string { return rules.DefaultHelpURI("schema/parse") }
+
 func (*parseRule) Check(_ rules.Context, _ artifact.Artifact) []diag.Diagnostic {
 	return nil
 }

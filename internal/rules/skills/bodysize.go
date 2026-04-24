@@ -35,6 +35,8 @@ func (*bodySize) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindSkill}
 }
 
+func (*bodySize) HelpURI() string { return rules.DefaultHelpURI("skills/body-size") }
+
 func (r *bodySize) Check(ctx rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.Skill)
 	if !ok {

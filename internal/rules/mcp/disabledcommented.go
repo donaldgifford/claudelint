@@ -27,6 +27,8 @@ func (*disabledCommented) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMCPServer}
 }
 
+func (*disabledCommented) HelpURI() string { return rules.DefaultHelpURI("mcp/disabled-commented") }
+
 func (r *disabledCommented) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
 	if !ok || !s.Disabled {

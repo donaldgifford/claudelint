@@ -25,6 +25,8 @@ func (*manifestFields) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindPlugin}
 }
 
+func (*manifestFields) HelpURI() string { return rules.DefaultHelpURI("plugin/manifest-fields") }
+
 func (r *manifestFields) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	p, ok := a.(*artifact.Plugin)
 	if !ok {

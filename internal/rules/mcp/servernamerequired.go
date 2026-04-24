@@ -21,6 +21,8 @@ func (*serverNameRequired) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMCPServer}
 }
 
+func (*serverNameRequired) HelpURI() string { return rules.DefaultHelpURI("mcp/server-name-required") }
+
 func (r *serverNameRequired) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
 	if !ok || s.Name != "" {

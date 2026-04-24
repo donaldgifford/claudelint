@@ -30,6 +30,8 @@ func (*versionSemver) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*versionSemver) HelpURI() string { return rules.DefaultHelpURI("marketplace/version-semver") }
+
 func (r *versionSemver) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

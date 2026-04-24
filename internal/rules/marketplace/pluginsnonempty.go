@@ -21,6 +21,8 @@ func (*pluginsNonempty) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*pluginsNonempty) HelpURI() string { return rules.DefaultHelpURI("marketplace/plugins-nonempty") }
+
 func (r *pluginsNonempty) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

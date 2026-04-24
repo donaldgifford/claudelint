@@ -23,6 +23,10 @@ func (*pluginNameUnique) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*pluginNameUnique) HelpURI() string {
+	return rules.DefaultHelpURI("marketplace/plugin-name-unique")
+}
+
 func (r *pluginNameUnique) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

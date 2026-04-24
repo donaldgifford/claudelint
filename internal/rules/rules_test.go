@@ -23,6 +23,7 @@ func (s *stubRule) Category() string                   { return s.cat }
 func (s *stubRule) DefaultSeverity() diag.Severity     { return s.sev }
 func (s *stubRule) DefaultOptions() map[string]any     { return s.opts }
 func (s *stubRule) AppliesTo() []artifact.ArtifactKind { return s.applies }
+func (s *stubRule) HelpURI() string                    { return DefaultHelpURI(s.id) }
 func (s *stubRule) Check(ctx Context, a artifact.Artifact) []diag.Diagnostic {
 	if s.checkFn != nil {
 		return s.checkFn(ctx, a)

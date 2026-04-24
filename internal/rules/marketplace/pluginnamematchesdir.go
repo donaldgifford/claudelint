@@ -28,6 +28,10 @@ func (*pluginNameMatchesDir) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*pluginNameMatchesDir) HelpURI() string {
+	return rules.DefaultHelpURI("marketplace/plugin-name-matches-dir")
+}
+
 func (r *pluginNameMatchesDir) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

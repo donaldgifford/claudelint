@@ -21,6 +21,8 @@ func (*authorRequired) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*authorRequired) HelpURI() string { return rules.DefaultHelpURI("marketplace/author-required") }
+
 func (r *authorRequired) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

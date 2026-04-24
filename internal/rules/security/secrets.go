@@ -47,6 +47,8 @@ var highEntropyCandidate = regexp.MustCompile(`[A-Za-z0-9+/=]{40,}`)
 
 const minSecretEntropy = 4.0
 
+func (*secrets) HelpURI() string { return rules.DefaultHelpURI("security/secrets") }
+
 func (r *secrets) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	src := a.Source()
 	var out []diag.Diagnostic

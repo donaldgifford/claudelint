@@ -281,16 +281,16 @@ read from one source of truth.
 
 #### Tasks
 
-- [ ] Extend the `Rule` interface in `internal/rules/rules.go` with
+- [x] Extend the `Rule` interface in `internal/rules/rules.go` with
   `HelpURI() string`. Document the convention: URL in
   `README.md` for Phase 2; a dedicated rules docs site later.
-- [ ] Provide a default via a small embeddable helper (e.g.
+- [x] Provide a default via a small embeddable helper (e.g.
   `rules.DefaultHelpURI(id)`) that returns
   `"https://github.com/donaldgifford/claudelint/blob/main/README.md#rule-<id>"`
   so rule authors can just return the default unless they override.
-- [ ] Touch every existing rule to return a URI (default is fine for
+- [x] Touch every existing rule to return a URI (default is fine for
   Phase 1 rules; new Phase 2 rules use the same default).
-- [ ] Add `--json` flag to `claudelint rules` in
+- [x] Add `--json` flag to `claudelint rules` in
   `internal/cli/rules.go`. Output schema:
 
   ```json
@@ -311,9 +311,9 @@ read from one source of truth.
   }
   ```
 
-- [ ] Document the new schema in `docs/rules-json-schema.md` (analogous
+- [x] Document the new schema in `docs/rules-json-schema.md` (analogous
   to Phase 1's `docs/json-output-schema.md`).
-- [ ] `internal/cli/rules_test.go` — assert both text and JSON output
+- [x] `internal/cli/rules_test.go` — assert both text and JSON output
   shapes against a fixed subset of rules.
 
 #### Success Criteria

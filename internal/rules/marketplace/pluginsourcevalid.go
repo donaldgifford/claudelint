@@ -25,6 +25,10 @@ func (*pluginSourceValid) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*pluginSourceValid) HelpURI() string {
+	return rules.DefaultHelpURI("marketplace/plugin-source-valid")
+}
+
 func (r *pluginSourceValid) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

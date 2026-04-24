@@ -32,6 +32,8 @@ func (*name) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*name) HelpURI() string { return rules.DefaultHelpURI("marketplace/name") }
+
 func (r *name) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

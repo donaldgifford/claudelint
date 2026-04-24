@@ -31,6 +31,8 @@ func (*commandRequired) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMCPServer}
 }
 
+func (*commandRequired) HelpURI() string { return rules.DefaultHelpURI("mcp/command-required") }
+
 func (r *commandRequired) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
 	if !ok {

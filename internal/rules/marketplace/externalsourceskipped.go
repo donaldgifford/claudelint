@@ -30,6 +30,10 @@ func (*externalSourceSkipped) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMarketplace}
 }
 
+func (*externalSourceSkipped) HelpURI() string {
+	return rules.DefaultHelpURI("marketplace/external-source-skipped")
+}
+
 func (r *externalSourceSkipped) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	m, ok := a.(*artifact.Marketplace)
 	if !ok {

@@ -28,6 +28,8 @@ func (*size) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindClaudeMD}
 }
 
+func (*size) HelpURI() string { return rules.DefaultHelpURI("claude_md/size") }
+
 func (r *size) Check(ctx rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	c, ok := a.(*artifact.ClaudeMD)
 	if !ok {

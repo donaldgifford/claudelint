@@ -49,6 +49,10 @@ func (*commandExistsOnPath) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMCPServer}
 }
 
+func (*commandExistsOnPath) HelpURI() string {
+	return rules.DefaultHelpURI("mcp/command-exists-on-path")
+}
+
 func (r *commandExistsOnPath) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
 	if !ok || s.Command == "" {

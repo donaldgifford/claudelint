@@ -30,6 +30,8 @@ func (*noSecretsInEnv) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindMCPServer}
 }
 
+func (*noSecretsInEnv) HelpURI() string { return rules.DefaultHelpURI("mcp/no-secrets-in-env") }
+
 func (r *noSecretsInEnv) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
 	if !ok || len(s.Env) == 0 {
