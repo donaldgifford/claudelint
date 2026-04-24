@@ -243,21 +243,23 @@ Ship the six MCP rules. Share the secrets matcher with
 
 #### Tasks
 
-- [ ] Expose a narrow `security.MatchesSecret([]byte) bool` from the
+- [x] Expose a narrow `security.MatchesSecret([]byte) bool` from the
   existing `internal/rules/security/` package so
   `rules/mcp/nosecretsinenv.go` can call it without the regex tables
   leaking out of the `security` package.
-- [ ] Create `internal/rules/mcp/` with:
-  - [ ] `mcp/command-required` (error) — `commandrequired.go`
-  - [ ] `mcp/command-exists-on-path` (warn) — `commandexistsonpath.go`
-  - [ ] `mcp/no-secrets-in-env` (error) — `nosecretsinenv.go`
-  - [ ] `mcp/no-unsafe-shell` (error) — `nounsafeshell.go` (mirror
+- [x] Create `internal/rules/mcp/` with:
+  - [x] `mcp/command-required` (error) — `commandrequired.go`
+  - [x] `mcp/command-exists-on-path` (warn) — `commandexistsonpath.go`
+    *(typo-catcher against a curated runner allowlist; path-qualified
+    commands and absolute paths are skipped)*
+  - [x] `mcp/no-secrets-in-env` (error) — `nosecretsinenv.go`
+  - [x] `mcp/no-unsafe-shell` (error) — `nounsafeshell.go` (mirror
     `hooks/nounsafeshell.go`)
-  - [ ] `mcp/disabled-commented` (info) — `disabledcommented.go`
-  - [ ] `mcp/server-name-required` (error) — `servernamerequired.go`
-- [ ] Blank-import `rules/mcp` from `internal/rules/all/all.go`.
-- [ ] `internal/rules/mcp/mcp_test.go` — table-driven per rule.
-- [ ] Update `expected_fingerprint.txt` again.
+  - [x] `mcp/disabled-commented` (info) — `disabledcommented.go`
+  - [x] `mcp/server-name-required` (error) — `servernamerequired.go`
+- [x] Blank-import `rules/mcp` from `internal/rules/all/all.go`.
+- [x] `internal/rules/mcp/mcp_test.go` — table-driven per rule.
+- [x] Update `expected_fingerprint.txt` (now `4cee5ee7`).
 
 #### Success Criteria
 

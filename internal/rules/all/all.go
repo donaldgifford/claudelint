@@ -17,6 +17,7 @@ import (
 	_ "github.com/donaldgifford/claudelint/internal/rules/commands"
 	_ "github.com/donaldgifford/claudelint/internal/rules/hooks"
 	_ "github.com/donaldgifford/claudelint/internal/rules/marketplace"
+	_ "github.com/donaldgifford/claudelint/internal/rules/mcp"
 	_ "github.com/donaldgifford/claudelint/internal/rules/plugin"
 	_ "github.com/donaldgifford/claudelint/internal/rules/schema"
 	_ "github.com/donaldgifford/claudelint/internal/rules/security"
