@@ -426,23 +426,29 @@ announcing.
 
 #### Tasks
 
-- [ ] Update `CHANGELOG.md` with a v0.2.0 section describing the new
+- [x] Update `CHANGELOG.md` with a v0.2.0 section describing the new
   artifact kinds, rule packages, SARIF output, Docker image, and
   ruleset version bump.
 - [ ] Merge the final Phase 2 PR to `main` with the `minor` release
-  label so `jefflinse/pr-semver-bump` produces `v0.2.0`.
+  label so `jefflinse/pr-semver-bump` produces `v0.2.0`. (Deferred
+  until Phase 2.9 lands; the release cuts once on the merge to `main`.)
 - [ ] Verify the release workflow produces:
   - binaries for darwin/linux/windows × amd64/arm64 (plus windows
     amd64 only);
   - signed checksums;
   - a working `ghcr.io/donaldgifford/claudelint:v0.2.0` image;
   - the image tagged as `:latest` and `:v0`.
-- [ ] Dogfood `claudelint run` against `donaldgifford/claude-skills`
+
+  (Deferred — validated at release time, after Phase 2.9.)
+- [x] Dogfood `claudelint run` against `donaldgifford/claude-skills`
   (the donald-loop / docz / go-development marketplace) as the
   primary Phase 2 dogfood target.
-- [ ] Record dogfood findings in a new
-  `docs/investigation/0005-phase-2-dogfood-findings.md` — same
-  template as INV-0003.
+- [x] Record dogfood findings in
+  `docs/investigation/0005-phase-2-dogfood-findings-marketplaces-mcp-and-spec-divergence.md`.
+  Primary finding: marketplace manifests in the wild nest `version` and
+  `owner` instead of top-level `version`/`author`, so two rules produce
+  false positives on conforming real marketplaces. Tracked as follow-up
+  for v0.3.0 rather than blocking the ship.
 
 #### Success Criteria
 
