@@ -10,21 +10,22 @@ package artifact
 // hooks/event-name-known, etc.) read from this package rather than
 // defining their own lists, so there is one source of truth.
 var KnownTools = map[string]struct{}{
-	"Bash":         {},
-	"BashOutput":   {},
-	"Edit":         {},
-	"ExitPlanMode": {},
-	"Glob":         {},
-	"Grep":         {},
-	"KillShell":    {},
-	"MultiEdit":    {},
-	"NotebookEdit": {},
-	"Read":         {},
-	"Task":         {},
-	"TodoWrite":    {},
-	"WebFetch":     {},
-	"WebSearch":    {},
-	"Write":        {},
+	"AskUserQuestion": {},
+	"Bash":            {},
+	"BashOutput":      {},
+	"Edit":            {},
+	"ExitPlanMode":    {},
+	"Glob":            {},
+	"Grep":            {},
+	"KillShell":       {},
+	"MultiEdit":       {},
+	"NotebookEdit":    {},
+	"Read":            {},
+	"Task":            {},
+	"TodoWrite":       {},
+	"WebFetch":        {},
+	"WebSearch":       {},
+	"Write":           {},
 }
 
 // IsKnownTool reports whether name is in the canonical tool list.

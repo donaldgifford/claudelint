@@ -30,6 +30,17 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - Ruleset version bumped to `v1.1.0` (minor, additive) to reflect the
   new rule packages.
 
+### Fixed
+
+- `marketplace/version-semver` and `marketplace/author-required` no
+  longer produce false positives on marketplace manifests that nest
+  `version` under `metadata.version` or express `author` as an
+  `owner{name,email}` object. The parser now accepts both the shape
+  DESIGN-0002 documents and the shape real marketplaces (e.g.
+  `donaldgifford/claude-skills`) actually use. See INV-0005.
+- `commands/allowed-tools-known` now recognizes `AskUserQuestion` as a
+  Claude Code built-in tool.
+
 ## [v0.0.1]
 
 ### Added

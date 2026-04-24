@@ -59,6 +59,21 @@ func TestParseMarketplaceFixtures(t *testing.T) {
 				{name: "external-https", source: "https://example.com/some/repo.git", resolved: ""},
 			},
 		},
+		{
+			// Nested shape used by real marketplaces in the wild:
+			// owner{name,email} object instead of a top-level author,
+			// metadata{description,version} instead of a top-level
+			// version. INV-0005 surfaced this during Phase 2 dogfood.
+			name:     "nested-shape",
+			file:     "testdata/ok/marketplaces/nested_shape/marketplace.json",
+			relPath:  ".claude-plugin/marketplace.json",
+			wantName: "donaldgifford-claude-skills",
+			wantVer:  "2.0.0",
+			wantAuth: "donaldgifford",
+			plugins: []wantPlugin{
+				{name: "claude-md", source: "./plugins/claude-md", resolved: "plugins/claude-md"},
+			},
+		},
 	}
 
 	for _, tt := range tests {

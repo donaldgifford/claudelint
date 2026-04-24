@@ -42,11 +42,32 @@ func ParseMarketplace(filePath string, src []byte) (*Marketplace, *ParseError) {
 
 	m := &Marketplace{Base: base}
 	m.Name, m.NameRange = stringField(src, &base, "name")
-	m.Version, m.VersionRange = stringField(src, &base, "version")
-	m.Author, m.AuthorRange = stringField(src, &base, "author")
+	// Real-world marketplaces in the Claude Code ecosystem (e.g.
+	// donaldgifford/claude-skills) nest version under metadata.version
+	// and use an owner{name,email} object instead of a top-level author
+	// string. Accept both shapes, preferring the top-level form when
+	// present so authors who follow DESIGN-0002 §2.1 literally still
+	// see their range point at the obvious token.
+	m.Version, m.VersionRange = stringFieldPath(src, &base, []string{"version"}, []string{"metadata", "version"})
+	m.Author, m.AuthorRange = stringFieldPath(src, &base, []string{"author"}, []string{"owner", "name"})
 	m.Plugins = parseMarketplacePlugins(src, &base, marketplaceRoot(filePath))
 
 	return m, nil
+}
+
+// stringFieldPath tries each path in turn and returns the first string
+// match with its byte range. Missing / non-string values fall through
+// to the next path. All paths empty → zero value.
+func stringFieldPath(src []byte, base *Base, paths ...[]string) (string, diag.Range) {
+	for _, p := range paths {
+		value, dt, off, err := jsonparser.Get(src, p...)
+		if err != nil || dt != jsonparser.String {
+			continue
+		}
+		end := min(off+2+len(value), len(src))
+		return string(value), base.ResolveRange(off, end)
+	}
+	return "", diag.Range{}
 }
 
 // parseMarketplacePlugins iterates the plugins[] array and resolves

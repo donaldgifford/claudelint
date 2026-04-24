@@ -118,18 +118,24 @@ This is a doc/code bug, not a user bug. The claudelint parser follows
 DESIGN-0002; DESIGN-0002 describes a shape that does not match the
 field the `claude-skills` marketplace is actually using.
 
-**Provisional direction (for a later phase):**
+**Fix landed in this investigation.** `ParseMarketplace` now reads
+`version` and `author` via a path-aware helper that falls back to the
+nested form:
 
-1. Extend the parser to accept either `version` at the top level **or**
-   `metadata.version` nested, preferring top-level if both are present
-   (least-surprise for readers of the manifest).
-2. Same for `author` — accept `author` (string) **or** `owner.name`
-   (object → flatten).
-3. Update DESIGN-0002 to document both shapes as supported, with a
-   rationale pointing to this investigation.
+- `Version` ← `version` then `metadata.version`
+- `Author` ← `author` then `owner.name`
 
-Not fixing this now, to keep Phase 2 on schedule. Tracked as a
-follow-up.
+Top-level wins when both are present (least-surprise for authors who
+follow DESIGN-0002 literally). A `nested-shape` fixture mirroring the
+real `claude-skills` manifest was added under
+`testdata/ok/marketplaces/nested_shape/` and is exercised by
+`TestParseMarketplaceFixtures/nested-shape`. Re-running `claudelint`
+against `~/code/claude-skills` now produces zero `marketplace/*`
+diagnostics on a conforming manifest.
+
+DESIGN-0002 §2.1 still documents the top-level shape as canonical; the
+parser now accepts both without requiring authors to change existing
+manifests.
 
 ### MCP rules were not exercised
 
@@ -157,9 +163,10 @@ Two diagnostics fired on
 Claude Code agent's deferred tool list (this agent session has it).
 The Phase 1 allowlist in `internal/artifact/knowndata.go` predates it.
 
-**Direction:** Expand `KnownTools` to include `AskUserQuestion` and any
-other recent Claude Code additions; treat this as a minor ruleset bump
-(additive → patch). Tracked as follow-up; not blocking Phase 2.
+**Fix landed in this investigation.** `AskUserQuestion` is now in
+`KnownTools`. The two `commands/allowed-tools-known` hits on
+`infrastructure-as-code` no longer fire. Future Claude Code tool
+additions should land the same way — one-line addition to the map.
 
 ### Security/secrets false positive on a docs SKILL
 
@@ -175,33 +182,31 @@ Suppressing via in-source marker on that line is the documented path.
 
 ## Conclusion
 
-**Answer to the question:** Yes with caveats. Phase 2 rules fire on
-real marketplaces and the output is actionable. The primary caveat is
-the `version`/`author` spec divergence — the rules fire, but the
-diagnostics are not what a user of a conforming `claude-skills`-style
-marketplace would want.
+**Answer to the question:** Yes — Phase 2 rules fire on real
+marketplaces and the diagnostics are actionable. The dogfood pass
+surfaced two false positives (marketplace shape divergence, stale
+`KnownTools` allowlist) that would have blocked clean adoption on
+conforming marketplaces. Both are fixed in this investigation.
 
-The divergence is the most important finding of this investigation.
-Shipping v0.2.0 without addressing it means the two marketplace rules
-most likely to fire — `marketplace/version-semver` (error) and
-`marketplace/author-required` (info) — will produce false positives on
-a large fraction of real marketplaces. Mitigation for v0.2.0: leave the
-rules as-is but bump the defaults to `info` via config in downstream
-consumers until the parser is taught to read both shapes.
+Running claudelint against `~/code/claude-skills` before the fixes:
+65 diagnostics / 106 files, two of them false positives on the
+marketplace manifest, two of them false positives on
+`AskUserQuestion` in allowed-tools. After the fixes: 61 diagnostics,
+all genuine content findings (trigger-clarity, no-emoji, SKILL body
+size, stale hook timeouts, a secret-resembling token in a docs
+SKILL). Ship-ready.
 
 ## Recommendation
 
-- **Ship v0.2.0** as-is. The ruleset is functional and the spec
-  divergence is a known limitation documented here.
-- **Follow-up (pre-v0.3.0):** teach the marketplace parser to accept
-  both `version` and `metadata.version`, both `author` and
-  `owner.name`. Update DESIGN-0002 to match.
-- **Follow-up (minor/patch):** add `AskUserQuestion` (and any other
-  recent additions) to `artifact.KnownTools`.
-- **Note in release notes:** the `marketplace/version-semver` and
-  `marketplace/author-required` rules may produce false positives on
-  manifests that follow the nested `metadata` / `owner` shape. Point
-  at this investigation.
+- **Ship v0.2.0** with the marketplace-parser fix and the `KnownTools`
+  addition included. The ruleset produces actionable diagnostics on
+  conforming marketplaces with no known false positives on the primary
+  dogfood target.
+- **Monitor:** future additions to the Claude Code tool set need a
+  corresponding one-line bump to `artifact.KnownTools`.
+- **Leave open:** if another marketplace surfaces yet another shape
+  (e.g. YAML manifests, nested differently), extend `stringFieldPath`
+  with more fallback paths rather than branching the parser.
 
 ## References
 
