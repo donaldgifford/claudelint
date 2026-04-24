@@ -87,13 +87,16 @@ func classifyMarketplace(p string) (artifact.ArtifactKind, bool) {
 }
 
 // classifyRoot handles files whose classification depends only on
-// their basename (CLAUDE.md at any depth, plugin manifests).
+// their basename (CLAUDE.md at any depth, plugin manifests, MCP
+// server declarations).
 func classifyRoot(base string) (artifact.ArtifactKind, bool) {
 	switch base {
 	case "CLAUDE.md":
 		return artifact.KindClaudeMD, true
 	case "plugin.json", "plugin.yaml", "plugin.yml":
 		return artifact.KindPlugin, true
+	case ".mcp.json":
+		return artifact.KindMCPServer, true
 	}
 	return "", false
 }

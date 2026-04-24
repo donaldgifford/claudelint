@@ -207,27 +207,24 @@ from both standalone `.mcp.json` and plugin-embedded `mcp.servers{}`.
 
 #### Tasks
 
-- [ ] Add `KindMCPServer` to the `ArtifactKind` enum.
-- [ ] Add `MCPServer` struct to `internal/artifact/types.go` per
+- [x] Add `KindMCPServer` to the `ArtifactKind` enum.
+- [x] Add `MCPServer` struct to `internal/artifact/types.go` per
   DESIGN-0002 §2 (includes `Embedded bool`).
-- [ ] Implement `ParseMCPFile(path string, src []byte) ([]MCPServer, error)`
-  and `ParseMCPEmbedded(pluginPath string, serversObj []byte) ([]MCPServer, error)`
-  in `internal/artifact/parse_mcp.go`. Both delegate to a private
-  `parseServerEntry()` so the rule-relevant fields (and byte ranges)
-  are shared.
-- [ ] Extend `ParsePlugin` in `parse_json.go` to detect the
-  `mcp.servers` field when present. The walker emits each embedded
-  server as an independent `KindMCPServer` candidate (not attached to
-  the `Plugin` struct) so `rules/mcp/` rules only ever see
-  `KindMCPServer` artifacts — matches how hook entries are handled.
-- [ ] Add `.mcp.json` to the default discovery file-name list in
-  `internal/discovery/walk.go`.
-- [ ] Extend `Classify()` to map repo-root `.mcp.json` to
-  `KindMCPServer`.
-- [ ] Fixtures: `testdata/ok/mcp/standalone.json`,
+- [x] Implement `ParseMCPFile(path string, src []byte) ([]*MCPServer, *ParseError)`
+  and `ParseMCPEmbedded(pluginPath string, src []byte) ([]*MCPServer, error)`
+  in `internal/artifact/parse_mcp.go`. Both delegate to a shared
+  `collectServers()` so rule-relevant fields stay consistent.
+- [x] Wire `parseOne` so a plugin manifest with `mcp.servers{}` emits
+  each embedded server as an independent `KindMCPServer` candidate
+  alongside the `Plugin` artifact. `parseOne` now returns a slice so
+  one file can fan out cleanly; single-artifact kinds return a
+  one-element slice via `wrapOne`.
+- [x] Map `.mcp.json` (at any depth) to `KindMCPServer` in
+  `Classify()`. Discovery picks it up through the existing walk.
+- [x] Fixtures: `testdata/ok/mcp/standalone.json`,
   `testdata/ok/mcp/embedded_in_plugin.json`, plus bad-case
-  (malformed, missing `command`, non-string env value).
-- [ ] Parser tests in `internal/artifact/parse_mcp_test.go`.
+  (`mcp_missing_command.json`, `mcp_nonobject_servers.json`).
+- [x] Parser tests in `internal/artifact/parse_mcp_test.go`.
 
 #### Success Criteria
 

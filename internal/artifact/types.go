@@ -185,6 +185,43 @@ type MarketplacePlugin struct {
 	Resolved string
 }
 
+// MCPServer is one MCP (Model Context Protocol) server declaration.
+// It is the artifact unit even when many servers live in one file:
+// one MCPServer per map entry in `.mcp.json`'s servers{} or in a
+// plugin.json's mcp.servers{}. Per-entry artifacts let rules attach
+// diagnostics to individual servers with precise byte ranges, the
+// same approach Phase 1 used for hook entries.
+type MCPServer struct {
+	Base
+
+	// Name is the map-key under servers{}.
+	Name      string
+	NameRange diag.Range
+
+	// Command is the executable the server runs (typically a
+	// language runner: uvx, npx, bunx, etc.).
+	Command      string
+	CommandRange diag.Range
+
+	// Args is the argv passed to Command.
+	Args []string
+
+	// Env is the per-server environment map.
+	Env map[string]string
+
+	// Disabled mirrors the optional disabled flag — disabled servers
+	// still parse but rules can choose to skip them.
+	Disabled bool
+
+	// Embedded is true when the server came from a plugin's
+	// plugin.json (mcp.servers{}) rather than a standalone .mcp.json.
+	// Some rules apply to only one context.
+	Embedded bool
+}
+
+// Kind implements Artifact.
+func (*MCPServer) Kind() ArtifactKind { return KindMCPServer }
+
 // Compile-time proof that every concrete type satisfies Artifact.
 var (
 	_ Artifact = (*ClaudeMD)(nil)
@@ -194,4 +231,5 @@ var (
 	_ Artifact = (*Hook)(nil)
 	_ Artifact = (*Plugin)(nil)
 	_ Artifact = (*Marketplace)(nil)
+	_ Artifact = (*MCPServer)(nil)
 )

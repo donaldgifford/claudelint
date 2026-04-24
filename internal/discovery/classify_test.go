@@ -39,6 +39,10 @@ func TestClassify(t *testing.T) {
 		{"marketplace nested", "some/sub/.claude-plugin/marketplace.json", true, artifact.KindMarketplace},
 		{"marketplace requires dir prefix", "marketplace.json", false, ""},
 
+		// MCP server declarations.
+		{"mcp at root", ".mcp.json", true, artifact.KindMCPServer},
+		{"mcp nested", "plugins/foo/.mcp.json", true, artifact.KindMCPServer},
+
 		{
 			"skill companion file is not a skill artifact",
 			".claude/skills/writer/references/style.md", false, "",
@@ -80,6 +84,7 @@ func TestClassifyCoversEveryKind(t *testing.T) {
 		artifact.KindHook:        ".claude/settings.json",
 		artifact.KindPlugin:      "plugin.json",
 		artifact.KindMarketplace: ".claude-plugin/marketplace.json",
+		artifact.KindMCPServer:   ".mcp.json",
 	}
 	for _, k := range artifact.AllKinds() {
 		p, ok := fixtures[k]

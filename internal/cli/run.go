@@ -319,12 +319,12 @@ func parseAll(cands []discovery.Candidate) ([]artifact.Artifact, []*artifact.Par
 			})
 			continue
 		}
-		a, perr := parseOne(c, src)
+		produced, perr := parseOne(c, src)
 		if perr != nil {
 			errs = append(errs, perr)
 			continue
 		}
-		arts = append(arts, a)
+		arts = append(arts, produced...)
 	}
 	return arts, errs
 }
@@ -332,14 +332,21 @@ func parseAll(cands []discovery.Candidate) ([]artifact.Artifact, []*artifact.Par
 // parseOne dispatches to the right parser for c.Kind. Skill
 // companions are indexed after a successful parse so rule code has
 // them available through the Artifact surface.
-func parseOne(c discovery.Candidate, src []byte) (artifact.Artifact, *artifact.ParseError) {
+//
+// Returns a slice so kinds that produce many artifacts per file
+// (mcp_server) can fan out without special-casing in the caller.
+// Single-artifact kinds return a one-element slice.
+func parseOne(c discovery.Candidate, src []byte) ([]artifact.Artifact, *artifact.ParseError) {
 	switch c.Kind {
 	case artifact.KindClaudeMD:
-		return artifact.ParseClaudeMD(c.Path, src)
+		a, perr := artifact.ParseClaudeMD(c.Path, src)
+		return wrapOne(a, perr)
 	case artifact.KindCommand:
-		return artifact.ParseCommand(c.Path, src)
+		a, perr := artifact.ParseCommand(c.Path, src)
+		return wrapOne(a, perr)
 	case artifact.KindAgent:
-		return artifact.ParseAgent(c.Path, src)
+		a, perr := artifact.ParseAgent(c.Path, src)
+		return wrapOne(a, perr)
 	case artifact.KindSkill:
 		s, perr := artifact.ParseSkill(c.Path, src)
 		if perr != nil {
@@ -353,19 +360,68 @@ func parseOne(c discovery.Candidate, src []byte) (artifact.Artifact, *artifact.P
 			// still run, they just can't cross-check references.
 			_ = err
 		}
-		return s, nil
+		return []artifact.Artifact{s}, nil
 	case artifact.KindHook:
-		return artifact.ParseHook(c.Path, src)
+		a, perr := artifact.ParseHook(c.Path, src)
+		return wrapOne(a, perr)
 	case artifact.KindPlugin:
-		return artifact.ParsePlugin(c.Path, src)
+		return parsePluginWithEmbedded(c.Path, src)
 	case artifact.KindMarketplace:
-		return artifact.ParseMarketplace(c.Path, src)
+		a, perr := artifact.ParseMarketplace(c.Path, src)
+		return wrapOne(a, perr)
+	case artifact.KindMCPServer:
+		servers, perr := artifact.ParseMCPFile(c.Path, src)
+		if perr != nil {
+			return nil, perr
+		}
+		out := make([]artifact.Artifact, 0, len(servers))
+		for _, s := range servers {
+			out = append(out, s)
+		}
+		return out, nil
 	default:
 		return nil, &artifact.ParseError{
 			Path:    c.Path,
 			Message: fmt.Sprintf("unknown kind %q", c.Kind),
 		}
 	}
+}
+
+// wrapOne is a tiny adapter that lifts a single (Artifact, *ParseError)
+// into the slice-shaped return parseOne now expects.
+func wrapOne(a artifact.Artifact, perr *artifact.ParseError) ([]artifact.Artifact, *artifact.ParseError) {
+	if perr != nil {
+		return nil, perr
+	}
+	return []artifact.Artifact{a}, nil
+}
+
+// parsePluginWithEmbedded parses a plugin manifest and, if it carries
+// an mcp.servers{} stanza, emits each embedded server as its own
+// KindMCPServer artifact. Both the plugin and the embedded servers
+// see the same underlying source, so rules can resolve ranges inside
+// the enclosing plugin.json.
+func parsePluginWithEmbedded(path string, src []byte) ([]artifact.Artifact, *artifact.ParseError) {
+	p, perr := artifact.ParsePlugin(path, src)
+	if perr != nil {
+		return nil, perr
+	}
+	out := []artifact.Artifact{p}
+	servers, err := artifact.ParseMCPEmbedded(path, src)
+	if err != nil {
+		// Malformed mcp.servers inside an otherwise-valid plugin.json:
+		// surface as a synthetic ParseError so reporter shows it, but
+		// still return the plugin itself so its own rules run.
+		return out, &artifact.ParseError{
+			Path:    path,
+			Message: err.Error(),
+			Cause:   err,
+		}
+	}
+	for _, s := range servers {
+		out = append(out, s)
+	}
+	return out, nil
 }
 
 func absSkillDir(skillFilePath string) string {

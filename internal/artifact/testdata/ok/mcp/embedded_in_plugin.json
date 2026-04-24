@@ -1,0 +1,12 @@
+{
+  "name": "host-plugin",
+  "version": "1.0.0",
+  "mcp": {
+    "servers": {
+      "weather": {
+        "command": "uvx",
+        "args": ["mcp-weather"]
+      }
+    }
+  }
+}

@@ -43,6 +43,11 @@ const (
 	// (.claude-plugin/marketplace.json). It drives discovery: each
 	// entry in its plugins[] array becomes a plugin root.
 	KindMarketplace ArtifactKind = "marketplace"
+
+	// KindMCPServer is a Model Context Protocol server declaration.
+	// One artifact represents one server entry — either from a
+	// standalone .mcp.json or a plugin.json's mcp.servers{} map.
+	KindMCPServer ArtifactKind = "mcp_server"
 )
 
 // AllKinds returns the canonical list of artifact kinds in a stable
@@ -58,6 +63,7 @@ func AllKinds() []ArtifactKind {
 		KindHook,
 		KindPlugin,
 		KindMarketplace,
+		KindMCPServer,
 	}
 }
 
