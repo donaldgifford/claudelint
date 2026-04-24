@@ -55,6 +55,10 @@ func Classify(relPath string) (artifact.ArtifactKind, bool) {
 	p := filepath.ToSlash(relPath)
 	base := baseName(p)
 
+	if k, ok := classifyMarketplace(p); ok {
+		return k, true
+	}
+
 	if k, ok := classifyRoot(base); ok {
 		return k, true
 	}
@@ -69,6 +73,17 @@ func Classify(relPath string) (artifact.ArtifactKind, bool) {
 	// happen to use those directory names incidentally still classify
 	// correctly when the path shape matches.
 	return classifyPluginLayout(p)
+}
+
+// classifyMarketplace matches `.claude-plugin/marketplace.json` at any
+// depth. The directory prefix is load-bearing — `marketplace.json` on
+// its own is not enough to classify as a marketplace manifest.
+func classifyMarketplace(p string) (artifact.ArtifactKind, bool) {
+	const needle = ".claude-plugin/marketplace.json"
+	if p == needle || strings.HasSuffix(p, "/"+needle) {
+		return artifact.KindMarketplace, true
+	}
+	return "", false
 }
 
 // classifyRoot handles files whose classification depends only on

@@ -17,7 +17,7 @@ import (
 // rule is added, removed, or changes its default severity or default
 // options. The CI guardrail test TestRulesetFingerprint fails loudly
 // if the ruleset content drifts without a corresponding bump.
-const RulesetVersion = "v1.0.0"
+const RulesetVersion = "v1.1.0"
 
 // RulesetFingerprint returns a short hex hash of the registered rules'
 // content. The hash covers:

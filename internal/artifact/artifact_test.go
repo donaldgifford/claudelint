@@ -13,6 +13,7 @@ func TestAllKindsStable(t *testing.T) {
 		KindAgent,
 		KindHook,
 		KindPlugin,
+		KindMarketplace,
 	}
 	got := AllKinds()
 	if len(got) != len(want) {

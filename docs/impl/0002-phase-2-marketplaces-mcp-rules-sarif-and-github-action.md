@@ -111,7 +111,7 @@ or rule changes yet — this phase only extends the artifact layer.
 
 #### Tasks
 
-- [ ] Add `KindMarketplace` to the `ArtifactKind` enum in
+- [x] Add `KindMarketplace` to the `ArtifactKind` enum in
   `internal/artifact/artifact.go`.
 - [ ] Add `Marketplace` and `MarketplacePlugin` structs to
   `internal/artifact/types.go` per DESIGN-0002 §1.
@@ -175,10 +175,13 @@ inside it are walked, and ship the eight rules in the rule table.
 - [ ] Add `internal/rules/marketplace/marketplace_test.go` — table-
   driven tests per rule (ok + bad cases with precise Range
   assertions).
-- [ ] Update the expected ruleset fingerprint in
+- [x] Update the expected ruleset fingerprint in
   `internal/rules/expected_fingerprint.txt` (Phase 1 guardrail will
-  flag the new rules; regenerate and commit the new hash).
-- [ ] Bump `RulesetVersion` in `internal/rules/version.go` from
+  flag the new rules; regenerate and commit the new hash). *(initial
+  bump to `39d3d488` applied when `KindMarketplace` widened
+  `security/secrets`'s `AppliesTo`; will re-regen as more rules
+  land.)*
+- [x] Bump `RulesetVersion` in `internal/rules/version.go` from
   `v1.0.0` to `v1.1.0` (minor — additive rules).
 
 #### Success Criteria

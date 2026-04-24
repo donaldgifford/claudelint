@@ -34,6 +34,11 @@ func TestClassify(t *testing.T) {
 		{"plugin-versioned skill", "go-development/2.0.1/skills/go/SKILL.md", true, artifact.KindSkill},
 		{"plugin-versioned command", "go-development/2.0.1/commands/review.md", true, artifact.KindCommand},
 
+		// Marketplace manifest at repo root and nested.
+		{"marketplace root", ".claude-plugin/marketplace.json", true, artifact.KindMarketplace},
+		{"marketplace nested", "some/sub/.claude-plugin/marketplace.json", true, artifact.KindMarketplace},
+		{"marketplace requires dir prefix", "marketplace.json", false, ""},
+
 		{
 			"skill companion file is not a skill artifact",
 			".claude/skills/writer/references/style.md", false, "",
@@ -68,12 +73,13 @@ func TestClassify(t *testing.T) {
 // to get at least one positive case or the test fails.
 func TestClassifyCoversEveryKind(t *testing.T) {
 	fixtures := map[artifact.ArtifactKind]string{
-		artifact.KindClaudeMD: "CLAUDE.md",
-		artifact.KindSkill:    ".claude/skills/x/SKILL.md",
-		artifact.KindCommand:  ".claude/commands/x.md",
-		artifact.KindAgent:    ".claude/agents/x.md",
-		artifact.KindHook:     ".claude/settings.json",
-		artifact.KindPlugin:   "plugin.json",
+		artifact.KindClaudeMD:    "CLAUDE.md",
+		artifact.KindSkill:       ".claude/skills/x/SKILL.md",
+		artifact.KindCommand:     ".claude/commands/x.md",
+		artifact.KindAgent:       ".claude/agents/x.md",
+		artifact.KindHook:        ".claude/settings.json",
+		artifact.KindPlugin:      "plugin.json",
+		artifact.KindMarketplace: ".claude-plugin/marketplace.json",
 	}
 	for _, k := range artifact.AllKinds() {
 		p, ok := fixtures[k]

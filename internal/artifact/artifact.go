@@ -38,6 +38,11 @@ const (
 
 	// KindPlugin is a plugin manifest (plugin.json or plugin.yaml).
 	KindPlugin ArtifactKind = "plugin"
+
+	// KindMarketplace is a plugin-marketplace manifest
+	// (.claude-plugin/marketplace.json). It drives discovery: each
+	// entry in its plugins[] array becomes a plugin root.
+	KindMarketplace ArtifactKind = "marketplace"
 )
 
 // AllKinds returns the canonical list of artifact kinds in a stable
@@ -52,6 +57,7 @@ func AllKinds() []ArtifactKind {
 		KindAgent,
 		KindHook,
 		KindPlugin,
+		KindMarketplace,
 	}
 }
 
