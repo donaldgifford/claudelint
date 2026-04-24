@@ -64,7 +64,9 @@ claudelint init
 List every rule shipped in the binary:
 
 ```bash
-claudelint rules
+claudelint rules            # human-readable table
+claudelint rules --json     # machine-readable catalog (see docs/rules-json-schema.md)
+claudelint rules <id>       # detail view for one rule
 ```
 
 ## Output formats
@@ -162,35 +164,47 @@ A typo in a `rule "<id>"` block does *not* silently disable the real
 rule. `claudelint` emits a `meta/unknown-rule` warning pointing at the
 offending config so the typo is visible.
 
-## Rules (v1)
+## Rules (ruleset v1.1)
 
 Every rule is built into the binary. The fingerprint under
 `claudelint version` changes whenever rules are added, removed, or
 have their ID / category / severity / options changed — a CI guardrail
 fails if the drift is not acknowledged.
 
-| ID                              | Category | Default  | Applies to                  |
-|---------------------------------|----------|----------|-----------------------------|
-| `schema/parse`                  | schema   | error    | every kind                  |
-| `schema/frontmatter-required`   | schema   | error    | skill, command, agent       |
-| `skills/trigger-clarity`        | content  | warning  | skill                       |
-| `skills/body-size`              | content  | warning  | skill                       |
-| `claude_md/duplicate-directives`| content  | warning  | `CLAUDE.md`                 |
-| `claude_md/size`                | content  | warning  | `CLAUDE.md`                 |
-| `commands/allowed-tools-known`  | schema   | error    | command                     |
-| `hooks/event-name-known`        | schema   | error    | hook                        |
-| `hooks/timeout-present`         | content  | warning  | hook                        |
-| `hooks/no-unsafe-shell`         | security | warning  | hook                        |
-| `plugin/manifest-fields`        | schema   | error    | plugin                      |
-| `plugin/semver`                 | schema   | warning  | plugin                      |
-| `security/secrets`              | security | error    | every kind                  |
-| `style/no-emoji`                | style    | info     | every kind                  |
+| ID                                    | Category  | Default  | Applies to                      |
+|---------------------------------------|-----------|----------|---------------------------------|
+| `schema/parse`                        | schema    | error    | every kind                      |
+| `schema/frontmatter-required`         | schema    | error    | skill, command, agent           |
+| `skills/trigger-clarity`              | content   | warning  | skill                           |
+| `skills/body-size`                    | content   | warning  | skill                           |
+| `claude_md/duplicate-directives`      | content   | warning  | `CLAUDE.md`                     |
+| `claude_md/size`                      | content   | warning  | `CLAUDE.md`                     |
+| `commands/allowed-tools-known`        | schema    | error    | command                         |
+| `hooks/event-name-known`              | schema    | error    | hook                            |
+| `hooks/timeout-present`               | content   | warning  | hook                            |
+| `hooks/no-unsafe-shell`               | security  | warning  | hook                            |
+| `plugin/manifest-fields`              | schema    | error    | plugin                          |
+| `plugin/semver`                       | schema    | warning  | plugin                          |
+| `marketplace/name`                    | schema    | error    | marketplace                     |
+| `marketplace/version-semver`          | schema    | error    | marketplace                     |
+| `marketplace/plugins-nonempty`        | schema    | warning  | marketplace                     |
+| `marketplace/plugin-source-valid`     | schema    | error    | marketplace                     |
+| `marketplace/plugin-name-unique`      | schema    | error    | marketplace                     |
+| `marketplace/plugin-name-matches-dir` | style     | warning  | marketplace                     |
+| `marketplace/author-required`         | style     | info     | marketplace                     |
+| `marketplace/external-source-skipped` | schema    | info     | marketplace                     |
+| `mcp/command-required`                | schema    | error    | mcp_server                      |
+| `mcp/server-name-required`            | schema    | error    | mcp_server                      |
+| `mcp/command-exists-on-path`          | schema    | warning  | mcp_server                      |
+| `mcp/no-unsafe-shell`                 | security  | error    | mcp_server                      |
+| `mcp/no-secrets-in-env`               | security  | error    | mcp_server                      |
+| `mcp/disabled-commented`              | style     | info     | mcp_server                      |
+| `security/secrets`                    | security  | error    | every kind                      |
+| `style/no-emoji`                      | style     | info     | every kind                      |
 
-Inspect any rule's metadata with:
-
-```bash
-claudelint rules <id>
-```
+Inspect any rule's metadata with `claudelint rules <id>` or get the
+full catalog as JSON with `claudelint rules --json`
+([schema](docs/rules-json-schema.md)).
 
 ### Rule reference
 
