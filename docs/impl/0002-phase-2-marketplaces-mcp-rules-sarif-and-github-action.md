@@ -49,7 +49,7 @@ created: 2026-04-23
 - [File Changes](#file-changes)
 - [Testing Plan](#testing-plan)
 - [Dependencies](#dependencies)
-- [Open Questions](#open-questions)
+- [Resolved Decisions](#resolved-decisions)
 - [References](#references)
 <!--toc:end-->
 
@@ -178,8 +178,8 @@ inside it are walked, and ship the eight rules in the rule table.
 - [ ] Update the expected ruleset fingerprint in
   `internal/rules/expected_fingerprint.txt` (Phase 1 guardrail will
   flag the new rules; regenerate and commit the new hash).
-- [ ] Bump `RulesetVersion` in `internal/rules/version.go` per the
-  decision captured in Open Question 1 below.
+- [ ] Bump `RulesetVersion` in `internal/rules/version.go` from
+  `v1.0.0` to `v1.1.0` (minor — additive rules).
 
 #### Success Criteria
 
@@ -208,11 +208,11 @@ from both standalone `.mcp.json` and plugin-embedded `mcp.servers{}`.
   in `internal/artifact/parse_mcp.go`. Both delegate to a private
   `parseServerEntry()` so the rule-relevant fields (and byte ranges)
   are shared.
-- [ ] Extend `ParsePlugin` in `parse_json.go` to also call
-  `ParseMCPEmbedded` when the `mcp.servers` field is present, and
-  attach the resulting artifacts via a new `Plugin.MCPServers []MCPServer`
-  field **or** surface them as separate walker candidates — pick one
-  per Open Question 2.
+- [ ] Extend `ParsePlugin` in `parse_json.go` to detect the
+  `mcp.servers` field when present. The walker emits each embedded
+  server as an independent `KindMCPServer` candidate (not attached to
+  the `Plugin` struct) so `rules/mcp/` rules only ever see
+  `KindMCPServer` artifacts — matches how hook entries are handled.
 - [ ] Add `.mcp.json` to the default discovery file-name list in
   `internal/discovery/walk.go`.
 - [ ] Extend `Classify()` to map repo-root `.mcp.json` to
@@ -239,10 +239,10 @@ Ship the six MCP rules. Share the secrets matcher with
 
 #### Tasks
 
-- [ ] Factor the regex bundle in `internal/rules/security/secrets.go`
-  into an unexported helper that `rules/mcp/nosecretsinenv.go` can
-  import — or expose it via a new internal package. Pick per Open
-  Question 3.
+- [ ] Expose a narrow `security.MatchesSecret([]byte) bool` from the
+  existing `internal/rules/security/` package so
+  `rules/mcp/nosecretsinenv.go` can call it without the regex tables
+  leaking out of the `security` package.
 - [ ] Create `internal/rules/mcp/` with:
   - [ ] `mcp/command-required` (error) — `commandrequired.go`
   - [ ] `mcp/command-exists-on-path` (warn) — `commandexistsonpath.go`
@@ -347,10 +347,11 @@ Produce SARIF 2.1.0 output and wire it into the CLI.
 - [ ] Accept an optional `SARIF_PATH` via `--sarif-file=<path>` so the
   Action can control where the file lands; default is stdout (parity
   with other formats).
+- [ ] Vendor the SARIF 2.1.0 JSON Schema under
+  `internal/reporter/testdata/sarif-2.1.0.json` (keeps `make ci`
+  network-free).
 - [ ] Add `internal/reporter/sarif_test.go` — golden-file test plus a
-  schema validation step that fetches the SARIF schema **once** at
-  test startup (or uses a vendored copy under `testdata/` — pick per
-  Open Question 4).
+  schema validation step that loads the vendored schema.
 
 #### Success Criteria
 
@@ -371,11 +372,10 @@ independent of this image.
 
 #### Tasks
 
-- [ ] Create `build/docker/Dockerfile` (or repo-root `Dockerfile` per
-  Open Question 5). Minimal, multi-stage: base layer =
-  distroless/static or alpine (pick per Open Question 6), copy the
-  goreleaser-built binary, `ENTRYPOINT ["/usr/local/bin/claudelint"]`,
-  `CMD ["run", "."]`.
+- [ ] Create a repo-root `Dockerfile`. Minimal, multi-stage: final
+  layer = `gcr.io/distroless/static-debian12`, copy the
+  goreleaser-built binary to `/usr/local/bin/claudelint`,
+  `ENTRYPOINT ["/usr/local/bin/claudelint"]`, `CMD ["run", "."]`.
 - [ ] Add a `dockers:` stanza to `.goreleaser.yml`:
   - Builds `linux/amd64` and `linux/arm64` images (via `dockers_v2`
     or two `dockers:` entries with `buildx` flags).
@@ -421,11 +421,9 @@ announcing.
   - signed checksums;
   - a working `ghcr.io/donaldgifford/claudelint:v0.2.0` image;
   - the image tagged as `:latest` and `:v0`.
-- [ ] Dogfood `claudelint run` against:
-  - [ ] The Anthropic official plugin marketplace repo.
-  - [ ] `donaldgifford/claude-skills` (the donald-loop / docz / etc.
-    marketplace).
-  - [ ] At least one non-Donald community marketplace.
+- [ ] Dogfood `claudelint run` against `donaldgifford/claude-skills`
+  (the donald-loop / docz / go-development marketplace) as the
+  primary Phase 2 dogfood target.
 - [ ] Record dogfood findings in a new
   `docs/investigation/0005-phase-2-dogfood-findings.md` — same
   template as INV-0003.
@@ -569,62 +567,35 @@ Out-of-repo (`donaldgifford/claudelint-action`):
   - `GITHUB_TOKEN` has `write:packages` scope for GHCR push (default
     for `${{ secrets.GITHUB_TOKEN }}` on modern runners, but confirm).
 
-## Open Questions
+## Resolved Decisions
 
-Review the five below before starting Phase 2.1. Answers feed back
-into the task list.
+The six original Open Questions were resolved during implementation
+review (2026-04-24):
 
-1. **Ruleset version bump semantics.** Phase 1 shipped `RulesetVersion
-   = "v1.0.0"`. DESIGN-0002 §Testing Strategy says "bump `rules.Version`
-   to `0.2.0`," but that conflicts with the ruleset's own semver
-   trajectory (new rules are additive → should be a **minor** bump to
-   `v1.1.0`). Proposal: bump ruleset to `v1.1.0`, independent of
-   claudelint's app version `v0.2.0`. Confirm.
-
-2. **Embedded MCP servers — attach or walk?** For a plugin with
-   `plugin.json` containing `mcp.servers{}`, do we:
-   - (a) attach servers to the `Plugin` artifact via a new
-     `Plugin.MCPServers []MCPServer` field, and have `rules/mcp/` rules
-     declare `AppliesTo() = []{KindPlugin, KindMCPServer}`; or
-   - (b) emit each server as an independent `KindMCPServer` candidate
-     from the walker, so `rules/mcp/` rules only ever see
-     `KindMCPServer` artifacts?
-   Proposal: **(b)** — cleaner separation, no cross-kind rule logic,
-   matches how we handle hook entries today. Trade-off: walker gains
-   a small embedding-aware code path in `parse_json.go`.
-
-3. **Secrets matcher sharing shape.** `rules/security/secrets.go`
-   today keeps its regex tables private. To reuse in `rules/mcp/`:
-   - (a) Move the matcher to a new unexported helper in the same
-     `security` package and export a narrow `MatchesSecret([]byte) bool`;
-   - (b) Factor into a new `internal/rules/secretmatch/` package.
-   Proposal: **(a)** — smaller blast radius, keeps the rule package as
-   the matcher's only owner. Confirm.
-
-4. **SARIF schema validation — vendor or fetch?** Vendoring the
-   `~230KB` schema under `testdata/` makes tests hermetic; fetching
-   at test startup is lighter on the repo but flaky offline.
-   Proposal: **vendor** — matches our `make ci` ideal of "no network
-   required." Confirm.
-
-5. **Dockerfile location and base image.** Two sub-questions:
-   - **Location:** `build/docker/Dockerfile` (keeps repo root clean)
-     vs `Dockerfile` at repo root (standard for `docker build .`
-     users). Proposal: repo-root `Dockerfile`, referenced from
-     `.goreleaser.yml` — matches user expectation and simplifies
-     goreleaser config.
-   - **Base image:** `gcr.io/distroless/static-debian12` (hermetic,
-     tiny, no shell for debugging) vs `alpine:3.20` (debuggable,
-     `apk` available, slightly larger). Proposal: **distroless** —
-     the binary is self-contained and users who want a shell can run
-     the binary on their own base. Confirm.
-
-6. **Non-Donald marketplace for dogfood (Phase 2.8).** Which
-   third-party marketplace gets the dogfood pass? Suggestions:
-   `anthropics/claude-plugins-official` (if it exists as a public
-   marketplace), or a popular community marketplace of your choice.
-   This is blocking announcement, not Phase 2.6 completion — record
-   the answer before kicking off Phase 2.8.
+1. **Ruleset version bump semantics →** bump `RulesetVersion` from
+   `v1.0.0` to `v1.1.0` (minor — additive rules), independent of
+   claudelint's app version `v0.2.0`. DESIGN-0002 §Testing Strategy
+   conflated the two; the ruleset has its own semver trajectory.
+2. **Embedded MCP servers →** emit each server as an independent
+   `KindMCPServer` candidate from the walker (option b). `rules/mcp/`
+   rules only ever see `KindMCPServer` artifacts. Matches how hook
+   entries are handled today; no cross-kind rule logic needed. The
+   walker gains a small embedding-aware code path in `parse_json.go`.
+3. **Secrets matcher sharing →** expose a narrow
+   `security.MatchesSecret([]byte) bool` from the existing
+   `internal/rules/security/` package (option a). Keeps the regex
+   tables owned by one package.
+4. **SARIF schema validation →** vendor the SARIF 2.1.0 JSON Schema
+   under `internal/reporter/testdata/sarif-2.1.0.json`. Tests stay
+   hermetic; `make ci` remains network-free.
+5. **Dockerfile location and base image →** repo-root `Dockerfile`
+   (standard for `docker build .`, simpler goreleaser config) on
+   `gcr.io/distroless/static-debian12`. Users who want a shell can
+   run the binary on their own base.
+6. **Dogfood target (Phase 2.8) →** `donaldgifford/claude-skills` is
+   the primary Phase 2 dogfood target. Additional marketplaces can be
+   added opportunistically but are not required to complete the
+   phase.
 
 ## References
 
