@@ -334,8 +334,10 @@ Produce SARIF 2.1.0 output and wire it into the CLI.
 
 #### Tasks
 
-- [ ] Add `internal/reporter/sarif.go` exporting
-  `SARIF(w io.Writer, s Summary) error`. Structure mirrors `JSON()`.
+- [x] Add `internal/reporter/sarif.go` exporting
+  `SARIF(w io.Writer, s Summary, opts SARIFOptions) error` (signature
+  extended with SARIFOptions so the CLI can thread its BuildInfo to
+  `runs[0].tool.driver.version`). Structure mirrors `JSON()`.
   Top-level document includes:
   - `$schema`: `https://json.schemastore.org/sarif-2.1.0.json`
   - `version`: `2.1.0`
@@ -346,18 +348,21 @@ Produce SARIF 2.1.0 output and wire it into the CLI.
   - `runs[0].results[]`: one entry per diagnostic, with
     `ruleId`, `level`, `message.text`, `locations[0].physicalLocation`
     (artifactLocation.uri + region.startLine/startColumn/endLine/endColumn).
-- [ ] Severity mapping: `Error → error`, `Warning → warning`,
+- [x] Severity mapping: `Error → error`, `Warning → warning`,
   `Info → note`.
-- [ ] Add `formatSARIF` to the format enum in `internal/cli/run.go`;
+- [x] Add `formatSARIF` to the format enum in `internal/cli/run.go`;
   update `validateFormat()` and the switch.
-- [ ] Accept an optional `SARIF_PATH` via `--sarif-file=<path>` so the
+- [x] Accept an optional `SARIF_PATH` via `--sarif-file=<path>` so the
   Action can control where the file lands; default is stdout (parity
   with other formats).
-- [ ] Vendor the SARIF 2.1.0 JSON Schema under
+- [x] Vendor the SARIF 2.1.0 JSON Schema under
   `internal/reporter/testdata/sarif-2.1.0.json` (keeps `make ci`
   network-free).
-- [ ] Add `internal/reporter/sarif_test.go` — golden-file test plus a
-  schema validation step that loads the vendored schema.
+- [x] Add `internal/reporter/sarif_test.go` — schema-validation test
+  (the vendored schema is loaded and every SARIF doc the reporter
+  emits is validated against it). Skipped a byte-for-byte golden file
+  in favor of shape assertions — the doc carries a live rules catalog
+  so every new rule would re-golden the fixture.
 
 #### Success Criteria
 

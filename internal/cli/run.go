@@ -22,6 +22,7 @@ const (
 	formatText   = "text"
 	formatJSON   = "json"
 	formatGitHub = "github"
+	formatSARIF  = "sarif"
 )
 
 // Exit codes returned by `claudelint run` (and the bare alias). The
@@ -51,32 +52,41 @@ type runOptions struct {
 	verbose     bool
 	maxWarnings int    // -1 means "unlimited" (the default)
 	profileDir  string // empty disables profiling
+	sarifFile   string // empty → write SARIF to stdout
+
+	// toolVersion is the claudelint binary version used by the SARIF
+	// reporter. Wired from BuildInfo so the reporter doesn't need to
+	// import cli.
+	toolVersion string
 }
 
 // newRunCmd returns the `run` subcommand. It walks every target path,
 // parses each discovered artifact, dispatches the rule registry via
-// the engine, and prints diagnostics in the selected format.
-func newRunCmd() *cobra.Command {
-	var opts runOptions
+// the engine, and prints diagnostics in the selected format. BuildInfo
+// is threaded in so the SARIF reporter can populate
+// `runs[0].tool.driver.version` accurately.
+func newRunCmd(info BuildInfo) *cobra.Command {
+	opts := runOptions{toolVersion: info.Version}
 	cmd := &cobra.Command{
 		Use:   "run [path...]",
 		Short: "Lint Claude artifacts under the given paths (default: cwd)",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runLint(cmd, opts, args)
+			return runLint(cmd, &opts, args)
 		},
 	}
 	cmd.Flags().StringVar(&opts.configPath, "config", "", "path to .claudelint.hcl (default: walk up from cwd)")
-	cmd.Flags().StringVar(&opts.format, "format", formatText, "output format: text, json, or github")
+	cmd.Flags().StringVar(&opts.format, "format", formatText, "output format: text, json, github, or sarif")
 	cmd.Flags().BoolVar(&opts.noColor, "no-color", false, "disable ANSI color in text output (also honors NO_COLOR env)")
 	cmd.Flags().BoolVar(&opts.quiet, "quiet", false, "print only error-severity diagnostics and the trailing summary")
 	cmd.Flags().BoolVar(&opts.verbose, "verbose", false, "print the loaded config path and every in-source-suppressed diagnostic")
 	cmd.Flags().IntVar(&opts.maxWarnings, "max-warnings", -1, "fail the run if warnings exceed N (default: unlimited)")
 	cmd.Flags().StringVar(&opts.profileDir, "profile", "", "write cpu.pprof, heap.pprof, block.pprof, mutex.pprof to this directory")
+	cmd.Flags().StringVar(&opts.sarifFile, "sarif-file", "", "write SARIF output to this file instead of stdout (only with --format=sarif)")
 	return cmd
 }
 
-func runLint(cmd *cobra.Command, opts runOptions, args []string) error {
+func runLint(cmd *cobra.Command, opts *runOptions, args []string) error {
 	if err := validateFormat(opts.format); err != nil {
 		return err
 	}
@@ -92,7 +102,7 @@ func runLint(cmd *cobra.Command, opts runOptions, args []string) error {
 
 // runLintCore is the profile-free happy path, split out so runLint's
 // cyclomatic complexity stays under the project limit.
-func runLintCore(cmd *cobra.Command, opts runOptions, args []string) error {
+func runLintCore(cmd *cobra.Command, opts *runOptions, args []string) error {
 	targets := args
 	if len(targets) == 0 {
 		targets = []string{"."}
@@ -127,7 +137,12 @@ func runLintCore(cmd *cobra.Command, opts runOptions, args []string) error {
 		Diagnostics: filterByQuiet(res.Diagnostics, opts.quiet),
 		Files:       res.Files,
 	}
-	if err := writeReport(cmd.OutOrStdout(), summary, opts); err != nil {
+	dest, closeFn, err := reportSink(cmd.OutOrStdout(), opts)
+	if err != nil {
+		return err
+	}
+	defer closeFn()
+	if err := writeReport(dest, summary, opts); err != nil {
 		return err
 	}
 	if opts.verbose {
@@ -154,10 +169,10 @@ func closeProfileSession(w io.Writer, s *profileSession) {
 // a usage error, not a silent fallback to text.
 func validateFormat(f string) error {
 	switch f {
-	case formatText, formatJSON, formatGitHub:
+	case formatText, formatJSON, formatGitHub, formatSARIF:
 		return nil
 	}
-	return fmt.Errorf("unknown --format %q (want text, json, or github)", f)
+	return fmt.Errorf("unknown --format %q (want text, json, github, or sarif)", f)
 }
 
 // resolveConfig adapts a LoadResult (possibly nil) into a
@@ -203,17 +218,41 @@ func discoverAll(targets []string) ([]discovery.Candidate, error) {
 // writeReport dispatches to the right formatter for opts.format.
 // Color handling lives here so text goes through
 // reporter.TextWithOptions with the resolved color flag.
-func writeReport(w io.Writer, s reporter.Summary, opts runOptions) error {
+func writeReport(w io.Writer, s reporter.Summary, opts *runOptions) error {
 	switch opts.format {
 	case formatJSON:
 		return reporter.JSON(w, s)
 	case formatGitHub:
 		return reporter.GitHub(w, s)
+	case formatSARIF:
+		return reporter.SARIF(w, s, reporter.SARIFOptions{ToolVersion: opts.toolVersion})
 	case formatText:
 		color := reporter.ShouldUseColor(opts.noColor, isTerminal(w))
 		return reporter.TextWithOptions(w, s, reporter.TextOptions{Color: color})
 	}
 	return fmt.Errorf("unreachable: unknown format %q", opts.format)
+}
+
+// reportSink returns the writer the report should go to, plus a cleanup
+// function. For every format the default is stdout; --sarif-file
+// redirects SARIF output to a file (and is silently ignored for other
+// formats, so a consumer can leave it set in a shared workflow script).
+func reportSink(stdout io.Writer, opts *runOptions) (io.Writer, func(), error) {
+	noop := func() {}
+	if opts.format != formatSARIF || opts.sarifFile == "" {
+		return stdout, noop, nil
+	}
+	f, err := os.Create(opts.sarifFile)
+	if err != nil {
+		return nil, noop, fmt.Errorf("open sarif file: %w", err)
+	}
+	return f, func() {
+		if cerr := f.Close(); cerr != nil {
+			// Best-effort: deferred close failures aren't surfaced to
+			// the caller since the report has already been flushed.
+			_, _ = fmt.Fprintf(os.Stderr, "claudelint: close sarif file: %v\n", cerr)
+		}
+	}, nil
 }
 
 // isTerminal returns true when w is an *os.File attached to a TTY.
