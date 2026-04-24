@@ -358,6 +358,8 @@ func parseOne(c discovery.Candidate, src []byte) (artifact.Artifact, *artifact.P
 		return artifact.ParseHook(c.Path, src)
 	case artifact.KindPlugin:
 		return artifact.ParsePlugin(c.Path, src)
+	case artifact.KindMarketplace:
+		return artifact.ParseMarketplace(c.Path, src)
 	default:
 		return nil, &artifact.ParseError{
 			Path:    c.Path,

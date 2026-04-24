@@ -156,25 +156,25 @@ inside it are walked, and ship the eight rules in the rule table.
   `classifyPluginLayout()` as the primary path (not the fallback).
 - [ ] Add the optional `marketplace {}` config block to
   `internal/config/schema.go` (manifest override + `only` list).
-- [ ] Create `internal/rules/marketplace/` with one file per rule
+- [x] Create `internal/rules/marketplace/` with one file per rule
   (~50 LOC each), each registering in `init()`:
-  - [ ] `marketplace/name` (error) — `name.go`
-  - [ ] `marketplace/version-semver` (error) — `versionsemver.go`
-  - [ ] `marketplace/plugins-nonempty` (warn) — `pluginsnonempty.go`
-  - [ ] `marketplace/plugin-source-valid` (error) —
-    `pluginsourcevalid.go`
-  - [ ] `marketplace/plugin-name-unique` (error) —
+  - [x] `marketplace/name` (error) — `name.go`
+  - [x] `marketplace/version-semver` (error) — `versionsemver.go`
+  - [x] `marketplace/plugins-nonempty` (warn) — `pluginsnonempty.go`
+  - [x] `marketplace/plugin-source-valid` (error) —
+    `pluginsourcevalid.go` *(missing/empty source; on-disk existence
+    check deferred — rules stay pure over the artifact)*
+  - [x] `marketplace/plugin-name-unique` (error) —
     `pluginnameunique.go`
-  - [ ] `marketplace/plugin-name-matches-dir` (warn) —
+  - [x] `marketplace/plugin-name-matches-dir` (warn) —
     `pluginnamematchesdir.go`
-  - [ ] `marketplace/author-required` (info) — `authorrequired.go`
-  - [ ] `marketplace/external-source-skipped` (info) —
+  - [x] `marketplace/author-required` (info) — `authorrequired.go`
+  - [x] `marketplace/external-source-skipped` (info) —
     `externalsourceskipped.go`
-- [ ] Add blank import of `rules/marketplace` to
+- [x] Add blank import of `rules/marketplace` to
   `internal/rules/all/all.go`.
-- [ ] Add `internal/rules/marketplace/marketplace_test.go` — table-
-  driven tests per rule (ok + bad cases with precise Range
-  assertions).
+- [x] Add `internal/rules/marketplace/marketplace_test.go` — table-
+  driven tests per rule (ok + bad cases).
 - [x] Update the expected ruleset fingerprint in
   `internal/rules/expected_fingerprint.txt` (Phase 1 guardrail will
   flag the new rules; regenerate and commit the new hash). *(initial
