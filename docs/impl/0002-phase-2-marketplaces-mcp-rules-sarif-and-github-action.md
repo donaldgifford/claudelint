@@ -145,16 +145,20 @@ inside it are walked, and ship the eight rules in the rule table.
 
 #### Tasks
 
-- [ ] Add a marketplace **pre-pass** to `internal/discovery/walk.go`
-  (or a new `internal/discovery/marketplace.go`). If
-  `<root>/.claude-plugin/marketplace.json` exists, parse it before
-  the main walk and emit one `KindMarketplace` candidate plus one
-  "plugin root" hint per local `source`.
-- [ ] Extend `Classify()` in `internal/discovery/classify.go` to
-  accept an optional set of explicit plugin roots. When the walker
-  is under one of those roots, classify with
-  `classifyPluginLayout()` as the primary path (not the fallback).
-- [ ] Add the optional `marketplace {}` config block to
+- [x] Add a marketplace **pre-pass** helper to
+  `internal/discovery/marketplace.go`. `LoadMarketplaceHints(absRoot)`
+  parses `<root>/.claude-plugin/marketplace.json` and returns the
+  declared local plugin roots. The walker itself already emits the
+  `KindMarketplace` candidate via `Classify()`; the hint is structural
+  plumbing for future engine-level on-disk validation.
+- [x] ~~Extend `Classify()` to accept explicit plugin roots.~~
+  *Dropped.* `classifyPluginLayout()` already handles the traditional
+  (`./plugins/foo`), flat (`./`), and versioned plugin-distribution
+  shapes. Re-confirmed via smoke test: a marketplace fixture with a
+  nested `plugins/donald-loop/.claude/skills/loop/SKILL.md` discovers
+  correctly with the existing classifier. The "plugin-root hint"
+  parameter would be a dead one.
+- [x] Add the optional `marketplace {}` config block to
   `internal/config/schema.go` (manifest override + `only` list).
 - [x] Create `internal/rules/marketplace/` with one file per rule
   (~50 LOC each), each registering in `init()`:

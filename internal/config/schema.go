@@ -19,11 +19,12 @@ const SchemaVersion = "1"
 // File is the top-level HCL document. Each field maps to a named
 // block (or list of blocks) defined in the schema.
 type File struct {
-	Claudelint *Claudelint  `hcl:"claudelint,block"`
-	RulesKind  []RulesKind  `hcl:"rules,block"`
-	Rules      []RuleBlock  `hcl:"rule,block"`
-	Ignore     *IgnoreBlock `hcl:"ignore,block"`
-	Output     *OutputBlock `hcl:"output,block"`
+	Claudelint  *Claudelint       `hcl:"claudelint,block"`
+	RulesKind   []RulesKind       `hcl:"rules,block"`
+	Rules       []RuleBlock       `hcl:"rule,block"`
+	Ignore      *IgnoreBlock      `hcl:"ignore,block"`
+	Output      *OutputBlock      `hcl:"output,block"`
+	Marketplace *MarketplaceBlock `hcl:"marketplace,block"`
 }
 
 // Claudelint is the required version-declaring block. Its only v1
@@ -80,4 +81,23 @@ type IgnoreBlock struct {
 //	}
 type OutputBlock struct {
 	Format string `hcl:"format,optional"`
+}
+
+// MarketplaceBlock tunes how claudelint handles a plugin-marketplace
+// repo. All fields are optional — auto-detection from
+// .claude-plugin/marketplace.json works for most projects:
+//
+//	marketplace {
+//	  manifest = ".claude-plugin/marketplace.json"  # override path
+//	  only     = ["foo", "bar"]                      # subset by name
+//	}
+//
+// `only` filters the plugin set considered during discovery; entries
+// whose plugins[].name is not in the list are skipped (their files
+// still appear in normal walks if the marketplace mechanism is not
+// the discovery driver, but rules that key off marketplace-declared
+// plugins respect this list).
+type MarketplaceBlock struct {
+	Manifest string   `hcl:"manifest,optional"`
+	Only     []string `hcl:"only,optional"`
 }
