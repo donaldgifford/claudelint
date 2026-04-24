@@ -1,10 +1,49 @@
 package plugin
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
+	"github.com/donaldgifford/claudelint/internal/diag"
+	"github.com/donaldgifford/claudelint/internal/rules"
 )
+
+// TestRuleMetadata covers the static Rule-interface methods on every
+// rule in this package. Keeps the coverage gate honest and catches
+// typos in IDs, severities, and applicability without having to write
+// a Check-level fixture for each metadata shape.
+func TestRuleMetadata(t *testing.T) {
+	cases := []rules.Rule{
+		&manifestFields{},
+		&semverRule{},
+	}
+	for _, r := range cases {
+		t.Run(r.ID(), func(t *testing.T) {
+			if r.Category() == "" {
+				t.Errorf("empty Category")
+			}
+			if r.DefaultSeverity() < diag.SeverityInfo || r.DefaultSeverity() > diag.SeverityError {
+				t.Errorf("unexpected severity %d", r.DefaultSeverity())
+			}
+			// DefaultOptions may legitimately be nil; just exercise the method.
+			_ = r.DefaultOptions()
+			kinds := r.AppliesTo()
+			if len(kinds) == 0 {
+				t.Errorf("AppliesTo is empty")
+			}
+			for _, k := range kinds {
+				if k != artifact.KindPlugin {
+					t.Errorf("unexpected kind %q (plugin rules should only apply to plugin)", k)
+				}
+			}
+			help := r.HelpURI()
+			if !strings.HasPrefix(help, "https://") {
+				t.Errorf("HelpURI %q is not an https URL", help)
+			}
+		})
+	}
+}
 
 func TestManifestFieldsOK(t *testing.T) {
 	src := []byte(`{"name":"x","version":"1.0.0"}`)
