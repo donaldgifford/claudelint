@@ -23,6 +23,10 @@ go install github.com/donaldgifford/claudelint/cmd/claudelint@latest
 Prebuilt binaries for darwin/linux/windows ship with each tagged
 release on the [GitHub Releases page](https://github.com/donaldgifford/claudelint/releases).
 
+Multi-arch container images (linux/amd64, linux/arm64) ship alongside
+each release at `ghcr.io/donaldgifford/claudelint`. See
+[Running in CI](#running-in-ci) below.
+
 ## Quickstart
 
 Lint the current repo:
@@ -60,6 +64,36 @@ claudelint rules
 - `--format=text` (default) — human-readable; honors `--no-color` / `NO_COLOR`.
 - `--format=json` — stable schema documented in [docs/json-output-schema.md](docs/json-output-schema.md).
 - `--format=github` — `::error` / `::warning` / `::notice` workflow commands.
+- `--format=sarif` — SARIF 2.1.0 log, suitable for GitHub Code Scanning
+  and other SARIF-aware tools. Pair with `--sarif-file=<path>` to write
+  to a file instead of stdout.
+
+## Running in CI
+
+### GitHub Actions
+
+```yaml
+- run: claudelint run --format=github .
+```
+
+Or upload SARIF to Code Scanning:
+
+```yaml
+- run: claudelint run --format=sarif --sarif-file=claudelint.sarif .
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: claudelint.sarif
+```
+
+### Docker (GitLab CI, Jenkins, generic)
+
+```bash
+docker run --rm -v "$PWD:/src" -w /src ghcr.io/donaldgifford/claudelint:latest run .
+```
+
+The image pins a tag per release (`:v0.2.0`, `:v0`, `:latest`). Use the
+pinned tag in scheduled pipelines to avoid surprises when claudelint
+ships a new rule.
 
 ## Exit codes
 

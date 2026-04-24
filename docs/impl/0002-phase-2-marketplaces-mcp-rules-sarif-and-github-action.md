@@ -383,27 +383,32 @@ independent of this image.
 
 #### Tasks
 
-- [ ] Create a repo-root `Dockerfile`. Minimal, multi-stage: final
-  layer = `gcr.io/distroless/static-debian12`, copy the
+- [x] Create a repo-root `Dockerfile`. Single-stage on top of
+  `gcr.io/distroless/static-debian12:nonroot`, copies the
   goreleaser-built binary to `/usr/local/bin/claudelint`,
   `ENTRYPOINT ["/usr/local/bin/claudelint"]`, `CMD ["run", "."]`.
-- [ ] Add a `dockers:` stanza to `.goreleaser.yml`:
-  - Builds `linux/amd64` and `linux/arm64` images (via `dockers_v2`
-    or two `dockers:` entries with `buildx` flags).
+- [x] Add a `dockers:` stanza to `.goreleaser.yml`:
+  - Builds `linux/amd64` and `linux/arm64` images via two `dockers`
+    entries with `use: buildx` and per-platform
+    `--platform` flags. (Stayed on classic `dockers` rather than
+    `dockers_v2`; v2 is still stabilizing. Revisit in a later phase.)
   - Tags: `ghcr.io/donaldgifford/claudelint:{{ .Version }}`,
     `:v{{ .Major }}`, `:v{{ .Major }}.{{ .Minor }}`, `:latest`.
-  - OCI labels for `org.opencontainers.image.source`,
-    `.revision`, `.version`, `.licenses`.
-- [ ] Add a `docker_manifests:` stanza to create a multi-arch manifest.
-- [ ] Add a `docker-login` step to `.github/workflows/release.yml`
-  before `goreleaser release --clean` (ghcr.io, using
-  `${{ secrets.GITHUB_TOKEN }}`).
-- [ ] Add a `make docker-local` target that calls
-  `goreleaser release --snapshot --clean --skip=publish,sign` and
-  verifies `docker run --rm ghcr.io/donaldgifford/claudelint:<snapshot> version` works.
-- [ ] Update `README.md` with a "Running in CI" section covering
+  - OCI labels for `org.opencontainers.image.title`, `.description`,
+    `.url`, `.source`, `.licenses` (static in the Dockerfile) and
+    `.version`, `.revision`, `.created` (goreleaser-injected).
+- [x] Add a `docker_manifests:` stanza to create a multi-arch manifest.
+- [x] Add `docker login ghcr.io` + QEMU + buildx setup to
+  `.github/workflows/release.yml` before `goreleaser release --clean`
+  (using `${{ secrets.GITHUB_TOKEN }}`).
+- [x] Add a `make docker-local` target that runs
+  `goreleaser release --snapshot --clean --skip=publish,sign
+  --skip=validate` and prints the snapshot-tag smoke command. (Final
+  run-check blocked by Docker daemon availability in this env; config
+  passes `goreleaser check`.)
+- [x] Update `README.md` with a "Running in CI" section covering
   docker invocation for non-GitHub runners (GitLab CI, Jenkins,
-  generic shell).
+  generic shell) and the github/codeql-action SARIF-upload pattern.
 
 #### Success Criteria
 

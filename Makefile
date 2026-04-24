@@ -182,6 +182,13 @@ release-local: ## Test goreleaser without publishing
 	@ $(MAKE) --no-print-directory log-$@
 	goreleaser release --snapshot --clean --skip=publish --skip=sign
 
+.PHONY: docker-local
+docker-local: ## Build the claudelint image locally via goreleaser snapshot
+	@ $(MAKE) --no-print-directory log-$@
+	goreleaser release --snapshot --clean --skip=publish --skip=sign --skip=validate
+	@ echo "Tag the snapshot image for a quick smoke test:"
+	@ echo "  docker run --rm ghcr.io/donaldgifford/claudelint:$(CUR_VERSION)-amd64 version"
+
 
 ########################################################################
 ## Self-Documenting Makefile Help                                     ##
