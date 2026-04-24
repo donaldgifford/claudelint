@@ -35,7 +35,15 @@ Lint the current repo:
 claudelint run .
 ```
 
-Emit GitHub Actions annotations on your PR:
+Emit GitHub Actions annotations on your PR (preferred: use the
+companion [`claudelint-action`](https://github.com/donaldgifford/claudelint-action)
+which also handles install + SARIF upload):
+
+```yaml
+- uses: donaldgifford/claudelint-action@v1
+```
+
+Or invoke the binary directly:
 
 ```yaml
 - run: claudelint run --format=github .

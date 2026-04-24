@@ -472,25 +472,29 @@ doc in *that* repo tracks its own lifecycle.
 #### Tasks
 
 - [ ] Create `donaldgifford/claudelint-action` on GitHub (public,
-  Apache-2.0, README stub).
-- [ ] Scaffold `action.yml` per DESIGN-0002 §3.2 (inputs, outputs).
-- [ ] Composite-action steps:
-  - [ ] Resolve `version` input (map `latest` to the GitHub API
+  Apache-2.0, README stub). **Deferred — manual repo bootstrap once
+  v0.2.0 is tagged.** Scaffolding in `companion/claudelint-action/`
+  is ready to `git init` and push; see `companion/README.md` for the
+  exact commands.
+- [x] Scaffold `action.yml` per DESIGN-0002 §3.2 (inputs, outputs). See
+  `companion/claudelint-action/action.yml`.
+- [x] Composite-action steps:
+  - [x] Resolve `version` input (map `latest` to the GitHub API
     "latest release" tag).
-  - [ ] Download the matching binary for `runner.os` /
+  - [x] Download the matching binary for `runner.os` /
     `runner.arch`.
-  - [ ] Verify the checksum against the release's `checksums.txt`.
-  - [ ] Invoke `claudelint run` with the supplied `path`, `format`,
+  - [x] Verify the checksum against the release's `checksums.txt`.
+  - [x] Invoke `claudelint run` with the supplied `path`, `format`,
     `config`, `max-warnings`.
-  - [ ] If `format=sarif` and `upload-sarif=true`, call
+  - [x] If `format=sarif` and `upload-sarif=true`, call
     `github/codeql-action/upload-sarif@v4`.
-- [ ] `.github/workflows/test.yml` in the action repo: checks out a
+- [x] `.github/workflows/test.yml` in the action repo: checks out a
   fixture directory (embedded under `fixtures/`) and runs the Action
-  against it; asserts on expected outputs (`diagnostics-count`,
-  `error-count`).
+  against it; asserts on expected outputs. See
+  `companion/claudelint-action/.github/workflows/test.yml`.
 - [ ] Tag `v1.0.0` + move floating `v1` tag after the test workflow
-  passes on `main`.
-- [ ] Add a "Quickstart" section to the claudelint README that
+  passes on `main`. **Deferred — same gate as the repo bootstrap.**
+- [x] Add a "Quickstart" section to the claudelint README that
   points at the Action.
 
 #### Success Criteria

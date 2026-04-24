@@ -1,0 +1,52 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  test-ok:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run claudelint on clean fixture
+        id: lint
+        uses: ./
+        with:
+          path: fixtures/ok
+          format: github
+          max-warnings: "-1"
+
+      - name: Assert zero errors on clean fixture
+        shell: bash
+        env:
+          ERRORS: ${{ steps.lint.outputs.error-count }}
+        run: |
+          if [[ "${ERRORS}" -ne 0 ]]; then
+            echo "expected 0 errors on fixtures/ok, got ${ERRORS}" >&2
+            exit 1
+          fi
+
+  test-sarif-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run claudelint with SARIF upload
+        uses: ./
+        with:
+          path: fixtures/ok
+          format: sarif
+          upload-sarif: "true"
+          max-warnings: "-1"
