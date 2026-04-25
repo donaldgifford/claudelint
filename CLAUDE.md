@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Phase 1 MVP shipped (v0.0.1). Phase 2 feature-complete on branch `docs/impl-0002-phase-2`; PR [#9](https://github.com/donaldgifford/claudelint/pull/9) is green and labeled `minor` so `jefflinse/pr-semver-bump` cuts `v0.2.0` on merge. Ruleset is `v1.1.0`, fingerprint `4cee5ee7`.
+Phase 1 MVP shipped as v0.0.1. Phase 2 shipped as **v0.1.0** (PR [#9](https://github.com/donaldgifford/claudelint/pull/9) merged 2026-04-25 → release published the same day). Ruleset is `v1.1.0`, fingerprint `4cee5ee7`. (IMPL-0002 calls it "v0.2.0" throughout — that was the planning name; semver math from `v0.0.1 + minor` actually produces `v0.1.0`.)
 
-Phase 2 delivered: two new artifact kinds (`KindMarketplace`, `KindMCPServer`), eight marketplace rules, six MCP rules, `Rule.HelpURI()`, `claudelint rules --json`, `--format=sarif` with vendored SARIF 2.1.0 schema validation, a multi-arch `ghcr.io/donaldgifford/claudelint` image via goreleaser, and companion-action scaffolding at `companion/claudelint-action/` ready to push to `donaldgifford/claudelint-action` once v0.2.0 is tagged. INV-0005 captures the `donaldgifford/claude-skills` dogfood pass; two false positives (nested marketplace shape, missing `AskUserQuestion`) were fixed in-flight.
+Phase 2 delivered: two new artifact kinds (`KindMarketplace`, `KindMCPServer`), eight marketplace rules, six MCP rules, `Rule.HelpURI()`, `claudelint rules --json`, `--format=sarif` with vendored SARIF 2.1.0 schema validation, a multi-arch `ghcr.io/donaldgifford/claudelint` image via goreleaser (tags: `0.1.0`, `v0`, `v0.1`, `latest`), and companion-action scaffolding at `companion/claudelint-action/` ready to push to `donaldgifford/claudelint-action`. INV-0005 captures the `donaldgifford/claude-skills` dogfood pass; two false positives (nested marketplace shape, missing `AskUserQuestion`) were fixed in-flight.
 
 `run` supports `--format=text|json|github|sarif`, `--sarif-file=<path>`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `make self-check`, `make coverage-gate`, `make bench`, and `make profile` are all wired. Phase 1 dogfooding captured in INV-0003.
 

@@ -52,7 +52,7 @@ need a second step.
 ```yaml
       - uses: donaldgifford/claudelint-action@v1
         with:
-          version: v0.2.0
+          version: v0.1.0
 ```
 
 `latest` resolves to the most recent release tag at runtime via the
@@ -62,7 +62,7 @@ GitHub API. Pinning is recommended for deterministic CI.
 
 | Name             | Default      | Description |
 |------------------|--------------|-------------|
-| `version`        | `latest`     | claudelint release tag to download (e.g. `v0.2.0`). |
+| `version`        | `latest`     | claudelint release tag to download (e.g. `v0.1.0`). |
 | `path`           | `.`          | Space-separated paths to lint. |
 | `format`         | `github`     | `text`, `json`, `github`, or `sarif`. |
 | `config`         | *(discovery)*| Explicit path to `.claudelint.hcl`. |
