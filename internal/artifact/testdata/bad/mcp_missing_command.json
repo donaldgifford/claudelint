@@ -1,0 +1,7 @@
+{
+  "servers": {
+    "broken": {
+      "args": ["foo"]
+    }
+  }
+}

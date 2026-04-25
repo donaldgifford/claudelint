@@ -28,6 +28,10 @@ func (*frontmatterRequired) AppliesTo() []artifact.ArtifactKind {
 	}
 }
 
+func (*frontmatterRequired) HelpURI() string {
+	return rules.DefaultHelpURI("schema/frontmatter-required")
+}
+
 func (r *frontmatterRequired) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	fm, name, description := extractFrontmatterFields(a)
 

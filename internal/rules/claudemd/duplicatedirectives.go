@@ -31,6 +31,10 @@ func (*duplicateDirectives) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindClaudeMD}
 }
 
+func (*duplicateDirectives) HelpURI() string {
+	return rules.DefaultHelpURI("claude_md/duplicate-directives")
+}
+
 func (r *duplicateDirectives) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	c, ok := a.(*artifact.ClaudeMD)
 	if !ok {

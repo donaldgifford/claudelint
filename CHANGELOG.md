@@ -8,6 +8,43 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Phase 2: two new artifact kinds — `KindMarketplace` for
+  `.claude-plugin/marketplace.json` and `KindMCPServer` for MCP server
+  declarations (standalone `.mcp.json` or plugin-embedded
+  `mcp.servers{}`).
+- Phase 2: eight `marketplace/*` rules (schema, author, plugin
+  uniqueness, plugin-source validity, external-source handling,
+  versioning) and six `mcp/*` rules (command required, known runner,
+  no secrets in env, no unsafe shell, disabled-but-commented, server
+  name required).
+- Phase 2: `Rule.HelpURI() string` method with `rules.DefaultHelpURI`
+  helper. Every built-in rule now exposes a documentation URL.
+- Phase 2: `claudelint rules --json` emits the rule catalog in a stable
+  schema documented at `docs/rules-json-schema.md`.
+- Phase 2: `--format=sarif` renders diagnostics as SARIF 2.1.0, suitable
+  for GitHub Code Scanning. `--sarif-file=<path>` redirects SARIF
+  output to a file.
+- Phase 2: multi-arch container image at
+  `ghcr.io/donaldgifford/claudelint` (linux/amd64 + linux/arm64),
+  published via goreleaser on every release.
+- Ruleset version bumped to `v1.1.0` (minor, additive) to reflect the
+  new rule packages.
+
+### Fixed
+
+- `marketplace/version-semver` and `marketplace/author-required` no
+  longer produce false positives on marketplace manifests that nest
+  `version` under `metadata.version` or express `author` as an
+  `owner{name,email}` object. The parser now accepts both the shape
+  DESIGN-0002 documents and the shape real marketplaces (e.g.
+  `donaldgifford/claude-skills`) actually use. See INV-0005.
+- `commands/allowed-tools-known` now recognizes `AskUserQuestion` as a
+  Claude Code built-in tool.
+
+## [v0.0.1]
+
+### Added
+
 - Phase 1 MVP of the linter (`run`, `rules`, `init`, `version`
   subcommands).
 - 14 built-in rules across `schema`, `content`, `security`, and
@@ -36,4 +73,5 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   the plugin root (no `.claude/` parent). Prior versions silently
   ignored every plugin artifact outside the `.claude/` convention.
 
-[Unreleased]: https://github.com/donaldgifford/claudelint/compare/v0.0.0...HEAD
+[Unreleased]: https://github.com/donaldgifford/claudelint/compare/v0.0.1...HEAD
+[v0.0.1]: https://github.com/donaldgifford/claudelint/compare/v0.0.0...v0.0.1

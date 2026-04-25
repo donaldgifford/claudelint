@@ -32,6 +32,8 @@ func (*semverRule) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindPlugin}
 }
 
+func (*semverRule) HelpURI() string { return rules.DefaultHelpURI("plugin/semver") }
+
 func (r *semverRule) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	p, ok := a.(*artifact.Plugin)
 	if !ok {

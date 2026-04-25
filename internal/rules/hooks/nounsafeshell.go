@@ -34,6 +34,8 @@ func (*noUnsafeShell) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindHook}
 }
 
+func (*noUnsafeShell) HelpURI() string { return rules.DefaultHelpURI("hooks/no-unsafe-shell") }
+
 func (r *noUnsafeShell) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	h, ok := a.(*artifact.Hook)
 	if !ok {

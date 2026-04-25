@@ -44,7 +44,7 @@ func Execute(info BuildInfo, stderr io.Writer) int {
 // newRootCmd assembles the claudelint command tree. Bare `claudelint`
 // delegates to `run` so `claudelint .` works the way users expect.
 func newRootCmd(info BuildInfo) *cobra.Command {
-	run := newRunCmd()
+	run := newRunCmd(info)
 
 	root := &cobra.Command{
 		Use:   "claudelint [path...]",

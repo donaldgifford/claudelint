@@ -416,7 +416,7 @@ func TestWriteReportUnknownFormatPanics(t *testing.T) {
 	// writeReport's switch has an "unreachable" default branch; hit it
 	// by passing a format value validateFormat would have rejected.
 	var buf bytes.Buffer
-	err := writeReport(&buf, reporter.Summary{}, runOptions{format: "nope"})
+	err := writeReport(&buf, reporter.Summary{}, &runOptions{format: "nope"})
 	if err == nil {
 		t.Errorf("writeReport with bogus format should error")
 	}

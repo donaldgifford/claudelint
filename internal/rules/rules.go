@@ -48,6 +48,12 @@ type Rule interface {
 	// that cover every kind (e.g. schema/parse) can list AllKinds.
 	AppliesTo() []artifact.ArtifactKind
 
+	// HelpURI returns a URL a user can follow for more detail about
+	// the rule — its rationale, examples, and how to fix diagnostics.
+	// Rules that have no bespoke docs yet can return DefaultHelpURI(r.ID()),
+	// which points at the project README anchor for the rule.
+	HelpURI() string
+
 	// Check produces zero or more Diagnostics for a single parsed
 	// artifact. It is called at most once per (artifact, rule) pair.
 	// Implementations must be deterministic and must not rely on

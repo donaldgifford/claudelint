@@ -26,6 +26,10 @@ func (*allowedToolsKnown) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindCommand}
 }
 
+func (*allowedToolsKnown) HelpURI() string {
+	return rules.DefaultHelpURI("commands/allowed-tools-known")
+}
+
 func (r *allowedToolsKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	c, ok := a.(*artifact.Command)
 	if !ok {

@@ -1,0 +1,161 @@
+name: "claudelint"
+description: "Lint Claude Code artifacts (CLAUDE.md, skills, commands, agents, hooks, plugins, marketplaces, MCP servers)."
+author: "Donald Gifford"
+branding:
+  icon: "check-square"
+  color: "blue"
+
+inputs:
+  version:
+    description: 'claudelint version to install (e.g. v0.2.0, or "latest")'
+    required: false
+    default: "latest"
+  path:
+    description: "Path(s) to lint, space-separated"
+    required: false
+    default: "."
+  format:
+    description: "Output format: text | json | github | sarif"
+    required: false
+    default: "github"
+  config:
+    description: "Path to .claudelint.hcl (defaults to discovery)"
+    required: false
+    default: ""
+  max-warnings:
+    description: "Fail if warnings exceed this count (-1 = disabled)"
+    required: false
+    default: "-1"
+  upload-sarif:
+    description: "If true, upload SARIF to GitHub code-scanning"
+    required: false
+    default: "false"
+  sarif-category:
+    description: "Category name for the uploaded SARIF"
+    required: false
+    default: "claudelint"
+
+outputs:
+  diagnostics-count:
+    description: "Total diagnostic count (errors + warnings + info)"
+    value: ${{ steps.run.outputs.diagnostics-count }}
+  error-count:
+    description: "Error-severity diagnostic count"
+    value: ${{ steps.run.outputs.error-count }}
+  sarif-path:
+    description: "Path to the generated SARIF file (if format=sarif)"
+    value: ${{ steps.run.outputs.sarif-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve claudelint version
+      id: resolve
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        if [[ "${INPUT_VERSION}" == "latest" ]]; then
+          tag=$(gh api repos/donaldgifford/claudelint/releases/latest --jq .tag_name)
+        else
+          tag="${INPUT_VERSION}"
+        fi
+        echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+    - name: Download claudelint binary
+      id: download
+      shell: bash
+      env:
+        TAG: ${{ steps.resolve.outputs.tag }}
+      run: |
+        set -euo pipefail
+        case "${RUNNER_OS}" in
+          Linux)   os=linux ;;
+          macOS)   os=darwin ;;
+          Windows) os=windows ;;
+          *) echo "unsupported runner OS: ${RUNNER_OS}" >&2; exit 2 ;;
+        esac
+        case "${RUNNER_ARCH}" in
+          X64)   arch=amd64 ;;
+          ARM64) arch=arm64 ;;
+          *) echo "unsupported runner arch: ${RUNNER_ARCH}" >&2; exit 2 ;;
+        esac
+        base="https://github.com/donaldgifford/claudelint/releases/download/${TAG}"
+        if [[ "${os}" == "windows" ]]; then
+          archive="claudelint_${os}_${arch}.zip"
+        else
+          archive="claudelint_${os}_${arch}.tar.gz"
+        fi
+        tmp="$(mktemp -d)"
+        cd "${tmp}"
+        curl -fsSL -o "${archive}" "${base}/${archive}"
+        curl -fsSL -o checksums.txt "${base}/checksums.txt"
+        # Verify SHA-256.
+        sha256sum --check --ignore-missing <(grep "  ${archive}\$" checksums.txt)
+        if [[ "${archive}" == *.zip ]]; then
+          unzip -q "${archive}"
+        else
+          tar -xzf "${archive}"
+        fi
+        install_dir="${HOME}/.claudelint/bin"
+        mkdir -p "${install_dir}"
+        if [[ "${os}" == "windows" ]]; then
+          mv claudelint.exe "${install_dir}/"
+        else
+          mv claudelint "${install_dir}/"
+          chmod +x "${install_dir}/claudelint"
+        fi
+        echo "${install_dir}" >> "$GITHUB_PATH"
+        echo "bin=${install_dir}/claudelint" >> "$GITHUB_OUTPUT"
+
+    - name: Run claudelint
+      id: run
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_MAX_WARNINGS: ${{ inputs.max-warnings }}
+      run: |
+        set -euo pipefail
+        args=()
+        if [[ -n "${INPUT_CONFIG}" ]]; then
+          args+=(--config "${INPUT_CONFIG}")
+        fi
+        args+=(--format "${INPUT_FORMAT}")
+        args+=(--max-warnings "${INPUT_MAX_WARNINGS}")
+
+        sarif_path=""
+        if [[ "${INPUT_FORMAT}" == "sarif" ]]; then
+          sarif_path="${RUNNER_TEMP}/claudelint.sarif"
+          args+=(--sarif-file "${sarif_path}")
+          echo "sarif-path=${sarif_path}" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Split INPUT_PATH on whitespace into the final positional args.
+        # shellcheck disable=SC2086
+        if claudelint run "${args[@]}" ${INPUT_PATH}; then
+          status=0
+        else
+          status=$?
+        fi
+
+        # Always compute counts via --format=json for predictability.
+        json="${RUNNER_TEMP}/claudelint-counts.json"
+        # shellcheck disable=SC2086
+        claudelint run --format=json --max-warnings=-1 ${INPUT_PATH} > "${json}" || true
+        diagnostics=$(jq '.diagnostic_count' "${json}")
+        errors=$(jq '.severity_count.error' "${json}")
+        echo "diagnostics-count=${diagnostics}" >> "$GITHUB_OUTPUT"
+        echo "error-count=${errors}" >> "$GITHUB_OUTPUT"
+
+        exit "${status}"
+
+    - name: Upload SARIF to Code Scanning
+      if: ${{ inputs.upload-sarif == 'true' && inputs.format == 'sarif' && always() }}
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: ${{ steps.run.outputs.sarif-path }}
+        category: ${{ inputs.sarif-category }}

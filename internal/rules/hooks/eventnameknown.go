@@ -24,6 +24,8 @@ func (*eventNameKnown) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindHook}
 }
 
+func (*eventNameKnown) HelpURI() string { return rules.DefaultHelpURI("hooks/event-name-known") }
+
 func (r *eventNameKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	h, ok := a.(*artifact.Hook)
 	if !ok {

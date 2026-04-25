@@ -47,6 +47,8 @@ var highEntropyCandidate = regexp.MustCompile(`[A-Za-z0-9+/=]{40,}`)
 
 const minSecretEntropy = 4.0
 
+func (*secrets) HelpURI() string { return rules.DefaultHelpURI("security/secrets") }
+
 func (r *secrets) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	src := a.Source()
 	var out []diag.Diagnostic
@@ -72,6 +74,29 @@ func (r *secrets) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic 
 		})
 	}
 	return out
+}
+
+// MatchesSecret reports whether b contains a token that looks like a
+// credential. It is the matcher the secrets rule uses, exposed for
+// other rule packages (e.g. rules/mcp) that want to check field-level
+// values without reimplementing the pattern bundle. The decision
+// combines the known-prefix regex with the Shannon-entropy filter
+// over the high-entropy candidate regex.
+//
+// This is the narrow public API the security package exposes on
+// purpose — larger matcher consumers should live inside this
+// package or move to a shared helper.
+func MatchesSecret(b []byte) bool {
+	if knownPrefixes.Match(b) {
+		return true
+	}
+	for _, match := range highEntropyCandidate.FindAllIndex(b, -1) {
+		token := b[match[0]:match[1]]
+		if shannonEntropy(token) >= minSecretEntropy {
+			return true
+		}
+	}
+	return false
 }
 
 // shannonEntropy computes the Shannon entropy (in bits per symbol)

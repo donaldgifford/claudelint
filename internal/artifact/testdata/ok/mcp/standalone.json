@@ -1,0 +1,19 @@
+{
+  "servers": {
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {
+        "DEBUG": "1"
+      }
+    },
+    "filesystem": {
+      "command": "uvx",
+      "args": ["mcp-server-filesystem", "/data"]
+    },
+    "disabled-one": {
+      "command": "echo",
+      "disabled": true
+    }
+  }
+}

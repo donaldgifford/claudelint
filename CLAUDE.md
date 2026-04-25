@@ -4,14 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Phase 1 MVP is shipped. PR #6 merged to `main` (commit `24dff7e`) and `v0.0.1` was auto-tagged via the release workflow. The full MVP ruleset is registered, the concurrent runner is in place, all three suppression mechanisms are wired, and `run` supports `--format=text|json|github`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `make self-check`, `make coverage-gate`, `make bench`, and `make profile` are all wired. Dogfooding happened during 1.8 (see INV-0003). The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
+Phase 1 MVP shipped (v0.0.1). Phase 2 feature-complete on branch `docs/impl-0002-phase-2`; PR [#9](https://github.com/donaldgifford/claudelint/pull/9) is green and labeled `minor` so `jefflinse/pr-semver-bump` cuts `v0.2.0` on merge. Ruleset is `v1.1.0`, fingerprint `4cee5ee7`.
+
+Phase 2 delivered: two new artifact kinds (`KindMarketplace`, `KindMCPServer`), eight marketplace rules, six MCP rules, `Rule.HelpURI()`, `claudelint rules --json`, `--format=sarif` with vendored SARIF 2.1.0 schema validation, a multi-arch `ghcr.io/donaldgifford/claudelint` image via goreleaser, and companion-action scaffolding at `companion/claudelint-action/` ready to push to `donaldgifford/claudelint-action` once v0.2.0 is tagged. INV-0005 captures the `donaldgifford/claude-skills` dogfood pass; two false positives (nested marketplace shape, missing `AskUserQuestion`) were fixed in-flight.
+
+`run` supports `--format=text|json|github|sarif`, `--sarif-file=<path>`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `make self-check`, `make coverage-gate`, `make bench`, and `make profile` are all wired. Phase 1 dogfooding captured in INV-0003.
+
+The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
 
 - `docs/rfc/0001-*.md` — the proposal (why claudelint exists, scope, phases)
 - `docs/adr/0001-*.md` — HCL chosen as the config format
-- `docs/design/0001-*.md` — architecture, interfaces, package layout, built-in rules, ruleset versioning
-- `docs/impl/0001-*.md` — Phase 1 task breakdown with success criteria, plus a "Resolved Decisions" section capturing 11 implementation choices already made
+- `docs/design/0001-*.md` — Phase 1 architecture, interfaces, package layout, built-in rules, ruleset versioning
+- `docs/design/0002-*.md` — Phase 2 architecture: marketplaces, MCP rules, GitHub Action, SARIF
+- `docs/impl/0001-*.md` — Phase 1 task breakdown
+- `docs/impl/0002-*.md` — Phase 2 task breakdown with success criteria per sub-phase
 
-When starting implementation, follow the phases in IMPL-0001 in order (1.1 foundation → 1.8 polish/release). Do not improvise architecture that contradicts DESIGN-0001 without updating the doc first.
+When continuing Phase 2, follow IMPL-0002 in order. Do not improvise architecture that contradicts DESIGN-0002 without updating the doc first.
 
 ## Architecture (target)
 
@@ -25,7 +33,7 @@ Parsers → Engine → Rules
 - **Engine** (`internal/engine/`) owns discovery, config, scheduling, concurrency, suppression, and reporting — this is where the complexity lives.
 - **Rules** (`internal/rules/<kind>/`) are small (~50 LOC), pure, focused, and implement one `Rule` interface from `internal/rules`. Each rule file runs `Register()` in `init()`. `internal/rules/all/` blank-imports every subpackage so registration happens.
 
-Rule packages must not import the engine. Rules are **built-in to the binary and versioned with it** — no third-party plugin rules in v1. The linted artifact kinds are `KindClaudeMD`, `KindSkill`, `KindCommand`, `KindAgent`, `KindHook`, `KindPlugin`.
+Rule packages must not import the engine. Rules are **built-in to the binary and versioned with it** — no third-party plugin rules in v1. The linted artifact kinds are `KindClaudeMD`, `KindSkill`, `KindCommand`, `KindAgent`, `KindHook`, `KindPlugin`, `KindMarketplace`, `KindMCPServer`. Every `Rule` implements `HelpURI() string`; `rules.DefaultHelpURI(id)` gives a free README anchor.
 
 Cobra subcommands live in `internal/cli/` (one file per command). `cmd/claudelint/main.go` is deliberately thin: it only translates `-ldflags` version/commit into a `cli.BuildInfo` and calls `cli.Execute`. This keeps the CLI testable without spawning a process.
 
@@ -40,6 +48,8 @@ Key decisions already locked in (see IMPL-0001 "Resolved Decisions"):
 - Suppressions: Markdown-only in-source (`<!-- claudelint:ignore=<id> -->`); config-level for JSON
 - `schema/parse` is registered as a pseudo-rule but synthesized by the engine from `ParseError`
 - pprof profiling is a Phase 1 requirement, not a nice-to-have
+- SARIF 2.1.0 output is the CI-facing format; schema is vendored under `internal/reporter/testdata/` so `make ci` stays network-free. Validator is `github.com/santhosh-tekuri/jsonschema/v5` (test-only dep).
+- Project-scoped `.mcp.json` files use the top-level key `servers{}` per DESIGN-0002 (not `mcpServers{}`; see §2.2 for rationale — if Claude Code standardizes on `mcpServers`, revisit both the parser and the design doc).
 
 ## Common commands
 

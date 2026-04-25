@@ -22,6 +22,8 @@ func (*timeoutPresent) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindHook}
 }
 
+func (*timeoutPresent) HelpURI() string { return rules.DefaultHelpURI("hooks/timeout-present") }
+
 func (r *timeoutPresent) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	h, ok := a.(*artifact.Hook)
 	if !ok {

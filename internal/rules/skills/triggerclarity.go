@@ -39,6 +39,8 @@ func (*triggerClarity) AppliesTo() []artifact.ArtifactKind {
 	return []artifact.ArtifactKind{artifact.KindSkill}
 }
 
+func (*triggerClarity) HelpURI() string { return rules.DefaultHelpURI("skills/trigger-clarity") }
+
 func (r *triggerClarity) Check(ctx rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.Skill)
 	if !ok {

@@ -1,0 +1,7 @@
+{
+  "name": "weird",
+  "version": "1.0.0",
+  "plugins": [
+    { "name": "one", "source": 42 }
+  ]
+}

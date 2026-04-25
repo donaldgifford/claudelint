@@ -29,6 +29,8 @@ func (*noEmoji) AppliesTo() []artifact.ArtifactKind {
 	return artifact.AllKinds()
 }
 
+func (*noEmoji) HelpURI() string { return rules.DefaultHelpURI("style/no-emoji") }
+
 func (r *noEmoji) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	if !containsEmoji(a.Source()) {
 		return nil

@@ -33,4 +33,5 @@ docz create design "Your Design Title"
 | ID | Title | Status | Date | Author | Link |
 |----|-------|--------|------|--------|------|
 | DESIGN-0001 | Claudelint linter architecture and rule engine | Draft | 2026-04-18 | Donald Gifford | [0001-claudelint-linter-architecture-and-rule-engine.md](0001-claudelint-linter-architecture-and-rule-engine.md) |
+| DESIGN-0002 | Phase 2 — marketplaces, MCP rules, and GitHub Action | Draft | 2026-04-23 | Donald Gifford | [0002-phase-2-marketplaces-mcp-rules-and-github-action.md](0002-phase-2-marketplaces-mcp-rules-and-github-action.md) |
 <!-- END DOCZ AUTO-GENERATED -->

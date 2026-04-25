@@ -1,0 +1,7 @@
+{
+  "name": "oops",
+  "version": "1.0.0",
+  "plugins": [
+    { "name": "one", "source": "./a",
+  ]
+}
