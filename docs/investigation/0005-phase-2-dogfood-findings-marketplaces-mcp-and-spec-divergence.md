@@ -72,7 +72,7 @@ that generates the problems.
 
 | Component      | Version / Value                                      |
 |----------------|------------------------------------------------------|
-| `claudelint`   | pre-v0.2.0 (branch `docs/impl-0002-phase-2`, ruleset v1.1.0, fingerprint `4cee5ee7`) |
+| `claudelint`   | pre-v0.1.0 (branch `docs/impl-0002-phase-2`, ruleset v1.1.0, fingerprint `4cee5ee7`) |
 | Go             | 1.26.1                                               |
 | Marketplace    | `donaldgifford/claude-skills` at `~/code/claude-skills` (HEAD, 2026-04-23) |
 
@@ -198,10 +198,11 @@ SKILL). Ship-ready.
 
 ## Recommendation
 
-- **Ship v0.2.0** with the marketplace-parser fix and the `KnownTools`
-  addition included. The ruleset produces actionable diagnostics on
-  conforming marketplaces with no known false positives on the primary
-  dogfood target.
+- **Ship v0.1.0** (note: IMPL-0002 calls the Phase 2 release "v0.2.0";
+  semver math from `v0.0.1 + minor` actually produces v0.1.0, which is
+  what the release workflow tagged). The ruleset produces actionable
+  diagnostics on conforming marketplaces with no known false positives
+  on the primary dogfood target.
 - **Monitor:** future additions to the Claude Code tool set need a
   corresponding one-line bump to `artifact.KnownTools`.
 - **Leave open:** if another marketplace surfaces yet another shape

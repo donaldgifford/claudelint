@@ -6,6 +6,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [v0.1.0] — 2026-04-25
+
 ### Added
 
 - Phase 2: two new artifact kinds — `KindMarketplace` for
@@ -73,5 +75,6 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   the plugin root (no `.claude/` parent). Prior versions silently
   ignored every plugin artifact outside the `.claude/` convention.
 
-[Unreleased]: https://github.com/donaldgifford/claudelint/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/donaldgifford/claudelint/compare/v0.1.0...HEAD
+[v0.1.0]: https://github.com/donaldgifford/claudelint/compare/v0.0.1...v0.1.0
 [v0.0.1]: https://github.com/donaldgifford/claudelint/compare/v0.0.0...v0.0.1

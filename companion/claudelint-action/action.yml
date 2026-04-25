@@ -7,7 +7,7 @@ branding:
 
 inputs:
   version:
-    description: 'claudelint version to install (e.g. v0.2.0, or "latest")'
+    description: 'claudelint version to install (e.g. v0.1.0, or "latest")'
     required: false
     default: "latest"
   path:
