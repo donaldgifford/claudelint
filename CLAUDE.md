@@ -19,7 +19,7 @@ The architecture and phased rollout are specified in `docs/` — **read the docs
 - `docs/impl/0001-*.md` — Phase 1 task breakdown
 - `docs/impl/0002-*.md` — Phase 2 task breakdown with success criteria per sub-phase
 
-When continuing Phase 2, follow IMPL-0002 in order. Do not improvise architecture that contradicts DESIGN-0002 without updating the doc first.
+Phase 2 is shipped. The next outstanding work is bootstrapping the `donaldgifford/claudelint-action` repo from `companion/claudelint-action/` (instructions in `companion/README.md`) and tagging it `v1.0.0` once its own test workflow is green. After that, Phase 3 (`convert` subcommand, gated on INV-0001) is the next planned phase. When extending an existing phase or planning a new one, follow the corresponding IMPL doc in order; do not improvise architecture that contradicts the matching DESIGN doc without updating it first.
 
 ## Architecture (target)
 
@@ -89,6 +89,7 @@ Use `Skill` with the `docz:*` skills for doc lifecycle work rather than reinvent
 
 - Branch prefixes drive auto-labeling (`.github/labeler.yml`): `feat/`, `fix/`, `chore/`, `docs/`, `bug/`. Use the `git-workflow:branch` skill.
 - **Releases are label-driven, not manual.** `.github/workflows/release.yml` runs `jefflinse/pr-semver-bump` on every push to `main`; the merged PR's label (`major` / `minor` / `patch` / `dont-release`) determines the version bump and tag. Do **not** run `git tag` or `make release TAG=...` by hand — it would race the workflow. (`RELEASE.md` predates this and is stale for Phase 1; keep that in mind when reading it.)
+- **Squash-merge subject must keep the `(#N)` suffix.** `pr-semver-bump` looks at the merge-commit message for the PR number; if you override `--subject` with `gh pr merge` and drop the suffix, the SHA-based fallback often fails (search-API indexing lag) and the workflow errors out. Either accept GitHub's default subject or include `(#N)` manually.
 - Release assets are defined in `.goreleaser.yml`; `.codecov.yml` gates coverage reporting.
-- **No Docker distribution in Phase 1.** The docker-build CI job and the `docker:` release job were removed (they referenced a nonexistent `docker-bake.hcl`). If Docker comes back in a later phase, a real `docker-bake.hcl` + `Dockerfile` need to land first.
+- **Docker images** ship from the same goreleaser run as the binaries (Phase 2 onward). Image is `ghcr.io/donaldgifford/claudelint`; tag layout per release is `:<version>` **without leading `v`** (goreleaser strips it on the bare-version tag), plus `:v<major>`, `:v<major>.<minor>`, and `:latest`. Multi-arch manifest covers `linux/amd64` + `linux/arm64`.
 - **GPG release signing:** the `GPG_PRIVATE_KEY` repo secret must be the output of `gpg --armor --export-secret-keys <keyid>` (begins with `-----BEGIN PGP PRIVATE KEY BLOCK-----`). The public-export variant imports cleanly but fails at sign-time with `gpg: skipped "***": No secret key`. `GPG_FINGERPRINT` is also required.
