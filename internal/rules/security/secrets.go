@@ -57,9 +57,9 @@ func (r *secrets) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic 
 		out = append(out, diag.Diagnostic{
 			RuleID:  r.ID(),
 			Path:    a.Path(),
-			Message: "file contains a token matching a known API-key prefix",
+			Range:   artifact.ResolveOffsetRange(src, match[0], match[1]),
+			Message: "token matches a known API-key prefix",
 		})
-		_ = match
 	}
 
 	for _, match := range highEntropyCandidate.FindAllIndex(src, -1) {
@@ -70,7 +70,8 @@ func (r *secrets) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic 
 		out = append(out, diag.Diagnostic{
 			RuleID:  r.ID(),
 			Path:    a.Path(),
-			Message: "file contains a high-entropy token that resembles a secret",
+			Range:   artifact.ResolveOffsetRange(src, match[0], match[1]),
+			Message: "high-entropy token resembles a secret",
 		})
 	}
 	return out
