@@ -6,7 +6,18 @@ import (
 )
 
 func TestParseHookDedicatedFile(t *testing.T) {
-	src := []byte(`{"event":"PreToolUse","matcher":"Bash","command":"echo ok","timeout":30}`)
+	src := []byte(`{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo ok", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}`)
 	h, perr := ParseHook(".claude/hooks/guard.json", src)
 	if perr != nil {
 		t.Fatalf("ParseHook = %v, want nil", perr)
@@ -30,8 +41,68 @@ func TestParseHookDedicatedFile(t *testing.T) {
 	if e.Timeout != 30 {
 		t.Errorf("Timeout = %d, want 30", e.Timeout)
 	}
-	if e.EventRange.IsZero() {
-		t.Errorf("EventRange should be populated")
+	if e.CommandRange.IsZero() {
+		t.Errorf("CommandRange should be populated")
+	}
+}
+
+// TestParseHookPluginNestedShape covers the regression behind
+// issue #14: a plugin hooks/hooks.json with timeout declared per
+// inner entry was previously read by the flat-shape parser, which
+// looked for `timeout` at the top level and produced Timeout == 0.
+func TestParseHookPluginNestedShape(t *testing.T) {
+	src := []byte(`{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash do-thing.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}`)
+	h, perr := ParseHook("plugins/example/hooks/hooks.json", src)
+	if perr != nil {
+		t.Fatalf("ParseHook = %v, want nil", perr)
+	}
+	if h.Embedded {
+		t.Errorf("plugin hooks.json should not be Embedded")
+	}
+	if len(h.Entries) != 1 {
+		t.Fatalf("entries = %d, want 1", len(h.Entries))
+	}
+	e := h.Entries[0]
+	if e.Event != "Stop" {
+		t.Errorf("Event = %q, want Stop", e.Event)
+	}
+	if e.Command != "bash do-thing.sh" {
+		t.Errorf("Command = %q, want bash do-thing.sh", e.Command)
+	}
+	if e.Timeout != 60 {
+		t.Errorf("Timeout = %d, want 60", e.Timeout)
+	}
+	if e.TimeoutRange.IsZero() {
+		t.Errorf("TimeoutRange should be populated")
+	}
+}
+
+// TestParseHookDedicatedFileMissingHooksKey asserts dedicated hook
+// files (non-settings) fail loudly when they don't carry a "hooks"
+// key — rejecting both legacy flat-shape files and any other unknown
+// shape rather than silently producing an entry with Timeout == 0.
+func TestParseHookDedicatedFileMissingHooksKey(t *testing.T) {
+	flat := []byte(`{"event":"PreToolUse","matcher":"Bash","command":"echo ok","timeout":30}`)
+	_, perr := ParseHook(".claude/hooks/legacy.json", flat)
+	if perr == nil {
+		t.Fatal("expected ParseError for flat-shape hook file")
+	}
+	if !strings.Contains(perr.Message, `"hooks" key`) {
+		t.Errorf("message = %q, want mention of missing hooks key", perr.Message)
 	}
 }
 

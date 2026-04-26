@@ -11,18 +11,41 @@ import (
 	"github.com/donaldgifford/claudelint/internal/diag"
 )
 
-// ParseHook parses a hook declaration. It recognizes two source shapes:
+// ParseHook parses a hook declaration. claudelint accepts a single
+// canonical shape regardless of which file it appears in:
 //
-//  1. A dedicated file under .claude/hooks/*.json whose top-level
-//     object is a single hook (keys: event, matcher, command,
-//     timeout).
-//  2. A .claude/settings{,.local}.json whose "hooks" stanza maps
-//     event names to arrays of matcher groups, each containing an
-//     array of hook commands. All entries are flattened into
-//     Hook.Entries.
+//	{
+//	  "hooks": {
+//	    "<EventName>": [
+//	      { "matcher": "<pattern>", "hooks": [
+//	          { "type": "command", "command": "<cmd>", "timeout": <s> }
+//	      ] }
+//	    ]
+//	  }
+//	}
 //
-// Parse errors (syntactically invalid JSON, hooks that are not an
-// object) yield a *ParseError pointing at the offending bytes.
+// This is the shape Claude Code documents for both
+// .claude/settings{,.local}.json and plugin hooks/hooks.json (see
+// https://docs.claude.com/en/docs/claude-code/hooks). Discovery also
+// classifies .claude/hooks/*.json as KindHook even though that path
+// is not canonically documented; we accept it on a best-effort basis
+// using the same nested shape.
+//
+// Hook.Embedded is true when the source file is a settings.json (the
+// hooks share a file with other Claude Code config) and false for
+// dedicated hook files.
+//
+// Failure modes:
+//   - syntactically invalid JSON → *ParseError
+//   - "hooks" key present but not an object → *ParseError
+//   - dedicated hook file missing the "hooks" key entirely → *ParseError
+//     (settings files are allowed to omit it; the file may carry no hooks)
+//
+// Earlier versions of the parser also accepted a flat
+// {event, matcher, command, timeout} shape for dedicated hook files.
+// That shape never appeared in Claude Code's documentation and produced
+// silent zero-Timeout values when the real nested shape was used (see
+// issue #14). It has been removed; an unknown shape now fails loudly.
 func ParseHook(path string, src []byte) (*Hook, *ParseError) {
 	base := NewBase(path, src)
 
@@ -36,16 +59,25 @@ func ParseHook(path string, src []byte) (*Hook, *ParseError) {
 	}
 
 	h := &Hook{Base: base}
+	settings := isSettingsFile(path)
+	h.Embedded = settings
 
-	if isSettingsFile(path) {
-		h.Embedded = true
-		if err := collectSettingsHooks(src, &base, h); err != nil {
-			return nil, &ParseError{Path: path, Message: err.Error(), Cause: err}
+	missingHooksKey, err := collectHooks(src, &base, h)
+	if err != nil {
+		return nil, &ParseError{
+			Path:    path,
+			Range:   base.ResolveRange(0, len(src)),
+			Message: err.Error(),
+			Cause:   err,
 		}
-		return h, nil
 	}
-
-	h.Entries = append(h.Entries, parseSingleHook(src, &base))
+	if missingHooksKey && !settings {
+		return nil, &ParseError{
+			Path:    path,
+			Range:   base.ResolveRange(0, len(src)),
+			Message: `hook file is missing the top-level "hooks" key; expected {"hooks": {"<EventName>": [{"hooks": [{"command": "...", "timeout": <s>}]}]}}`,
+		}
+	}
 	return h, nil
 }
 
@@ -82,39 +114,35 @@ func ParsePlugin(path string, src []byte) (*Plugin, *ParseError) {
 	return p, nil
 }
 
-// parseSingleHook builds a HookEntry from a flat hook object.
-func parseSingleHook(src []byte, base *Base) HookEntry {
-	e := HookEntry{}
-	e.Event, e.EventRange = stringField(src, base, "event")
-	e.Matcher, e.MatcherRange = stringField(src, base, "matcher")
-	e.Command, e.CommandRange = stringField(src, base, "command")
-	e.Timeout, e.TimeoutRange = intField(src, base, "timeout")
-	return e
-}
-
-// collectSettingsHooks walks the "hooks" stanza of a settings file and
-// flattens every (event, matcher, command) triple into Hook.Entries.
-// Settings files that have no hooks key simply produce an empty Entries
-// slice — absence is not an error.
-func collectSettingsHooks(src []byte, base *Base, h *Hook) error {
-	hooksRaw, dt, _, err := jsonparser.Get(src, "hooks")
-	if err != nil {
-		if errors.Is(err, jsonparser.KeyPathNotFoundError) {
-			return nil
+// collectHooks walks the "hooks" stanza and flattens every
+// (event, matcher, command) triple into Hook.Entries. The same nested
+// shape applies to .claude/settings{,.local}.json, plugin
+// hooks/hooks.json, and any .claude/hooks/*.json discovered by the
+// classifier.
+//
+// The first return value reports whether the top-level "hooks" key was
+// absent. Callers decide whether absence is an error (dedicated hook
+// files) or acceptable (settings files that carry no hooks).
+func collectHooks(src []byte, base *Base, h *Hook) (missing bool, err error) {
+	hooksRaw, dt, _, gerr := jsonparser.Get(src, "hooks")
+	if gerr != nil {
+		if errors.Is(gerr, jsonparser.KeyPathNotFoundError) {
+			return true, nil
 		}
-		return fmt.Errorf("settings.hooks: %w", err)
+		return false, fmt.Errorf("hooks: %w", gerr)
 	}
 	if dt != jsonparser.Object {
-		return fmt.Errorf("settings.hooks must be an object, got %s", dt.String())
+		return false, fmt.Errorf("hooks must be an object, got %s", dt.String())
 	}
 
-	return jsonparser.ObjectEach(hooksRaw, func(eventKey, groups []byte, _ jsonparser.ValueType, _ int) error {
+	walkErr := jsonparser.ObjectEach(hooksRaw, func(eventKey, groups []byte, _ jsonparser.ValueType, _ int) error {
 		event := string(eventKey)
-		_, err := jsonparser.ArrayEach(groups, func(group []byte, _ jsonparser.ValueType, _ int, _ error) {
+		_, aerr := jsonparser.ArrayEach(groups, func(group []byte, _ jsonparser.ValueType, _ int, _ error) {
 			collectMatcherGroup(group, base, event, h)
 		})
-		return err
+		return aerr
 	})
+	return false, walkErr
 }
 
 // collectMatcherGroup pulls every { matcher, hooks: [...] } item out

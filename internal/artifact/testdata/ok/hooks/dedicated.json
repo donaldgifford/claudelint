@@ -1,6 +1,12 @@
 {
-  "event": "PreToolUse",
-  "matcher": "Bash",
-  "command": "./scripts/guard.sh",
-  "timeout": 30
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "./scripts/guard.sh", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
