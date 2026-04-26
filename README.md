@@ -273,24 +273,39 @@ entry is a valid Claude tool name from the shipping set.
 
 #### `hooks/event-name-known`
 
-Hook config events must match one of the known Claude hook events
-(`PreToolUse`, `PostToolUse`, `Stop`, etc.).
+Each top-level key under `"hooks"` is the event name. It must match
+one of the known Claude Code hook events (`PreToolUse`, `PostToolUse`,
+`Stop`, etc.).
 
-**Bad**: `on: PretoolUse` (wrong case / typo)
-**Fix**: `on: PreToolUse`.
+**Bad**: `"PretoolUse": [...]` (wrong case / typo)
+**Fix**: `"PreToolUse": [...]`.
 
 #### `hooks/timeout-present`
 
-Every hook entry should declare a timeout so a runaway hook cannot
-hang the session.
+Every hook entry should declare a `timeout` (seconds) so a runaway
+hook cannot hang the session.
 
 **Bad**:
 
-    hooks:
-      - on: PreToolUse
-        command: lint-check
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      { "hooks": [{ "type": "command", "command": "lint-check" }] }
+    ]
+  }
+}
+```
 
-**Fix**: add `timeout: 5s` to the entry.
+**Fix**: add `"timeout": 5` to the inner hook entry.
+
+> **Hook shape.** claudelint parses every hook file — settings,
+> plugin `hooks/hooks.json`, `.claude/hooks/*.json` — using the same
+> nested layout above. A dedicated hook file missing the top-level
+> `"hooks"` key fails parsing with a `schema/parse` error rather
+> than silently producing zero-timeout entries. See
+> [DESIGN-0001 §Hook shape](docs/design/0001-claudelint-linter-architecture-and-rule-engine.md)
+> for the rationale and the best-effort handling of `.claude/hooks/*.json`.
 
 #### `hooks/no-unsafe-shell`
 

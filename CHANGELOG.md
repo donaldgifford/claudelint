@@ -6,6 +6,30 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `hooks/timeout-present` no longer false-fires on plugin
+  `hooks/hooks.json` files that declare `timeout` per inner entry. The
+  hook parser previously dispatched non-`settings.json` files to a flat
+  `{event, matcher, command, timeout}` shape that does not appear in
+  the Claude Code docs, causing `Timeout` to read as 0 for every entry
+  in a real plugin hook file. The parser now uses the canonical nested
+  `{"hooks": {"<EventName>": [{"matcher": "...", "hooks": [...]}]}}`
+  shape uniformly. (#14)
+
+### Changed
+
+- **Breaking:** the hook parser no longer accepts the flat
+  `{event, matcher, command, timeout}` top-level shape. A dedicated
+  hook file (`.claude/hooks/*.json`, plugin `hooks/hooks.json`) that
+  is missing the `hooks` key now fails parsing with `*ParseError`
+  rather than silently producing an entry with `Timeout == 0`.
+  Settings files (`.claude/settings{,.local}.json`) may still omit
+  the `hooks` key. The flat shape was a parser-author assumption that
+  did not match Claude Code's documented hook schema; see
+  `docs/design/0001-*.md` "Hook shape" for the rationale and the
+  best-effort handling of `.claude/hooks/*.json`.
+
 ## [v0.1.0] — 2026-04-25
 
 ### Added

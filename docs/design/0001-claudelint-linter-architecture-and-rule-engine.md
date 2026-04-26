@@ -293,11 +293,57 @@ automatically.
 | `skill` | Frontmatter (`name`, `description`, optional `allowed-tools`, `model`) + Markdown body. Companion files indexed. |
 | `command` | Frontmatter (`description`, `argument-hint`, `allowed-tools`) + body. |
 | `agent` | Frontmatter (`name`, `description`, `tools`) + system prompt body. |
-| `hook` | JSON — either dedicated file or the `hooks` stanza inside `settings.json`. |
+| `hook` | JSON. Single canonical nested shape `{"hooks": {"<EventName>": [{"matcher": "...", "hooks": [{"command": "...", "timeout": <s>}]}]}}` — see "Hook shape" note below. |
 | `plugin` | JSON or YAML manifest; fields per the Claude plugin spec (`name`, `version`, `commands`, `skills`, `agents`, …). |
 
 All parsers preserve byte offsets so diagnostics can report exact
 line/column ranges, including inside Markdown bodies.
+
+#### Hook shape
+
+The hook parser accepts one canonical shape for every file it sees,
+regardless of location:
+
+```json
+{
+  "hooks": {
+    "<EventName>": [
+      {
+        "matcher": "<pattern>",
+        "hooks": [
+          { "type": "command", "command": "<cmd>", "timeout": <s> }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This is the shape Claude Code documents at
+<https://docs.claude.com/en/docs/claude-code/hooks> for both
+`.claude/settings{,.local}.json` and plugin `hooks/hooks.json`.
+
+Discovery also classifies `.claude/hooks/*.json` as `KindHook`. Claude
+Code does not document this layout canonically; claudelint accepts it
+on a **best-effort** basis using the same nested shape. The parser
+flips `Hook.Embedded` only for settings files (the hooks key shares a
+file with other Claude Code config) — dedicated hook files have
+`Embedded = false` regardless of their parent directory.
+
+Failure is loud:
+
+- a syntactically invalid JSON file → `*ParseError`
+- a `hooks` key present but not an object → `*ParseError`
+- a dedicated hook file missing the `hooks` key entirely → `*ParseError`
+  (settings files may omit it — they may simply carry no hooks)
+
+Earlier versions of the parser also accepted a flat
+`{event, matcher, command, timeout}` shape for dedicated hook files.
+That shape never appeared in Claude Code's docs and silently produced
+`Timeout == 0` when the real nested shape was used inside one of
+those files (issue #14). It has been removed; an unknown shape now
+fails loudly so the user gets a parse error instead of misleading
+content diagnostics.
 
 ### Built-in rules (MVP shortlist)
 

@@ -76,26 +76,27 @@ type Agent struct {
 // Kind implements Artifact.
 func (*Agent) Kind() ArtifactKind { return KindAgent }
 
-// Hook is a Claude Code hook artifact: either a dedicated
-// .claude/hooks/*.json file or the "hooks" stanza inside
-// .claude/settings{,.local}.json. One file usually carries multiple
-// hook entries (one per event × matcher), so the artifact is a
-// container over []HookEntry.
+// Hook is a Claude Code hook artifact: a settings file
+// (.claude/settings{,.local}.json) carrying a "hooks" stanza, a
+// plugin hooks/hooks.json, or a .claude/hooks/*.json file. Every
+// shape uses the same nested layout — see ParseHook — and one file
+// usually carries multiple entries (one per event × matcher × hook
+// command), so the artifact is a container over []HookEntry.
 //
-// Embedded mode (inside settings.json) is distinguished by Embedded
-// == true; rules that only apply to one shape can switch on it.
+// Embedded == true distinguishes settings files (hooks share a file
+// with other Claude Code config) from dedicated hook files; rules
+// that only apply to one shape can switch on it.
 type Hook struct {
 	Base
 
-	// Embedded is true when the source file is a settings.json (i.e.
-	// the hooks are reached via the "hooks" key) rather than a
-	// dedicated file in .claude/hooks/.
+	// Embedded is true when the source file is a settings.json (the
+	// hooks are reached via the "hooks" key alongside other Claude
+	// Code config), false for dedicated hook files.
 	Embedded bool
 
-	// Entries is the list of concrete hook declarations. For
-	// dedicated hook files this is always length 1; for settings
-	// files it is the flattened cross-product of events × matchers ×
-	// hook commands.
+	// Entries is the flattened cross-product of events × matchers ×
+	// hook commands. May be empty when a settings file carries no
+	// hooks; a dedicated hook file with no entries fails parsing.
 	Entries []HookEntry
 }
 
