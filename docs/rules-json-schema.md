@@ -16,8 +16,8 @@ tools can discover the ruleset without parsing human-targeted text.
 ```json
 {
   "schema_version":  "1",
-  "ruleset_version": "v1.1.0",
-  "fingerprint":     "4cee5ee7",
+  "ruleset_version": "v1.2.0",
+  "fingerprint":     "e7f26796",
   "rules": [
     { ... }
   ]
