@@ -177,6 +177,7 @@ fails if the drift is not acknowledged.
 | `schema/frontmatter-required`         | schema    | error    | skill, command, agent           |
 | `skills/trigger-clarity`              | content   | warning  | skill                           |
 | `skills/body-size`                    | content   | warning  | skill                           |
+| `skills/no-version-field`             | schema    | warning  | skill                           |
 | `claude_md/duplicate-directives`      | content   | warning  | `CLAUDE.md`                     |
 | `claude_md/size`                      | content   | warning  | `CLAUDE.md`                     |
 | `commands/allowed-tools-known`        | schema    | error    | command                         |
@@ -250,6 +251,28 @@ Guardrail against runaway SKILL.md files. Default limit is 2000 words.
 Override per-rule:
 
     rule "skills/body-size" { options = { max_words = 3000 } }
+
+#### `skills/no-version-field`
+
+Warns when a `SKILL.md` frontmatter declares a `version` key. Skill
+versioning is load-bearing only at the plugin level (`plugin.json`'s
+`version` field); a `version:` in `SKILL.md` is silently ignored by
+Claude Code and creates two competing sources of truth that drift
+over time.
+
+**Bad**:
+
+    ---
+    name: bar
+    description: Does the thing
+    version: 1.2.3
+    ---
+
+**Fix**: drop the `version:` line — set the version in the enclosing
+`plugin.json`. To enforce as a CI gate, override severity in
+`.claudelint.hcl`:
+
+    rule "skills/no-version-field" { severity = "error" }
 
 #### `claude_md/duplicate-directives`
 
