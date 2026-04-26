@@ -104,6 +104,38 @@ func TestSuppressInSourceIgnoredForJSONKinds(t *testing.T) {
 	}
 }
 
+// TestSuppressSecretsByIDPerLineMarker is the integration regression
+// for issue #15: with security/secrets now emitting a real
+// Range.Start.Line, the engine's per-line suppressor can match the
+// marker `<!-- claudelint:ignore=security/secrets -->` on the line
+// above the offending token. We register a stub rule under the
+// real security/secrets ID to keep this test isolated from the
+// rule's own unit tests (which prove the Range itself is correct).
+func TestSuppressSecretsByIDPerLineMarker(t *testing.T) {
+	rules.Reset()
+	registerLineEmitter(t, "security/secrets", 4, artifact.KindClaudeMD)
+
+	src := []byte(
+		"# Title\n" +
+			"\n" +
+			"<!-- claudelint:ignore=security/secrets -->\n" +
+			"key: sk-ABCDEFGHIJKLMNOPQRSTUV12345\n",
+	)
+	arts := []artifact.Artifact{&fakeArtifact{
+		path:   "CLAUDE.md",
+		kind:   artifact.KindClaudeMD,
+		source: src,
+	}}
+
+	res := New(nil).Run(arts, nil)
+	if len(res.Diagnostics) != 0 {
+		t.Errorf("per-line marker did not suppress security/secrets: %+v", res.Diagnostics)
+	}
+	if len(res.Suppressed) != 1 {
+		t.Errorf("expected 1 suppressed diagnostic, got %d", len(res.Suppressed))
+	}
+}
+
 // TestSuppressionMechanismMatrix verifies that each of the three
 // suppression mechanisms independently silences a rule: config-level
 // enabled=false, config-level per-rule paths glob, and in-source

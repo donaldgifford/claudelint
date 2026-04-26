@@ -43,3 +43,50 @@ func TestSecretsLowEntropyTokenIgnored(t *testing.T) {
 		t.Errorf("low-entropy long token should not flag, got %v", d)
 	}
 }
+
+// TestSecretsRangePointsAtMatch is the regression for issue #15: the
+// rule used to emit Range == zero, making per-line suppression
+// impossible because the engine could not match a marker to any line.
+// The diagnostic must now point at the matched token's line + column.
+func TestSecretsRangePointsAtMatch(t *testing.T) {
+	// Token sits on line 3, after "key: " (5 chars), so the match
+	// starts at column 6 of that line.
+	src := []byte("# Title\n\nkey: sk-ABCDEFGHIJKLMNOPQRSTUV12345\n")
+	c, _ := artifact.ParseClaudeMD("CLAUDE.md", src)
+	d := (&secrets{}).Check(nil, c)
+	if len(d) != 1 {
+		t.Fatalf("expected 1 diagnostic, got %d", len(d))
+	}
+	if d[0].Range.Start.Line != 3 {
+		t.Errorf("Range.Start.Line = %d, want 3", d[0].Range.Start.Line)
+	}
+	if d[0].Range.Start.Column != 6 {
+		t.Errorf("Range.Start.Column = %d, want 6", d[0].Range.Start.Column)
+	}
+	if d[0].Range.End.Line != 3 {
+		t.Errorf("Range.End.Line = %d, want 3", d[0].Range.End.Line)
+	}
+	if d[0].Range.End.Column <= d[0].Range.Start.Column {
+		t.Errorf("Range.End.Column = %d, want > Start.Column %d",
+			d[0].Range.End.Column, d[0].Range.Start.Column)
+	}
+}
+
+// TestSecretsHighEntropyRangePointsAtMatch is the regression for the
+// high-entropy code path of the rule, which previously also emitted
+// Range == zero.
+func TestSecretsHighEntropyRangePointsAtMatch(t *testing.T) {
+	// Token sits on line 3.
+	src := []byte("intro\n\ntoken: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKL09\n")
+	c, _ := artifact.ParseClaudeMD("CLAUDE.md", src)
+	d := (&secrets{}).Check(nil, c)
+	if len(d) != 1 {
+		t.Fatalf("expected 1 diagnostic, got %d", len(d))
+	}
+	if d[0].Range.Start.Line != 3 {
+		t.Errorf("Range.Start.Line = %d, want 3", d[0].Range.Start.Line)
+	}
+	if d[0].Range.IsZero() {
+		t.Errorf("Range should not be zero — per-line suppression depends on it")
+	}
+}

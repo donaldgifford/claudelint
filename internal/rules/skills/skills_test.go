@@ -67,3 +67,44 @@ func TestTriggerClaritySkipsWhenDescriptionEmpty(t *testing.T) {
 		t.Errorf("empty description should not trigger trigger-clarity (frontmatter-required owns that)")
 	}
 }
+
+func TestNoVersionFieldPresent(t *testing.T) {
+	src := []byte("---\nname: x\ndescription: y\nversion: 1.2.3\n---\n# body\n")
+	s, _ := artifact.ParseSkill("s.md", src)
+	d := (&noVersionField{}).Check(&optCtx{}, s)
+	if len(d) != 1 {
+		t.Fatalf("expected 1 diagnostic for SKILL.md with version, got %d", len(d))
+	}
+	if !strings.Contains(d[0].Message, "plugin.json") {
+		t.Errorf("message should mention plugin.json as canonical source, got %q", d[0].Message)
+	}
+	// Range must point at the version key (line 4 of the source —
+	// dashes line 1, name line 2, description line 3, version line 4).
+	if d[0].Range.Start.Line != 4 {
+		t.Errorf("Range.Start.Line = %d, want 4", d[0].Range.Start.Line)
+	}
+	if d[0].Range.IsZero() {
+		t.Errorf("Range is zero; should point at the version key")
+	}
+}
+
+func TestNoVersionFieldAbsent(t *testing.T) {
+	src := []byte("---\nname: x\ndescription: y\n---\n# body\n")
+	s, _ := artifact.ParseSkill("s.md", src)
+	if d := (&noVersionField{}).Check(&optCtx{}, s); len(d) != 0 {
+		t.Errorf("SKILL.md without version should pass, got %v", d)
+	}
+}
+
+// TestNoVersionFieldCommentedOut covers the success criterion that a
+// commented-out `# version:` line in the body (or anywhere outside
+// the YAML frontmatter) does not trigger the rule. The Skill parser
+// only parses keys inside the --- frontmatter fence, so a `version`
+// elsewhere in the document is invisible to Frontmatter.Keys.
+func TestNoVersionFieldCommentedOut(t *testing.T) {
+	src := []byte("---\nname: x\ndescription: y\n---\n# body\n# version: 1.0\n")
+	s, _ := artifact.ParseSkill("s.md", src)
+	if d := (&noVersionField{}).Check(&optCtx{}, s); len(d) != 0 {
+		t.Errorf("commented-out version in body should not trigger, got %v", d)
+	}
+}

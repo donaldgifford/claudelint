@@ -6,8 +6,36 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- New rule `mcp/server-allowlist` (severity `error`, security category)
+  flags MCP servers whose name is not in a configured `allowlist`.
+  Marketplace owners can vet which MCP servers ship in plugins by
+  setting `rule "mcp/server-allowlist" { options = { allowlist = [...] } }`
+  in `.claudelint.hcl`. The rule is opt-in by way of the allowlist
+  option: with no list configured it emits a loud
+  configuration-error diagnostic per server, so accidental enablement
+  is never silent. See README "mcp/server-allowlist" for the
+  behavioural matrix. (#16)
+- New rule `skills/no-version-field` (severity `warning`, schema
+  category) warns when a `SKILL.md` frontmatter declares a `version`
+  key. Skill versioning is load-bearing only at the plugin level
+  (`plugin.json`); a `version:` in `SKILL.md` is silently ignored by
+  Claude Code and creates two competing sources of truth. The rule
+  applies to `KindSkill` only and points its diagnostic at the
+  `version:` line so per-line suppression works. (#17)
+- Ruleset version bumped to `v1.2.0` (additive — two new rules).
+
 ### Fixed
 
+- `security/secrets` now emits a non-zero `Range` pointing at the
+  matched token's line + column for both the known-prefix path and
+  the high-entropy path. The previous file-level `(0, 0)` range made
+  per-line suppression with `<!-- claudelint:ignore=security/secrets -->`
+  impossible — the engine's per-line suppressor matches by line
+  number, so it had no line to bind a marker to. Users were forced
+  into either whole-file `ignore-file` or globally disabling the
+  rule, both of which widen the trust boundary too far. (#15)
 - `hooks/timeout-present` no longer false-fires on plugin
   `hooks/hooks.json` files that declare `timeout` per inner entry. The
   hook parser previously dispatched non-`settings.json` files to a flat

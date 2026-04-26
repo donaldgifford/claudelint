@@ -20,15 +20,9 @@ type Base struct {
 // line-start offset table. lineIndex[i] is the byte offset of the
 // start of line (i+1); lineIndex[0] is always 0.
 func NewBase(path string, source []byte) Base {
-	idx := []int{0}
-	for i, b := range source {
-		if b == '\n' {
-			idx = append(idx, i+1)
-		}
-	}
 	out := make([]byte, len(source))
 	copy(out, source)
-	return Base{path: path, source: out, lineIndex: idx}
+	return Base{path: path, source: out, lineIndex: buildLineIndex(out)}
 }
 
 // Path returns the repo-relative path of this artifact.
@@ -43,22 +37,57 @@ func (b *Base) Source() []byte { return b.source }
 // line/column Position. Out-of-range offsets clamp to the end of the
 // source so buggy callers cannot panic reporters.
 func (b *Base) ResolvePosition(offset int) diag.Position {
-	switch {
-	case offset < 0:
-		offset = 0
-	case offset > len(b.source):
-		offset = len(b.source)
-	}
-
-	line := searchLine(b.lineIndex, offset)
-	col := offset - b.lineIndex[line-1] + 1
-	return diag.Position{Line: line, Column: col, Offset: offset}
+	return resolveOffset(b.source, b.lineIndex, offset)
 }
 
 // ResolveRange is a convenience that converts a [start, end) byte
 // range into a diag.Range.
 func (b *Base) ResolveRange(start, end int) diag.Range {
 	return diag.Range{Start: b.ResolvePosition(start), End: b.ResolvePosition(end)}
+}
+
+// ResolveOffsetRange converts a [start, end) byte range over src into
+// a diag.Range without requiring a pre-built Base. It is the helper
+// for rules that scan Source() bytes directly (e.g. security/secrets)
+// and need to convert regex match offsets into line/column positions.
+//
+// Callers that already hold a Base should prefer Base.ResolveRange,
+// which reuses the cached line index. This function recomputes the
+// line index per call — fine for the handful of matches a typical
+// rule produces but not for tight loops.
+func ResolveOffsetRange(src []byte, start, end int) diag.Range {
+	idx := buildLineIndex(src)
+	return diag.Range{
+		Start: resolveOffset(src, idx, start),
+		End:   resolveOffset(src, idx, end),
+	}
+}
+
+// buildLineIndex returns the same line-start offset table NewBase
+// builds, exposed as a free function so ResolveOffsetRange can share
+// the algorithm.
+func buildLineIndex(src []byte) []int {
+	idx := []int{0}
+	for i, b := range src {
+		if b == '\n' {
+			idx = append(idx, i+1)
+		}
+	}
+	return idx
+}
+
+// resolveOffset is the offset → Position conversion shared by Base
+// and ResolveOffsetRange.
+func resolveOffset(src []byte, idx []int, offset int) diag.Position {
+	switch {
+	case offset < 0:
+		offset = 0
+	case offset > len(src):
+		offset = len(src)
+	}
+	line := searchLine(idx, offset)
+	col := offset - idx[line-1] + 1
+	return diag.Position{Line: line, Column: col, Offset: offset}
 }
 
 // searchLine returns the 1-based line number whose start offset is

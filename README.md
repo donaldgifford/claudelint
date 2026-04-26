@@ -177,6 +177,7 @@ fails if the drift is not acknowledged.
 | `schema/frontmatter-required`         | schema    | error    | skill, command, agent           |
 | `skills/trigger-clarity`              | content   | warning  | skill                           |
 | `skills/body-size`                    | content   | warning  | skill                           |
+| `skills/no-version-field`             | schema    | warning  | skill                           |
 | `claude_md/duplicate-directives`      | content   | warning  | `CLAUDE.md`                     |
 | `claude_md/size`                      | content   | warning  | `CLAUDE.md`                     |
 | `commands/allowed-tools-known`        | schema    | error    | command                         |
@@ -199,6 +200,7 @@ fails if the drift is not acknowledged.
 | `mcp/no-unsafe-shell`                 | security  | error    | mcp_server                      |
 | `mcp/no-secrets-in-env`               | security  | error    | mcp_server                      |
 | `mcp/disabled-commented`              | style     | info     | mcp_server                      |
+| `mcp/server-allowlist`                | security  | error    | mcp_server                      |
 | `security/secrets`                    | security  | error    | every kind                      |
 | `style/no-emoji`                      | style     | info     | every kind                      |
 
@@ -249,6 +251,28 @@ Guardrail against runaway SKILL.md files. Default limit is 2000 words.
 Override per-rule:
 
     rule "skills/body-size" { options = { max_words = 3000 } }
+
+#### `skills/no-version-field`
+
+Warns when a `SKILL.md` frontmatter declares a `version` key. Skill
+versioning is load-bearing only at the plugin level (`plugin.json`'s
+`version` field); a `version:` in `SKILL.md` is silently ignored by
+Claude Code and creates two competing sources of truth that drift
+over time.
+
+**Bad**:
+
+    ---
+    name: bar
+    description: Does the thing
+    version: 1.2.3
+    ---
+
+**Fix**: drop the `version:` line — set the version in the enclosing
+`plugin.json`. To enforce as a CI gate, override severity in
+`.claudelint.hcl`:
+
+    rule "skills/no-version-field" { severity = "error" }
 
 #### `claude_md/duplicate-directives`
 
@@ -341,6 +365,33 @@ high-entropy strings. False positives are suppressible per-path:
 
 **Bad**: a literal `AKIA...` string in a CLAUDE.md fixture.
 **Fix**: delete it, scrub via `git filter-branch`, rotate the key.
+
+#### `mcp/server-allowlist`
+
+Restricts MCP servers to a vetted list. Useful for marketplace owners
+who want every plugin's MCP server reviewed before it ships.
+
+The rule is opt-in via configuration. Set the `allowlist` option to
+the vetted server names:
+
+    rule "mcp/server-allowlist" {
+      options = {
+        allowlist = ["github", "deepwiki", "jira"]
+      }
+    }
+
+Behaviour matrix:
+
+| `allowlist` value | Effect                                                              |
+|-------------------|---------------------------------------------------------------------|
+| unset             | Loud config error per server: rule is enabled without an allowlist  |
+| `[]`              | Fires on every server (explicit "block all")                        |
+| `["x", "y"]`      | Fires on every server whose name is not in the list                 |
+
+To silence the rule entirely, set `enabled = false` instead of
+removing the `allowlist` option — leaving the rule on without an
+allowlist surfaces a configuration error so misconfigurations don't
+silently no-op.
 
 #### `style/no-emoji`
 
