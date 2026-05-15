@@ -2,13 +2,22 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: claudelint
-  description: Framework and tooling for linting, auditing, and formatting Claude plugins, skills, subagents, and more.
+  name: repo-guardian
+  title: Repo Guardian
+  description: "Github App to automate repo onboarding and settings"
   annotations:
-    github.com/project-slug: donaldgifford/claudelint
-    backstage.io/techdocs-ref: dir:.
+    backstage.io/code-coverage: enabled
+    backstage.io/source-location: url:https://github.com/donaldgifford/repo-guardian
+    backstage.io/techdocs-ref: "dir:."
+    github.com/project-slug: "donaldgifford/repo-guardian"
+    jira/project-key: "DON"
+    jira/label: "repo-guardian"
+  tags:
+    - go
+    - github
+  namespace: default
 spec:
-  owner: homelab
-  type: tool
-  system: dev-tools
   lifecycle: production
+  type: service
+  owner: donaldgifford
+  system: infrastructure
