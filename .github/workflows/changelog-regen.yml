@@ -6,12 +6,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Skip the run for any chore commit and must be the last commit. Chores
-# are not changelog-worthy under our cliff.toml grouping (chore(changelog),
-# chore(release), chore(deps*), chore(pr), chore(pull) are explicitly skipped,
-# and the remaining chores land under "Miscellaneous Tasks" which we treat as
-# noise for the regen workflow). This also subsumes the original loop
-# guard for chore(changelog) auto-syncs.
+# Loop guard: skip the run when the head commit is itself a
+# chore(changelog) auto-sync (this workflow's own output). Without this,
+# the chore(changelog) push the regen step makes would re-trigger the
+# workflow on main and we'd cycle. cliff.toml's commit_parsers separately
+# skip chore-changelog commits from the generated CHANGELOG body via
+# `^chore.*[Cc]hangelog`, so even if the guard misfires the output stays
+# stable — but the guard saves an extra workflow run.
 jobs:
   regen:
     if: ${{ !startsWith(github.event.head_commit.message, 'chore(changelog)') }}

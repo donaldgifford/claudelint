@@ -1,132 +1,101 @@
 # Changelog
 
-All notable changes to `claudelint` are documented here. The format
-follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
+All notable changes to this project are documented here. The format is
+based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 this project adheres to [Semantic Versioning](https://semver.org/).
+## [unreleased]
 
-## [Unreleased]
+### Bug Fixes
 
-### Added
+- Dockerfile
 
-- New rule `mcp/server-allowlist` (severity `error`, security category)
-  flags MCP servers whose name is not in a configured `allowlist`.
-  Marketplace owners can vet which MCP servers ship in plugins by
-  setting `rule "mcp/server-allowlist" { options = { allowlist = [...] } }`
-  in `.claudelint.hcl`. The rule is opt-in by way of the allowlist
-  option: with no list configured it emits a loud
-  configuration-error diagnostic per server, so accidental enablement
-  is never silent. See README "mcp/server-allowlist" for the
-  behavioural matrix. (#16)
-- New rule `skills/no-version-field` (severity `warning`, schema
-  category) warns when a `SKILL.md` frontmatter declares a `version`
-  key. Skill versioning is load-bearing only at the plugin level
-  (`plugin.json`); a `version:` in `SKILL.md` is silently ignored by
-  Claude Code and creates two competing sources of truth. The rule
-  applies to `KindSkill` only and points its diagnostic at the
-  `version:` line so per-line suppression works. (#17)
-- Ruleset version bumped to `v1.2.0` (additive — two new rules).
+### Other
 
-### Fixed
+- Changelog
 
-- `security/secrets` now emits a non-zero `Range` pointing at the
-  matched token's line + column for both the known-prefix path and
-  the high-entropy path. The previous file-level `(0, 0)` range made
-  per-line suppression with `<!-- claudelint:ignore=security/secrets -->`
-  impossible — the engine's per-line suppressor matches by line
-  number, so it had no line to bind a marker to. Users were forced
-  into either whole-file `ignore-file` or globally disabling the
-  rule, both of which widen the trust boundary too far. (#15)
-- `hooks/timeout-present` no longer false-fires on plugin
-  `hooks/hooks.json` files that declare `timeout` per inner entry. The
-  hook parser previously dispatched non-`settings.json` files to a flat
-  `{event, matcher, command, timeout}` shape that does not appear in
-  the Claude Code docs, causing `Timeout` to read as 0 for every entry
-  in a real plugin hook file. The parser now uses the canonical nested
-  `{"hooks": {"<EventName>": [{"matcher": "...", "hooks": [...]}]}}`
-  shape uniformly. (#14)
+### Miscellaneous Tasks
 
-### Changed
+- Tooling cleanup — just task runner, docker-bake, git-cliff, renovate
 
-- **Breaking:** the hook parser no longer accepts the flat
-  `{event, matcher, command, timeout}` top-level shape. A dedicated
-  hook file (`.claude/hooks/*.json`, plugin `hooks/hooks.json`) that
-  is missing the `hooks` key now fails parsing with `*ParseError`
-  rather than silently producing an entry with `Timeout == 0`.
-  Settings files (`.claude/settings{,.local}.json`) may still omit
-  the `hooks` key. The flat shape was a parser-author assumption that
-  did not match Claude Code's documented hook schema; see
-  `docs/design/0001-*.md` "Hook shape" for the rationale and the
-  best-effort handling of `.claude/hooks/*.json`.
+## [0.2.0] - 2026-04-26
 
-## [v0.1.0] — 2026-04-25
+### Features
 
-### Added
+- Range-aware secrets + mcp/server-allowlist + skills/no-version-field ([#19](https://github.com/donaldgifford/claudelint/issues/19))
 
-- Phase 2: two new artifact kinds — `KindMarketplace` for
-  `.claude-plugin/marketplace.json` and `KindMCPServer` for MCP server
-  declarations (standalone `.mcp.json` or plugin-embedded
-  `mcp.servers{}`).
-- Phase 2: eight `marketplace/*` rules (schema, author, plugin
-  uniqueness, plugin-source validity, external-source handling,
-  versioning) and six `mcp/*` rules (command required, known runner,
-  no secrets in env, no unsafe shell, disabled-but-commented, server
-  name required).
-- Phase 2: `Rule.HelpURI() string` method with `rules.DefaultHelpURI`
-  helper. Every built-in rule now exposes a documentation URL.
-- Phase 2: `claudelint rules --json` emits the rule catalog in a stable
-  schema documented at `docs/rules-json-schema.md`.
-- Phase 2: `--format=sarif` renders diagnostics as SARIF 2.1.0, suitable
-  for GitHub Code Scanning. `--sarif-file=<path>` redirects SARIF
-  output to a file.
-- Phase 2: multi-arch container image at
-  `ghcr.io/donaldgifford/claudelint` (linux/amd64 + linux/arm64),
-  published via goreleaser on every release.
-- Ruleset version bumped to `v1.1.0` (minor, additive) to reflect the
-  new rule packages.
+## [0.1.1] - 2026-04-26
 
-### Fixed
+### Bug Fixes
 
-- `marketplace/version-semver` and `marketplace/author-required` no
-  longer produce false positives on marketplace manifests that nest
-  `version` under `metadata.version` or express `author` as an
-  `owner{name,email}` object. The parser now accepts both the shape
-  DESIGN-0002 documents and the shape real marketplaces (e.g.
-  `donaldgifford/claude-skills`) actually use. See INV-0005.
-- `commands/allowed-tools-known` now recognizes `AskUserQuestion` as a
-  Claude Code built-in tool.
+- *(hooks)* Parse nested shape uniformly; drop unsupported flat shape ([#18](https://github.com/donaldgifford/claudelint/issues/18))
 
-## [v0.0.1]
+### Documentation
 
-### Added
+- Rename Phase 2 ship from v0.2.0 to v0.1.0 ([#10](https://github.com/donaldgifford/claudelint/issues/10))
 
-- Phase 1 MVP of the linter (`run`, `rules`, `init`, `version`
-  subcommands).
-- 14 built-in rules across `schema`, `content`, `security`, and
-  `style` categories.
-- Three independent suppression mechanisms: in-source HTML-comment
-  markers (Markdown kinds only), config-level `rule { enabled = false }`
-  / `paths = […]` toggles, and a `meta/unknown-rule` warning for typos.
-- Three output formats: text (colorized, `NO_COLOR`-aware), JSON (stable
-  schema v1 documented in `docs/json-output-schema.md`), and GitHub
-  Actions workflow commands.
-- Exit-code contract: `0` clean, `1` diagnostics failed the run,
-  `2` usage / config / I/O error. `--max-warnings=N` promotes warning
-  overflow into exit 1.
-- `--profile=<dir>` flag captures cpu/heap/block/mutex pprof for a
-  single run.
-- CI coverage gate (`make coverage-gate`) at `COVERAGE_MIN=55`, with
-  the eventual target documented as 80%.
-- Dogfood investigation ([INV-0003](docs/investigation/0003-phase-18-dogfood-findings-on-external-claude-plugins.md))
-  against two external Claude plugins; surfaced a plugin-layout
-  classifier gap that is now fixed.
+## [0.1.0] - 2026-04-25
 
-### Fixed
+### Features
 
-- `internal/discovery/classify.go` now recognizes plugin-distribution
-  layouts where `skills/`, `commands/`, `agents/`, and `hooks/` sit at
-  the plugin root (no `.claude/` parent). Prior versions silently
-  ignored every plugin artifact outside the `.claude/` convention.
+- Phase 2 — marketplaces, MCP rules, SARIF, Docker, companion Action
 
-[Unreleased]: https://github.com/donaldgifford/claudelint/compare/v0.1.0...HEAD
-[v0.1.0]: https://github.com/donaldgifford/claudelint/compare/v0.0.1...v0.1.0
-[v0.0.1]: https://github.com/donaldgifford/claudelint/compare/v0.0.0...v0.0.1
+### Miscellaneous Tasks
+
+- *(claude-md)* Reflect Phase 1 ship + label-driven release + GPG gotcha
+
+## [0.0.1] - 2026-04-21
+
+### Features
+
+- *(cli)* Scaffold cobra CLI with run/rules/init/version stubs
+- *(diag)* Add Diagnostic, Severity, Range, Position, Fix types
+- *(artifact)* Add ArtifactKind enum and Artifact interface
+- *(discovery)* Walk repo with gitignore semantics and classify artifacts
+- *(reporter)* Add minimal text formatter
+- *(cli)* Wire run end-to-end — discovery + text reporter
+- *(cli,rules)* Move ruleset version constants into internal/rules
+- *(artifact)* Add typed Artifact structs and positional helpers
+- *(artifact)* Add ParseError type for parser failures
+- *(artifact)* Parse Markdown + YAML frontmatter via goccy/go-yaml
+- *(artifact)* Parse Hook and Plugin JSON with byte-offset ranges
+- *(artifact)* Index Skill companion files by kind
+- *(config)* HCL v1 loader, resolver, and init scaffolder
+- *(rules,engine)* Ship Rule interface, registry, and concurrent runner
+- *(rules)* Ship every MVP rule, wire registry, add fingerprint gate
+- *(engine)* Implement three-mechanism suppression for Phase 1.6
+- *(cli)* Phase 1.7 output formats, flags, exit codes, E2E tests
+- *(cli,ci)* Phase 1.8 — pprof, bench, coverage gate, release polish
+- *(discovery)* Classify plugin-root layouts without .claude/ parent
+
+### Other
+
+- Settings
+
+### Documentation
+
+- Add RFC/ADR/DESIGN/IMPL/INV for claudelint linter
+- Reframe DESIGN-0001 around engine+rules, rename lint→run
+- *(impl-0001)* Align with DESIGN-0001 and add Open Questions
+- Fold resolved open questions into DESIGN-0001 and IMPL-0001
+- *(inv-0002)* Diagnose ralph-loop permission matcher bug, plan fork
+- *(inv-0002)* Fix ToC truncation by removing raw backtick fences
+- *(inv-0002)* Add upstream git history, issues, and unmerged PRs
+- *(inv-0002)* Add copy-pasteable reference implementation for fork
+- Add CLAUDE.md with architecture, commands, and doc workflow
+- *(README,impl)* Add per-rule examples and fixes
+- *(release)* Finalize Phase 1 testing plan + add RELEASE.md
+- *(inv)* Record donald-loop stop hook silent-promise-detection bug
+
+### Testing
+
+- *(artifact)* Add testdata/ok + testdata/bad parser fixtures
+
+### Miscellaneous Tasks
+
+- Allow ralph-loop setup script in project permissions
+- Remove ineffective ralph-loop allow entry
+- Add LICENSE (Apache-2.0) and CHANGELOG for v0.1.0
+- Ignore dist/ and untrack accidentally-committed goreleaser output
+- Drop docker-build job — no Docker distribution in Phase 1
+- Drop docker release job; pin codeql-action to v4.35.1
+
