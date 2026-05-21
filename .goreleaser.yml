@@ -1,4 +1,5 @@
 ---
+# $schema=https://goreleaser.com/static/schema.json
 version: 2
 
 builds:
@@ -12,14 +13,9 @@ builds:
     goos:
       - linux
       - darwin
-      - windows
     goarch:
       - amd64
       - arm64
-    ignore:
-      # windows/arm64 rarely worth the extra matrix time for a CLI linter.
-      - goos: windows
-        goarch: arm64
     env:
       - CGO_ENABLED=0
 
@@ -27,55 +23,8 @@ archives:
   - id: default
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     formats: ["tar.gz"]
-    format_overrides:
-      - goos: windows
-        formats: ["zip"]
     files:
       - none*
-
-dockers:
-  - id: claudelint-amd64
-    goos: linux
-    goarch: amd64
-    dockerfile: Dockerfile
-    use: buildx
-    image_templates:
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-amd64"
-    build_flag_templates:
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-  - id: claudelint-arm64
-    goos: linux
-    goarch: arm64
-    dockerfile: Dockerfile
-    use: buildx
-    image_templates:
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-arm64"
-    build_flag_templates:
-      - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-
-docker_manifests:
-  - name_template: "ghcr.io/donaldgifford/claudelint:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-amd64"
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/donaldgifford/claudelint:v{{ .Major }}"
-    image_templates:
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-amd64"
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/donaldgifford/claudelint:v{{ .Major }}.{{ .Minor }}"
-    image_templates:
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-amd64"
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/donaldgifford/claudelint:latest"
-    image_templates:
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-amd64"
-      - "ghcr.io/donaldgifford/claudelint:{{ .Version }}-arm64"
 
 checksum:
   name_template: 'checksums.txt'

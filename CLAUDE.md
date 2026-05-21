@@ -10,7 +10,7 @@ After PR #19 merges, ruleset will be `v1.2.0`, fingerprint `e7f26796`, with the 
 
 Phase 2 delivered: two new artifact kinds (`KindMarketplace`, `KindMCPServer`), the marketplace + MCP rule packages, `Rule.HelpURI()`, `claudelint rules --json`, `--format=sarif` with vendored SARIF 2.1.0 schema validation, a multi-arch `ghcr.io/donaldgifford/claudelint` image via goreleaser (tags: `0.1.0`, `v0`, `v0.1`, `latest`), and companion-action scaffolding at `companion/claudelint-action/` ready to push to `donaldgifford/claudelint-action`. INV-0005 captures the `donaldgifford/claude-skills` dogfood pass; two false positives (nested marketplace shape, missing `AskUserQuestion`) were fixed in-flight.
 
-`run` supports `--format=text|json|github|sarif`, `--sarif-file=<path>`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `make self-check`, `make coverage-gate`, `make bench`, and `make profile` are all wired. Phase 1 dogfooding captured in INV-0003.
+`run` supports `--format=text|json|github|sarif`, `--sarif-file=<path>`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `just self-check`, `just coverage-gate`, `just bench`, and `just profile` are all wired. Phase 1 dogfooding captured in INV-0003.
 
 The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
 
@@ -50,7 +50,7 @@ Key decisions already locked in (see IMPL-0001 "Resolved Decisions"):
 - Suppressions: Markdown-only in-source (`<!-- claudelint:ignore=<id> -->`); config-level for JSON
 - `schema/parse` is registered as a pseudo-rule but synthesized by the engine from `ParseError`
 - pprof profiling is a Phase 1 requirement, not a nice-to-have
-- SARIF 2.1.0 output is the CI-facing format; schema is vendored under `internal/reporter/testdata/` so `make ci` stays network-free. Validator is `github.com/santhosh-tekuri/jsonschema/v5` (test-only dep).
+- SARIF 2.1.0 output is the CI-facing format; schema is vendored under `internal/reporter/testdata/` so `just ci` stays network-free. Validator is `github.com/santhosh-tekuri/jsonschema/v5` (test-only dep).
 - Project-scoped `.mcp.json` files use the top-level key `servers{}` per DESIGN-0002 (not `mcpServers{}`; see §2.2 for rationale — if Claude Code standardizes on `mcpServers`, revisit both the parser and the design doc).
 - **Hook parser accepts one canonical nested shape only** — see DESIGN-0001 §Hook shape. Settings files, plugin `hooks/hooks.json`, and `.claude/hooks/*.json` all use `{"hooks": {"<EventName>": [{"matcher", "hooks": [...]}]}}`. A dedicated hook file missing the `hooks` key fails parsing loudly. The pre-#14 flat `{event, matcher, command, timeout}` shape was a parser-author assumption and is no longer accepted.
 - **Range emission helpers for new rules:** for rules that walk `Source()` bytes (regex matches, etc.), use `artifact.ResolveOffsetRange(src, start, end)` to convert byte offsets to a `diag.Range`. For rules that target a frontmatter key, use `s.Frontmatter.KeyRange("<key>")`. Pre-parsed fields already carry their own ranges (e.g. `MCPServer.NameRange`, `Skill.Body`). File-level `(0,0)` ranges break per-line suppression markers — never emit them for content rules.
@@ -58,20 +58,21 @@ Key decisions already locked in (see IMPL-0001 "Resolved Decisions"):
 
 ## Common commands
 
-Everything funnels through `make`. The CLI is invoked as `claudelint run` (not `lint`).
+Everything funnels through `just` (see `justfile` + `docker.just`). The CLI is invoked as `claudelint run` (not `lint`). `just --list` enumerates every recipe.
 
-- `make build` — build `build/bin/claudelint` with version/commit ldflags
-- `make test` — `go test -v -race ./...`
-- `make test-pkg PKG=./internal/rules/skills` — test a single package
-- `make test-coverage` — race + coverage profile to `coverage.out`
-- `make test-report` — coverage + open HTML report
-- `make lint` / `make lint-fix` — `golangci-lint run` (config in `.golangci.yml`, Uber Go Style Guide)
-- `make fmt` — `gofmt -s -w` + `goimports -local github.com/donaldgifford`
-- `make check` — lint + test (pre-commit gate)
-- `make ci` — lint + test + build + license-check (matches CI)
-- `make release-local` — dry-run goreleaser with `--snapshot --skip=publish --skip=sign`
+- `just build` — build `build/bin/claudelint` with version/commit ldflags
+- `just test` — `go test -v -race ./...`
+- `just test-pkg ./internal/rules/skills` — test a single package
+- `just test-coverage` — race + coverage profile to `coverage.out`
+- `just test-report` — coverage + open HTML report
+- `just lint` / `just lint-fix` — `golangci-lint run` (config in `.golangci.yml`, Uber Go Style Guide)
+- `just fmt` — `gofmt -s -w` + `goimports -local github.com/donaldgifford`
+- `just check` — lint + test (pre-commit gate)
+- `just ci` — lint + test + build + license-check (matches CI)
+- `just release-local` — dry-run goreleaser with `--snapshot --skip=publish --skip=sign`
+- `just docker-build` — local single-arch image via `docker buildx bake` (see `docker-bake.hcl`)
 
-Running a single Go test: `go test -run TestFoo ./internal/rules/skills` (or use `make test-pkg`).
+Running a single Go test: `go test -run TestFoo ./internal/rules/skills` (or use `just test-pkg`).
 
 ## Tooling
 
@@ -93,8 +94,8 @@ Use `Skill` with the `docz:*` skills for doc lifecycle work rather than reinvent
 ## Git / PR conventions
 
 - Branch prefixes drive auto-labeling (`.github/labeler.yml`): `feat/`, `fix/`, `chore/`, `docs/`, `bug/`. Use the `git-workflow:branch` skill.
-- **Releases are label-driven, not manual.** `.github/workflows/release.yml` runs `jefflinse/pr-semver-bump` on every push to `main`; the merged PR's label (`major` / `minor` / `patch` / `dont-release`) determines the version bump and tag. Do **not** run `git tag` or `make release TAG=...` by hand — it would race the workflow. (`RELEASE.md` predates this and is stale for Phase 1; keep that in mind when reading it.)
+- **Releases are label-driven, not manual.** `.github/workflows/release.yml` runs `jefflinse/pr-semver-bump` on every push to `main`; the merged PR's label (`major` / `minor` / `patch` / `dont-release`) determines the version bump and tag. Do **not** run `git tag` or `just release TAG=...` by hand — it would race the workflow. (`RELEASE.md` predates this and is stale for Phase 1; keep that in mind when reading it.)
 - **Squash-merge subject must keep the `(#N)` suffix.** `pr-semver-bump` looks at the merge-commit message for the PR number; if you override `--subject` with `gh pr merge` and drop the suffix, the SHA-based fallback often fails (search-API indexing lag) and the workflow errors out. Either accept GitHub's default subject or include `(#N)` manually.
-- Release assets are defined in `.goreleaser.yml`; `.codecov.yml` gates coverage reporting.
-- **Docker images** ship from the same goreleaser run as the binaries (Phase 2 onward). Image is `ghcr.io/donaldgifford/claudelint`; tag layout per release is `:<version>` **without leading `v`** (goreleaser strips it on the bare-version tag), plus `:v<major>`, `:v<major>.<minor>`, and `:latest`. Multi-arch manifest covers `linux/amd64` + `linux/arm64`.
+- Release assets are defined in `.goreleaser.yml` (binaries + checksums + GPG sign only — no Docker); `.codecov.yml` gates coverage reporting.
+- **Docker images** ship from a separate `docker` job in `.github/workflows/release.yml` via `docker/bake-action@v6` reading `docker-bake.hcl`. Image is `ghcr.io/donaldgifford/claudelint`; tag layout comes from `docker/metadata-action@v5`. Per release of `vX.Y.Z`: `:X.Y.Z` (bare semver, leading `v` stripped), `:X.Y` (floating minor), `:vX` (floating major — emitted via `type=match,pattern=v\d+` because the `{{major}}` semver shorthand skips when major is 0), and `:latest`. Multi-arch manifest covers `linux/amd64` + `linux/arm64`. CI PR builds use the `ci` bake target (linux/amd64 only) for fast PR feedback.
 - **GPG release signing:** the `GPG_PRIVATE_KEY` repo secret must be the output of `gpg --armor --export-secret-keys <keyid>` (begins with `-----BEGIN PGP PRIVATE KEY BLOCK-----`). The public-export variant imports cleanly but fails at sign-time with `gpg: skipped "***": No secret key`. `GPG_FINGERPRINT` is also required.

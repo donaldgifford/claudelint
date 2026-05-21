@@ -412,14 +412,14 @@ claudelint run --profile=./profile .
 go tool pprof ./profile/cpu.pprof
 ```
 
-`make profile` is a convenience target that runs the command against
+`just profile` is a convenience target that runs the command against
 this repo and prints the pprof command you need.
 
 ## Contributing
 
-- `make check` runs `lint + test`.
-- `make ci` runs the full CI pipeline (`lint + test + build + license-check`).
-- `make self-check` dogfoods `claudelint run .` against this repo — the
+- `just check` runs `lint + test`.
+- `just ci` runs the full CI pipeline (`lint + test + build + license-check`).
+- `just self-check` dogfoods `claudelint run .` against this repo — the
   CI build fails if new code surfaces any error-severity diagnostic.
 - All docs go through [docz](https://github.com/donaldgifford/docz).
   Run `docz update` after editing any doc to refresh index tables and

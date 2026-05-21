@@ -18,6 +18,8 @@ prettier = "3.7.4"
 "github:donaldgifford/makefmt" = "latest"
 checkmake = "latest"
 git-cliff = "latest"
+actionlint = "latest"
+just = "latest"
 
 # tools
 yq = "4.48.1"
