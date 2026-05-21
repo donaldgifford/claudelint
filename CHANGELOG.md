@@ -16,6 +16,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 ### Miscellaneous Tasks
 
 - Tooling cleanup — just task runner, docker-bake, git-cliff, renovate
+- *(mise)* Add renovate annotations to every pinned tool
 
 ## [0.2.0] - 2026-04-26
 
