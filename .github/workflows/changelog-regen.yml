@@ -14,7 +14,7 @@ on:
 # guard for chore(changelog) auto-syncs.
 jobs:
   regen:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore') }}
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(changelog)') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
