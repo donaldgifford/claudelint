@@ -1,27 +1,30 @@
 # syntax=docker/dockerfile:1.6
-#
-# Runtime image for claudelint. Goreleaser provides a pre-built binary
-# at build context root (one per target architecture via --build-arg);
-# this file only packages it into a distroless base so the image is
-# minimal (<10 MB) and has no shell.
-#
-# Local builds: prefer `make docker-local`, which runs goreleaser in
-# snapshot mode and feeds the binary into this file.
+
+# Build stage
+FROM --platform=$BUILDPLATFORM golang:1.26 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /src
+
+# Cache dependencies.
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source and build.
+COPY . .
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+  go build -trimpath -ldflags="-s -w" -o /claudelint ./cmd/claudelint
+
+# Runtime stage
 FROM gcr.io/distroless/static-debian12:nonroot
 
 ARG TARGETARCH=amd64
 
-# Goreleaser places the binary next to this Dockerfile during `dockers`
-# processing. Keep the filename unqualified so amd64 and arm64 builds
-# share this stage.
-COPY claudelint /usr/local/bin/claudelint
+COPY --from=builder /claudelint /claudelint
 
-# OCI image metadata. Version/revision are filled in by goreleaser.
-LABEL org.opencontainers.image.title="claudelint" \
-      org.opencontainers.image.description="Linter for Claude Code artifacts" \
-      org.opencontainers.image.url="https://github.com/donaldgifford/claudelint" \
-      org.opencontainers.image.source="https://github.com/donaldgifford/claudelint" \
-      org.opencontainers.image.licenses="MIT"
+USER nonroot:nonroot
 
-ENTRYPOINT ["/usr/local/bin/claudelint"]
-CMD ["run", "."]
+ENTRYPOINT ["/claudelint"]
+
