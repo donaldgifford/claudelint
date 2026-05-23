@@ -12,6 +12,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 ### Other
 
 - Changelog
+- CODEOWNERS
 
 ### Miscellaneous Tasks
 
