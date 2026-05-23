@@ -3,21 +3,11 @@
 All notable changes to this project are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 this project adheres to [Semantic Versioning](https://semver.org/).
-## [unreleased]
-
-### Bug Fixes
-
-- Dockerfile
-
-### Other
-
-- Changelog
-- CODEOWNERS
+## [0.2.1] - 2026-05-23
 
 ### Miscellaneous Tasks
 
-- Tooling cleanup — just task runner, docker-bake, git-cliff, renovate
-- *(mise)* Add renovate annotations to every pinned tool
+- Tooling cleanup — just task runner, docker-bake, git-cliff, renovate ([#23](https://github.com/donaldgifford/claudelint/issues/23))
 
 ## [0.2.0] - 2026-04-26
 
