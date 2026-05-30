@@ -3,21 +3,11 @@
 All notable changes to this project are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 this project adheres to [Semantic Versioning](https://semver.org/).
-## [unreleased]
-
-### Features
-
-- *(security)* Surface scan findings + GHCR OCI annotations
-- *(security)* Bump Go to 1.26.3 + add CodeQL workflow
-
-### Bug Fixes
-
-- *(ci)* Install syft via anchore action, not mise
+## [0.2.2] - 2026-05-30
 
 ### Miscellaneous Tasks
 
-- *(security)* Wire SBOM generation + grype scanning
-- *(security)* Switch dependabot to security-only + severity labels
+- *(security)* SBOM generation + grype scanning ([#32](https://github.com/donaldgifford/claudelint/issues/32))
 
 ## [0.2.1] - 2026-05-23
 
