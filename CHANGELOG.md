@@ -17,6 +17,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 ### Miscellaneous Tasks
 
 - *(security)* Wire SBOM generation + grype scanning
+- *(security)* Switch dependabot to security-only + severity labels
 
 ## [0.2.1] - 2026-05-23
 
