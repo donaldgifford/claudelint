@@ -8,6 +8,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 ### Features
 
 - *(security)* Surface scan findings + GHCR OCI annotations
+- *(security)* Bump Go to 1.26.3 + add CodeQL workflow
 
 ### Bug Fixes
 
