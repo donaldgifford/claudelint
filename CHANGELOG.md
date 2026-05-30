@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 this project adheres to [Semantic Versioning](https://semver.org/).
+## [unreleased]
+
+### Bug Fixes
+
+- *(ci)* Install syft via anchore action, not mise
+
+### Miscellaneous Tasks
+
+- *(security)* Wire SBOM generation + grype scanning
+
 ## [0.2.1] - 2026-05-23
 
 ### Miscellaneous Tasks
