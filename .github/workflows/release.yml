@@ -113,6 +113,7 @@ jobs:
             docker-bake.hcl
             ${{ steps.meta.outputs.bake-file-tags }}
             ${{ steps.meta.outputs.bake-file-labels }}
+            ${{ steps.meta.outputs.bake-file-annotations }}
           set: |-
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
