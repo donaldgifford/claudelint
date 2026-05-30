@@ -77,6 +77,10 @@ target "claudelint-ci" {
   inherits  = ["_common"]
   tags      = ["${REGISTRY}:${TAG}-ci"]
   platforms = ["linux/amd64"]
+  attest = [
+    "type=sbom",
+    "type=provenance,mode=min",
+  ]
 }
 
 target "claudelint-release" {
@@ -88,4 +92,8 @@ target "claudelint-release" {
     "linux/arm64",
   ]
   output = ["type=registry"]
+  attest = [
+    "type=sbom",
+    "type=provenance,mode=max",
+  ]
 }

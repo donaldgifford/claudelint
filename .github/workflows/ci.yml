@@ -107,11 +107,23 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Verify builds for all platforms
+      - name: Set up mise (for syft)
+        uses: jdx/mise-action@v4
+        with:
+          experimental: true
+
+      - name: Build snapshot release with SBOMs
         uses: goreleaser/goreleaser-action@v7.1.0
         with:
           version: "~> v2"
-          args: build --snapshot --clean
+          args: release --snapshot --skip=publish --skip=sign --clean
+
+      - name: Scan archive SBOM
+        uses: anchore/scan-action@v7
+        with:
+          sbom: dist/claudelint_linux_amd64.tar.gz.spdx.json
+          severity-cutoff: high
+          fail-build: false
 
   docker-build:
     name: Docker Build
@@ -147,6 +159,14 @@ jobs:
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
             *.output=type=registry
+
+      - name: Scan dev image
+        if: github.event_name == 'pull_request'
+        uses: anchore/scan-action@v7
+        with:
+          image: ghcr.io/donaldgifford/claudelint:dev-ci
+          severity-cutoff: high
+          fail-build: false
 
       - name: Build multi-arch images (post-merge validation)
         if: github.event_name == 'push'
