@@ -107,10 +107,8 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Set up mise (for syft)
-        uses: jdx/mise-action@v4
-        with:
-          experimental: true
+      - name: Install syft
+        uses: anchore/sbom-action/download-syft@v0
 
       - name: Build snapshot release with SBOMs
         uses: goreleaser/goreleaser-action@v7.1.0
