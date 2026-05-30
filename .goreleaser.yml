@@ -26,6 +26,14 @@ archives:
     files:
       - none*
 
+sboms:
+  - id: archives
+    artifacts: archive
+    documents:
+      - "${artifact}.spdx.json"
+    cmd: syft
+    args: ["$artifact", "--output", "spdx-json=$document"]
+
 checksum:
   name_template: 'checksums.txt'
 

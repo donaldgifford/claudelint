@@ -43,7 +43,17 @@ target "_common" {
     "org.opencontainers.image.source"      = "https://github.com/donaldgifford/claudelint"
     "org.opencontainers.image.licenses"    = "Apache-2.0"
     "org.opencontainers.image.description" = "claudelint"
+    "org.opencontainers.image.title"       = "claudelint"
   }
+  // Annotations land on the OCI manifest (and the index, for multi-arch
+  // builds). GHCR reads these — not labels — to populate the version
+  // page's source-repo link, description, and license badge.
+  annotations = [
+    "index,manifest:org.opencontainers.image.source=https://github.com/donaldgifford/claudelint",
+    "index,manifest:org.opencontainers.image.licenses=Apache-2.0",
+    "index,manifest:org.opencontainers.image.description=claudelint",
+    "index,manifest:org.opencontainers.image.title=claudelint",
+  ]
 }
 
 // Stub providing default `tags` for local `docker buildx bake`. CI
@@ -77,6 +87,10 @@ target "claudelint-ci" {
   inherits  = ["_common"]
   tags      = ["${REGISTRY}:${TAG}-ci"]
   platforms = ["linux/amd64"]
+  attest = [
+    "type=sbom",
+    "type=provenance,mode=min",
+  ]
 }
 
 target "claudelint-release" {
@@ -88,4 +102,8 @@ target "claudelint-release" {
     "linux/arm64",
   ]
   output = ["type=registry"]
+  attest = [
+    "type=sbom",
+    "type=provenance,mode=max",
+  ]
 }
