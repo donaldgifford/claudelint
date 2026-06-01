@@ -173,7 +173,7 @@ Add a new GitHub Actions workflow that runs `astro check` + `astro build` on PRs
 - [x] Also: extend `.github/labeler.yml` so PRs touching `site/**` get the `documentation` label.
 - [ ] First-pass: do **not** add to branch protection. Observe two PRs running clean.
 - [ ] After two clean runs: add `Docs / build` (or chosen job name) as a required status check.
-- [ ] Update CLAUDE.md "Git / PR conventions" section to mention the docs check.
+- [x] Update CLAUDE.md "Git / PR conventions" section to mention the docs check. *(added in 6fdacb2 — `Docs CI` bullet in CLAUDE.md L126)*
 
 #### Success Criteria
 
