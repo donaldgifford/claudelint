@@ -188,11 +188,13 @@ Add a new GitHub Actions workflow that runs `astro check` + `astro build` on PRs
 
 Stand up the Cloudflare Pages project, wire it to the repo, configure build settings, and verify production + preview deploys work end-to-end. At this point the site is live at the Pages-assigned subdomain (e.g. `claudelint.pages.dev`), not yet at `claudelint.dev`.
 
+> **Blocked on Donald.** Every task below requires Cloudflare dashboard access and cannot be performed from a code-only session. Donald to walk through these in the Cloudflare UI; once the project is up, mark each box and re-enter the loop for the DNS cutover in Phase 6.
+
 #### Tasks
 
 - [ ] In Cloudflare dashboard: create a Pages project named `claudelint` bound to the `donaldgifford/claudelint` GitHub repo.
 - [ ] Configure build settings: framework preset = Astro, build command = `cd site && npm install && npm run build`, build output directory = `site/dist`, root directory = repo root.
-- [ ] Set Node version env var in Cloudflare Pages to match `mise.toml` Node pin.
+- [ ] Set Node version env var in Cloudflare Pages to match `mise.toml` Node pin (currently `22.20.0`).
 - [ ] Set production branch to `main`.
 - [ ] Enable preview deployments for all branches with open PRs.
 - [ ] Trigger first deploy by pushing a no-op to `main` (or by manually deploying); verify the Pages-assigned subdomain works.
@@ -215,16 +217,16 @@ Point `claudelint.dev` at the Cloudflare Pages project, verify HTTPS, and do fin
 
 #### Tasks
 
-- [ ] In Cloudflare DNS for `claudelint.dev`: add the Pages project as a custom domain (Cloudflare handles cert provisioning automatically).
-- [ ] Verify `https://claudelint.dev` resolves to the Starlight site with a valid cert.
-- [ ] Test redirect behavior: HTTP → HTTPS, `www.claudelint.dev` → `claudelint.dev` (or whichever direction you prefer).
-- [ ] Confirm `mkdocs build --strict` still passes against current `docs/`.
-- [ ] Mermaid parity check: pick (or create) a doc with a Mermaid block, render it via both MkDocs and Starlight, compare visually.
-- [ ] Update `README.md` with a "Documentation" section linking to `https://claudelint.dev`.
-- [ ] Update `CONTRIBUTING.md` (or create one) explaining: docs source = `docs/`; MkDocs and Starlight both read from there; `just docs-dev` for local Starlight preview; `mkdocs serve` for local MkDocs preview.
-- [ ] Update `CLAUDE.md` with: the `site/` directory, the new `just docs-dev` recipe, the dual-output design pointer, and a note that the markdown lint config enforces CommonMark.
-- [ ] Update IMPL-0003 phase checkboxes as work completes; flip status to "Implemented" when all phases are done.
-- [ ] Move DESIGN-0003 status from "Draft" → "Implemented".
+- [ ] In Cloudflare DNS for `claudelint.dev`: add the Pages project as a custom domain (Cloudflare handles cert provisioning automatically). *(blocked on Phase 5 + dashboard access)*
+- [ ] Verify `https://claudelint.dev` resolves to the Starlight site with a valid cert. *(blocked on Phase 5)*
+- [ ] Test redirect behavior: HTTP → HTTPS, `www.claudelint.dev` → `claudelint.dev` (or whichever direction you prefer). *(blocked on Phase 5)*
+- [ ] Confirm `mkdocs build --strict` still passes against current `docs/`. *(mkdocs not installed locally; Backstage TechDocs is the actual consumer — re-verify in TechDocs view after merge)*
+- [ ] Mermaid parity check: pick (or create) a doc with a Mermaid block, render it via both MkDocs and Starlight, compare visually. *(deferred — no Mermaid blocks in `docs/` today; revisit when one lands)*
+- [x] Update `README.md` with a "Documentation" section linking to `https://claudelint.dev`.
+- [x] Update `CONTRIBUTING.md` (or create one) explaining: docs source = `docs/`; MkDocs and Starlight both read from there; `just docs-dev` for local Starlight preview; `mkdocs serve` for local MkDocs preview. *(created)*
+- [x] Update `CLAUDE.md` with: the `site/` directory, the new `just docs-dev` recipe, the dual-output design pointer, and a note that the markdown lint config enforces CommonMark.
+- [x] Update IMPL-0003 phase checkboxes as work completes; flip status to "Implemented" when all phases are done. *(checkboxes current; final status flip waits on Phase 5)*
+- [ ] Move DESIGN-0003 status from "Draft" → "Implemented". *(waits on Phase 5 — code side complete, deploy pending)*
 
 #### Success Criteria
 
