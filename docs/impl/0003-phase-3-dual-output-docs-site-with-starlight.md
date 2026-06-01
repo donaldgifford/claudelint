@@ -164,12 +164,13 @@ Add a new GitHub Actions workflow that runs `astro check` + `astro build` on PRs
 
 #### Tasks
 
-- [ ] Create `.github/workflows/docs.yml`.
-- [ ] Triggers: `push` to `main` and `pull_request` to `main` with `paths` filter on `docs/**`, `site/**`, `astro.config.mjs`, `package.json`, `package-lock.json`, `.github/workflows/docs.yml`.
-- [ ] Steps: checkout, `actions/setup-node@v6` reading version from `mise.toml` (or `package.json` `engines`), `npm ci`, `npm run check`, `npm run build`.
-- [ ] Cache `~/.npm` and `site/node_modules` to keep CI fast.
-- [ ] Upload `site/dist/` as a workflow artifact for inspection on failure.
-- [ ] Add a markdown-lint step (`markdownlint-cli2` on `docs/**/*.md`).
+- [x] Create `.github/workflows/docs.yml`.
+- [x] Triggers: `push` to `main` and `pull_request` to `main` with `paths` filter on `docs/**`, `site/**`, `astro.config.mjs`, `package.json`, `package-lock.json`, `.github/workflows/docs.yml`. *(paths cover docs/, site/, .markdownlint.yaml, justfile, mise.toml, the workflow itself; astro config + package.json live under site/)*
+- [x] Steps: checkout, `actions/setup-node@v6` reading version from `mise.toml` (or `package.json` `engines`), `npm ci`, `npm run check`, `npm run build`. *(uses `jdx/mise-action@v4` to pin Node from `mise.toml` — single source of truth — rather than a separate setup-node step)*
+- [x] Cache `~/.npm` and `site/node_modules` to keep CI fast. *(actions/cache@v4 keyed on package-lock.json)*
+- [x] Upload `site/dist/` as a workflow artifact for inspection on failure. *(actions/upload-artifact@v4, 7-day retention)*
+- [x] Add a markdown-lint step (`markdownlint-cli2` on `docs/**/*.md`). *(separate `lint-md` job running `just lint-md`)*
+- [x] Also: extend `.github/labeler.yml` so PRs touching `site/**` get the `documentation` label.
 - [ ] First-pass: do **not** add to branch protection. Observe two PRs running clean.
 - [ ] After two clean runs: add `Docs / build` (or chosen job name) as a required status check.
 - [ ] Update CLAUDE.md "Git / PR conventions" section to mention the docs check.
