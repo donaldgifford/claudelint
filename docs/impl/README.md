@@ -1,3 +1,7 @@
+---
+title: Implementation Plans
+---
+
 # Implementation Plans
 
 This directory contains implementation plans with concrete tasks and milestones.

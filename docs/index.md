@@ -1,3 +1,7 @@
+---
+title: claudelint
+---
+
 # claudelint
 
 Welcome to the documentation for claudelint.

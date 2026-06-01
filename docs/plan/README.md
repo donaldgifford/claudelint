@@ -1,3 +1,7 @@
+---
+title: Plans
+---
+
 # Plans
 
 Planning documents that capture the goal, approach, and component breakdown for

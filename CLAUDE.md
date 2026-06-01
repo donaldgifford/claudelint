@@ -107,6 +107,8 @@ Authoring rules to keep both pipelines happy:
 - Stick to CommonMark + GFM in `docs/**/*.md`. No MkDocs-only syntax (`!!! note`, `???`, `pymdownx`). Phase 3 will add a `markdownlint-cli2` profile to enforce this.
 - Mermaid fenced blocks (` ```mermaid ... ``` `) work in both pipelines via `rehype-mermaid` (Starlight) and `pymdownx.superfences` (MkDocs).
 - Node toolchain pinned in `mise.toml` (`node = "22.20.0"`). Use `just docs-*` recipes rather than `cd site && npm ...` directly.
+- **Top-level `docs/*.md` files need `title:` frontmatter** (e.g. `docs/index.md`, `docs/json-output-schema.md`). Starlight's content schema requires it. Per-type README files (`docs/<type>/README.md`) also need `title:`. docz-generated files already have it.
+- **Cross-doc links**: write Markdown-style relative paths with `.md` extensions (e.g. `[DESIGN-0001](../design/0001-foo.md)`). MkDocs handles them natively. Starlight's custom `remark-md-link-rewriter` plugin (under `site/src/plugins/`) rewrites them to absolute lowercase routes (`/design/0001-foo/`). Don't write Starlight-only `slug:` links — they break MkDocs.
 
 ## Git / PR conventions
 

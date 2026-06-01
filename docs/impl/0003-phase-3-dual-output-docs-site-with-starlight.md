@@ -113,15 +113,15 @@ Configure Starlight to read Markdown from the existing root `docs/` tree, not fr
 
 #### Tasks
 
-- [ ] Configure Astro's content collection (or `srcDir`) in `astro.config.mjs` to point at `../docs/` from `site/`.
-- [ ] Configure Starlight's `sidebar` for filesystem auto-discovery, grouping by directory (`rfc/`, `adr/`, `design/`, `impl/`, `plan/`, `investigation/`).
-- [ ] Verify each doc type's README renders as the group landing page.
-- [ ] Verify all existing RFC/ADR/DESIGN/IMPL/PLAN/INV docs are reachable from the sidebar.
-- [ ] Confirm `<!--toc:start-->` / `<!--toc:end-->` blocks (docz-generated) don't render as visible content in Starlight.
-- [ ] Confirm relative cross-doc links (e.g. `[DESIGN-0001](../design/0001-...)` from an IMPL doc) resolve correctly in Starlight.
-- [ ] Add a `docs/index.md` landing page (or wire Starlight to use the existing `docs/README.md`) as the public site homepage.
-- [ ] Add `editLink` config so each doc page links to its GitHub source for "Edit on GitHub".
-- [ ] Spot-check one doc per type by browsing locally; fix any render issues.
+- [x] Configure Astro's content collection (or `srcDir`) in `astro.config.mjs` to point at `../docs/` from `site/`. *(uses `glob({ pattern, base: '../docs' })` from `astro/loaders` — Starlight's `docsLoader()` is hardcoded to `src/content/docs/`)*
+- [x] Configure Starlight's `sidebar` for filesystem auto-discovery, grouping by directory (`rfc/`, `adr/`, `design/`, `impl/`, `plan/`, `investigation/`). *(Starlight v0.39 requires `items: [{ autogenerate }]` wrapping)*
+- [x] Verify each doc type's README renders as the group landing page. *(renders at `/<type>/readme/`; sidebar autogenerate exposes it)*
+- [x] Verify all existing RFC/ADR/DESIGN/IMPL/PLAN/INV docs are reachable from the sidebar.
+- [x] Confirm `<!--toc:start-->` / `<!--toc:end-->` blocks (docz-generated) don't render as visible content in Starlight. *(HTML comments pass through, invisible)*
+- [x] Confirm relative cross-doc links (e.g. `[DESIGN-0001](../design/0001-...)` from an IMPL doc) resolve correctly in Starlight. *(custom remark plugin `site/src/plugins/remark-md-link-rewriter.mjs` rewrites `.md` relative links to absolute Starlight routes)*
+- [x] Add a `docs/index.md` landing page (or wire Starlight to use the existing `docs/README.md`) as the public site homepage. *(existing `docs/index.md` + minimal `title:` frontmatter)*
+- [x] Add `editLink` config so each doc page links to its GitHub source for "Edit on GitHub".
+- [x] Spot-check one doc per type by browsing locally; fix any render issues. *(verified via build output + grep on rendered HTML)*
 
 #### Success Criteria
 

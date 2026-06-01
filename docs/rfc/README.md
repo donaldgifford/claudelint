@@ -1,3 +1,7 @@
+---
+title: RFCs
+---
+
 # Requests for Comments (RFCs)
 
 This directory contains RFCs documenting high-level proposals for major features

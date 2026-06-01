@@ -1,3 +1,7 @@
+---
+title: JSON output schema
+---
+
 # claudelint JSON output schema
 
 `claudelint run --format=json` emits a single JSON object to stdout.

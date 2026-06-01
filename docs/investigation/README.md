@@ -1,3 +1,7 @@
+---
+title: Investigations
+---
+
 # Investigations
 
 Time-boxed research spikes and validation experiments. Use an investigation

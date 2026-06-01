@@ -1,3 +1,7 @@
+---
+title: Design Documents
+---
+
 # Design Documents
 
 This directory contains detailed design documents for feature implementation.

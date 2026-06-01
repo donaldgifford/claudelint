@@ -1,3 +1,7 @@
+---
+title: Architecture Decision Records
+---
+
 # Architecture Decision Records (ADRs)
 
 This directory contains Architecture Decision Records documenting significant
