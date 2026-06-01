@@ -220,7 +220,7 @@ Point `claudelint.dev` at the Cloudflare Pages project, verify HTTPS, and do fin
 - [ ] In Cloudflare DNS for `claudelint.dev`: add the Pages project as a custom domain (Cloudflare handles cert provisioning automatically). *(blocked on Phase 5 + dashboard access)*
 - [ ] Verify `https://claudelint.dev` resolves to the Starlight site with a valid cert. *(blocked on Phase 5)*
 - [ ] Test redirect behavior: HTTP → HTTPS, `www.claudelint.dev` → `claudelint.dev` (or whichever direction you prefer). *(blocked on Phase 5)*
-- [ ] Confirm `mkdocs build --strict` still passes against current `docs/`. *(mkdocs not installed locally; Backstage TechDocs is the actual consumer — re-verify in TechDocs view after merge)*
+- [x] Confirm `mkdocs build --strict` still passes against current `docs/`. *(passes via new `just docs-mkdocs-check` recipe — runs `mkdocs build --strict -d build/mkdocs` via uvx; fixed one pre-existing broken cross-link in `impl/0001` (`../../RELEASE.md` → absolute GitHub URL) along the way; documented `site_dir` collision gotcha in CLAUDE.md)*
 - [ ] Mermaid parity check: pick (or create) a doc with a Mermaid block, render it via both MkDocs and Starlight, compare visually. *(deferred — no Mermaid blocks in `docs/` today; revisit when one lands)*
 - [x] Update `README.md` with a "Documentation" section linking to `https://claudelint.dev`.
 - [x] Update `CONTRIBUTING.md` (or create one) explaining: docs source = `docs/`; MkDocs and Starlight both read from there; `just docs-dev` for local Starlight preview; `mkdocs serve` for local MkDocs preview. *(created)*

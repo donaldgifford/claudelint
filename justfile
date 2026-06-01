@@ -229,6 +229,15 @@ docs-check:
 docs-install:
     @cd site && npm install
 
+# Verify the MkDocs (TechDocs) pipeline against the shared docs/ tree.
+# MkDocs's default site_dir is `site/`, which collides with our Astro
+# source — always pass `-d` to a throwaway path. Uses uvx so no
+# permanent Python install is required.
+[group('docs')]
+docs-mkdocs-check:
+    @uvx --from mkdocs --with mkdocs-techdocs-core mkdocs build --strict -d {{ build_dir }}/mkdocs
+    @echo "✓ mkdocs --strict passed (output discarded in {{ build_dir }}/mkdocs)"
+
 # ─── Composite gates ────────────────────────────────────────────────
 
 # Pre-commit gate: lint + test

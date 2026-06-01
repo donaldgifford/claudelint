@@ -109,6 +109,7 @@ Authoring rules to keep both pipelines happy:
 - Node toolchain pinned in `mise.toml` (`node = "22.20.0"`). Use `just docs-*` recipes rather than `cd site && npm ...` directly.
 - **Top-level `docs/*.md` files need `title:` frontmatter** (e.g. `docs/index.md`, `docs/json-output-schema.md`). Starlight's content schema requires it. Per-type README files (`docs/<type>/README.md`) also need `title:`. docz-generated files already have it.
 - **Cross-doc links**: write Markdown-style relative paths with `.md` extensions (e.g. `[DESIGN-0001](../design/0001-foo.md)`). MkDocs handles them natively. Starlight's custom `remark-md-link-rewriter` plugin (under `site/src/plugins/`) rewrites them to absolute lowercase routes (`/design/0001-foo/`). Don't write Starlight-only `slug:` links — they break MkDocs.
+- **MkDocs build gotcha:** MkDocs's default `site_dir` is `site/` — running `mkdocs build` from repo root would clobber the Astro source under `site/`. Always pass `-d <somewhere>` or use `just docs-mkdocs-check` (builds into `build/mkdocs/`). docz manages `mkdocs.yml` and doesn't expose a `site_dir` knob, so the safe-build recipe is the workaround.
 - **Markdown lint authoring rules** (enforced by `just lint-md`):
   - Fenced code blocks need a language hint — use `text` for ASCII diagrams / trees / non-syntax-highlighted output.
   - Bare URLs need `<>` wrapping (`<https://example.com>`).
