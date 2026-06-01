@@ -34,4 +34,5 @@ docz create impl "Your Implementation Title"
 |----|-------|--------|------|--------|------|
 | IMPL-0001 | Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks | Draft | 2026-04-18 | Donald Gifford | [0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md](0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md) |
 | IMPL-0002 | Phase 2 — marketplaces, MCP rules, SARIF, and GitHub Action | Draft | 2026-04-23 | Donald Gifford | [0002-phase-2-marketplaces-mcp-rules-sarif-and-github-action.md](0002-phase-2-marketplaces-mcp-rules-sarif-and-github-action.md) |
+| IMPL-0003 | Phase 3 — Dual-output docs site with Starlight | Draft | 2026-05-31 | Donald Gifford | [0003-phase-3-dual-output-docs-site-with-starlight.md](0003-phase-3-dual-output-docs-site-with-starlight.md) |
 <!-- END DOCZ AUTO-GENERATED -->

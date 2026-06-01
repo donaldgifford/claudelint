@@ -10,22 +10,26 @@ nav:
         - Overview: design/README.md
         - 'DESIGN-0001: Claudelint linter architecture and rule engine': design/0001-claudelint-linter-architecture-and-rule-engine.md
         - 'DESIGN-0002: Phase 2 — marketplaces, MCP rules, and GitHub Action': design/0002-phase-2-marketplaces-mcp-rules-and-github-action.md
+        - 'DESIGN-0003: Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public': design/0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md
     - Implementation Plans:
         - Overview: impl/README.md
         - 'IMPL-0001: Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks': impl/0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md
         - 'IMPL-0002: Phase 2 — marketplaces, MCP rules, SARIF, and GitHub Action': impl/0002-phase-2-marketplaces-mcp-rules-sarif-and-github-action.md
+        - 'IMPL-0003: Phase 3 — Dual-output docs site with Starlight': impl/0003-phase-3-dual-output-docs-site-with-starlight.md
     - Investigations:
         - Overview: investigation/README.md
         - 'INV-0001: OpenAI and OpenCode skill/plugin format compatibility with Claude': investigation/0001-openai-and-opencode-skill-and-plugin-format-compatibility-with.md
         - 'INV-0002: Ralph-loop permission matcher bug and fork plan': investigation/0002-ralph-loop-permission-matcher-bug-and-fork-plan.md
         - 'INV-0003: Phase 1.8 dogfood findings on external Claude plugins': investigation/0003-phase-18-dogfood-findings-on-external-claude-plugins.md
         - 'INV-0004: Donald-loop stop hook silently fails promise detection on transcripts with unescaped newlines': investigation/0004-donald-loop-stop-hook-silently-fails-promise-detection-on.md
+        - 'INV-0005: Phase 2 dogfood findings: marketplaces, MCP, and spec divergence': investigation/0005-phase-2-dogfood-findings-marketplaces-mcp-and-spec-divergence.md
     - Plans:
         - Overview: plan/README.md
     - RFCs:
         - Overview: rfc/README.md
         - 'RFC-0001: Claudelint: a Go-based linter with HCL config for Claude plugins, skills, hooks, and CLAUDE.md': rfc/0001-claudelint-go-based-linter-with-hcl-config-for-claude-plugins.md
     - claudelint JSON output schema: json-output-schema.md
+    - claudelint rules JSON schema: rules-json-schema.md
 plugins:
     - techdocs-core
 site_description: Documentation for claudelint

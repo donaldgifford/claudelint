@@ -24,6 +24,7 @@ created: 2026-04-18
   - [Core interfaces](#core-interfaces)
   - [Execution flow](#execution-flow)
   - [Parsers](#parsers)
+    - [Hook shape](#hook-shape)
   - [Built-in rules (MVP shortlist)](#built-in-rules-mvp-shortlist)
   - [Ruleset versioning](#ruleset-versioning)
   - [Config schema v1](#config-schema-v1)

@@ -182,6 +182,28 @@ release tag:
     @git tag -a {{ tag }} -m "Release {{ tag }}"
     @git push origin {{ tag }}
 
+# ─── Docs site (Astro + Starlight) ──────────────────────────────────
+
+# Start the local Starlight dev server (site/) at http://localhost:4321
+[group('docs')]
+docs-dev:
+    @cd site && npm run dev
+
+# Build the Starlight site into site/dist/
+[group('docs')]
+docs-build:
+    @cd site && npm run build
+
+# Run astro check (type + content collection diagnostics) on site/
+[group('docs')]
+docs-check:
+    @cd site && npm run check
+
+# Install Node deps in site/ (idempotent — run after pulling)
+[group('docs')]
+docs-install:
+    @cd site && npm install
+
 # ─── Composite gates ────────────────────────────────────────────────
 
 # Pre-commit gate: lint + test

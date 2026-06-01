@@ -45,6 +45,10 @@ jq = "latest"
 "github:donaldgifford/docz" = "latest"
 
 
+# Docs site (Astro + Starlight under site/)
+# renovate: datasource=node-version depName=node
+node = "22.20.0"
+
 # Release tools
 # renovate: datasource=github-releases depName=golangci/golangci-lint
 golangci-lint = "2.11.4"

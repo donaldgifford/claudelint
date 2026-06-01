@@ -71,6 +71,10 @@ Everything funnels through `just` (see `justfile` + `docker.just`). The CLI is i
 - `just ci` — lint + test + build + license-check (matches CI)
 - `just release-local` — dry-run goreleaser with `--snapshot --skip=publish --skip=sign`
 - `just docker-build` — local single-arch image via `docker buildx bake` (see `docker-bake.hcl`)
+- `just docs-dev` — start the Starlight dev server (under `site/`) at `http://localhost:4321`
+- `just docs-build` — build the Starlight site into `site/dist/`
+- `just docs-check` — `astro check` (type + content collection diagnostics) on `site/`
+- `just docs-install` — install Node deps in `site/` (idempotent; run after pulling)
 
 Running a single Go test: `go test -run TestFoo ./internal/rules/skills` (or use `just test-pkg`).
 
@@ -90,6 +94,19 @@ Docs are managed by the `docz` CLI (config in `.docz.yaml`). Six doc types: `rfc
 - `wiki.auto_update: true` means `docz update` also refreshes `mkdocs.yml` nav.
 
 Use `Skill` with the `docz:*` skills for doc lifecycle work rather than reinventing the frontmatter by hand.
+
+### Dual-output docs site (DESIGN-0003 / IMPL-0003 — in progress on `docs/site` branch)
+
+The same `docs/` tree feeds **two** rendered outputs:
+
+- **MkDocs + Material** — consumed by Backstage TechDocs. Driven by `mkdocs.yml`, which `docz update` keeps in sync. No CI changes.
+- **Astro + Starlight** — public site at `https://claudelint.dev` (Cloudflare Pages, planned cutover in Phase 6). Lives under `site/`; reads the shared root `docs/` tree via Astro content collections.
+
+Authoring rules to keep both pipelines happy:
+
+- Stick to CommonMark + GFM in `docs/**/*.md`. No MkDocs-only syntax (`!!! note`, `???`, `pymdownx`). Phase 3 will add a `markdownlint-cli2` profile to enforce this.
+- Mermaid fenced blocks (` ```mermaid ... ``` `) work in both pipelines via `rehype-mermaid` (Starlight) and `pymdownx.superfences` (MkDocs).
+- Node toolchain pinned in `mise.toml` (`node = "22.20.0"`). Use `just docs-*` recipes rather than `cd site && npm ...` directly.
 
 ## Git / PR conventions
 
