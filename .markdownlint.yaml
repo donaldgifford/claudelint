@@ -50,3 +50,19 @@ MD030: false
 # https://github.com/DavidAnson/markdownlint/blob/main/doc/md033.md
 MD033: false
 # allowed_elements: ["a", "img", "div"]
+
+# Multiple top-level headings — Starlight requires frontmatter `title:`
+# (used as the rendered page heading); MkDocs / docz template emits a
+# body H1 of the form `# TYPE NNNN: title`. To allow both, blank
+# `front_matter_title` so MD025 ignores frontmatter and only enforces
+# "single body H1" — which is the docz convention already.
+# https://github.com/DavidAnson/markdownlint/blob/main/doc/md025.md
+MD025:
+  front_matter_title: ""
+
+# Duplicate headings — IMPL docs intentionally repeat `Tasks` and
+# `Success Criteria` under each phase. siblings_only=true permits the
+# pattern as long as the duplicates have different parents.
+# https://github.com/DavidAnson/markdownlint/blob/main/doc/md024.md
+MD024:
+  siblings_only: true

@@ -80,7 +80,7 @@ Why Starlight over Docusaurus:
 
 The existing `docs/` tree stays as-is. `docz` continues to scaffold new docs into `docs/<type>/NNNN-slug.md` with the established frontmatter shape.
 
-```
+```text
 docs/
 ├── adr/                # ADR-0001, ADR-0002, ...
 ├── design/             # DESIGN-0001, DESIGN-0002, DESIGN-0003 (this doc), ...
@@ -93,7 +93,7 @@ docs/
 
 ### Build pipelines (two new + one existing)
 
-```
+```text
                     ┌──────────────────────────┐
                     │     docs/ (one tree)     │
                     │   .md + frontmatter      │
@@ -130,7 +130,7 @@ docs/
 
 Add an Astro project alongside the existing repo:
 
-```
+```text
 .
 ├── astro.config.mjs        # starlight({ sidebar: 'auto', ... })
 ├── package.json            # astro + @astrojs/starlight

@@ -139,15 +139,15 @@ Sweep the existing `docs/` tree for MkDocs-specific Markdown syntax (`!!! note`,
 
 #### Tasks
 
-- [ ] `grep -RE '^\s*!!!|^\s*\?\?\?' docs/` — flag admonitions.
-- [ ] `grep -R 'pymdownx' docs/` — flag pymdownx-specific syntax.
-- [ ] Convert admonitions to standard `> [!NOTE]` / `> [!WARNING]` (GFM) or plain blockquotes.
-- [ ] Convert any tabs/snippets to plain Markdown.
-- [ ] Verify Mermaid fenced blocks (` ```mermaid ... ``` `) render in both MkDocs and Starlight after picking a plugin (see Phase 4).
-- [ ] Update `.markdownlint.json` / `.markdownlint-cli2.yaml` config to enforce CommonMark + GFM only (no MkDocs extensions).
-- [ ] Add `just lint-md` recipe (or fold into `just lint`) running `markdownlint-cli2` on `docs/**/*.md`.
-- [ ] Run `markdownlint-cli2 --fix` on `docs/`; commit any auto-fixed nits.
-- [ ] Manually fix any remaining violations.
+- [x] `grep -RE '^\s*!!!|^\s*\?\?\?' docs/` — flag admonitions. *(no hits)*
+- [x] `grep -R 'pymdownx' docs/` — flag pymdownx-specific syntax. *(no hits)*
+- [x] Convert admonitions to standard `> [!NOTE]` / `> [!WARNING]` (GFM) or plain blockquotes. *(none needed)*
+- [x] Convert any tabs/snippets to plain Markdown. *(none present)*
+- [ ] Verify Mermaid fenced blocks (` ```mermaid ... ``` `) render in both MkDocs and Starlight after picking a plugin (see Phase 4). *(deferred to Phase 4)*
+- [x] Update `.markdownlint.json` / `.markdownlint-cli2.yaml` config to enforce CommonMark + GFM only (no MkDocs extensions). *(`.markdownlint.yaml` + custom grep checks in `just lint-md`; only legitimate relaxations are MD025 `front_matter_title: ""` for docz title convention and MD024 `siblings_only: true` for repeated phase sub-headings)*
+- [x] Add `just lint-md` recipe (or fold into `just lint`) running `markdownlint-cli2` on `docs/**/*.md`. *(runs markdownlint plus three regex grep checks for `!!!`, `???`, and `pymdownx`)*
+- [x] Run `markdownlint-cli2 --fix` on `docs/`; commit any auto-fixed nits.
+- [x] Manually fix any remaining violations. *(MD040 language hints, MD034 bare URLs, MD038 space-in-code, MD046 mixed code-block style, MD051 broken anchors, MD018 `#issue` at line start — fixed in source rather than disabling rules)*
 
 #### Success Criteria
 

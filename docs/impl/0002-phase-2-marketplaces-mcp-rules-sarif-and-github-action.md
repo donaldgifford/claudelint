@@ -31,7 +31,7 @@ created: 2026-04-23
   - [Phase 2.4 — rules/mcp/ package](#phase-24--rulesmcp-package)
     - [Tasks](#tasks-3)
     - [Success Criteria](#success-criteria-3)
-  - [Phase 2.5 — Rule metadata: help_uri + rules --json](#phase-25--rule-metadata-helpuri--rules---json)
+  - [Phase 2.5 — Rule metadata: help_uri + rules --json](#phase-25--rule-metadata-help_uri--rules---json)
     - [Tasks](#tasks-4)
     - [Success Criteria](#success-criteria-4)
   - [Phase 2.6 — SARIF reporter and --format=sarif](#phase-26--sarif-reporter-and---formatsarif)

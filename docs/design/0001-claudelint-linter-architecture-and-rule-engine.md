@@ -44,7 +44,7 @@ created: 2026-04-18
 Detailed design for the claudelint core. The architecture is three
 layers with a single direction of dependency:
 
-```
+```text
      Parsers  →  Engine  →  Rules
    (bytes →    (orchestrates,  (tiny, pure
     typed       schedules,      Check funcs
@@ -122,7 +122,7 @@ allowlists, skill trigger rules).
 
 ### Package layout
 
-```
+```text
 cmd/claudelint/          # CLI entrypoint (cobra)
 internal/config/         # HCL loader + schema v1
 internal/discovery/      # filesystem walker + artifact classification
@@ -390,7 +390,7 @@ change.
 
 `claudelint version` prints both:
 
-```
+```text
 claudelint v0.3.1
 ruleset    v1.2.0 (a1b2c3d4)
 ```
@@ -449,7 +449,7 @@ Suppression IDs must exist; unknown IDs are themselves a warning
 
 ### CLI
 
-```
+```text
 claudelint                       # run against the cwd
 claudelint run ./path            # run against a subtree
 claudelint run --format=sarif    # machine output
@@ -534,4 +534,4 @@ loader refuses unknown versions with a clear upgrade message.
 - ADR-0001 — Use HCL as config format
 - IMPL-0001 — Phase 1 plan
 - INV-0001 — Format conversion investigation
-- SARIF 2.1.0: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
+- SARIF 2.1.0: <https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html>

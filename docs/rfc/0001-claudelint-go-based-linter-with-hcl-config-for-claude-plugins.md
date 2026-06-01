@@ -111,7 +111,7 @@ The tool prints human-readable diagnostics by default and supports
 
 High-level architecture (details in DESIGN-0001):
 
-```
+```text
 +-------------------+    +------------------+    +-------------------+
 |   Discovery       | -> |  Parsers         | -> |   Rule Engine     |
 |   (fs walker,     |    |  (md+frontmatter,|    |   (built-in and   |
@@ -216,5 +216,5 @@ Key design points:
 - DESIGN-0001 — Claudelint linter architecture and rule engine
 - IMPL-0001 — Phase 1: core linter for CLAUDE.md, skills, plugins, hooks
 - INV-0001 — OpenAI and OpenCode skill/plugin format compatibility with Claude
-- HashiCorp HCL: https://github.com/hashicorp/hcl
-- SARIF 2.1.0 spec: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
+- HashiCorp HCL: <https://github.com/hashicorp/hcl>
+- SARIF 2.1.0 spec: <https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html>

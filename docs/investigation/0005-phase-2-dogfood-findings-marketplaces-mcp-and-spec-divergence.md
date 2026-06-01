@@ -83,8 +83,10 @@ that generates the problems.
 A single run surfaced 65 diagnostics across 106 files. The top two
 findings originate from the new `marketplace/*` package:
 
-    .claude-plugin/marketplace.json: info:  marketplace manifest has no "author" field  [marketplace/author-required]
-    .claude-plugin/marketplace.json: error: marketplace manifest is missing required field "version"  [marketplace/version-semver]
+```text
+.claude-plugin/marketplace.json: info:  marketplace manifest has no "author" field  [marketplace/author-required]
+.claude-plugin/marketplace.json: error: marketplace manifest is missing required field "version"  [marketplace/version-semver]
+```
 
 Both rules are correctly wired: they run against
 `.claude-plugin/marketplace.json`, they produce a file-level diagnostic
@@ -157,7 +159,9 @@ distributes MCP servers comes online, revisit.
 Two diagnostics fired on
 `plugins/infrastructure-as-code/commands/{scaffold,test}.md`:
 
-    unknown tool "AskUserQuestion" in allowed-tools  [commands/allowed-tools-known]
+```text
+unknown tool "AskUserQuestion" in allowed-tools  [commands/allowed-tools-known]
+```
 
 `AskUserQuestion` is a legitimate Claude Code tool — it appears in the
 Claude Code agent's deferred tool list (this agent session has it).
@@ -173,7 +177,9 @@ additions should land the same way — one-line addition to the map.
 `plugins/git-workflow/skills/commit/SKILL.md` tripped
 `security/secrets`:
 
-    file contains a high-entropy token that resembles a secret  [security/secrets]
+```text
+file contains a high-entropy token that resembles a secret  [security/secrets]
+```
 
 Spot-check showed the match is on example content (a demo commit
 message body showing a hash-like string) rather than a real secret.

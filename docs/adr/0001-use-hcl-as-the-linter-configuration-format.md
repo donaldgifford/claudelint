@@ -103,5 +103,5 @@ format for `.claudelint.hcl`.
 ## References
 
 - RFC-0001 — Claudelint
-- HashiCorp HCL: https://github.com/hashicorp/hcl
-- HCL language spec: https://github.com/hashicorp/hcl/blob/main/hclsyntax/spec.md
+- HashiCorp HCL: <https://github.com/hashicorp/hcl>
+- HCL language spec: <https://github.com/hashicorp/hcl/blob/main/hclsyntax/spec.md>

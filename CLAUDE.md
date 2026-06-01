@@ -104,11 +104,18 @@ The same `docs/` tree feeds **two** rendered outputs:
 
 Authoring rules to keep both pipelines happy:
 
-- Stick to CommonMark + GFM in `docs/**/*.md`. No MkDocs-only syntax (`!!! note`, `???`, `pymdownx`). Phase 3 will add a `markdownlint-cli2` profile to enforce this.
+- Stick to CommonMark + GFM in `docs/**/*.md`. No MkDocs-only syntax (`!!! note`, `???`, `pymdownx`). Enforced by `just lint-md` (Phase 3) via `markdownlint-cli2` + three regex grep checks.
 - Mermaid fenced blocks (` ```mermaid ... ``` `) work in both pipelines via `rehype-mermaid` (Starlight) and `pymdownx.superfences` (MkDocs).
 - Node toolchain pinned in `mise.toml` (`node = "22.20.0"`). Use `just docs-*` recipes rather than `cd site && npm ...` directly.
 - **Top-level `docs/*.md` files need `title:` frontmatter** (e.g. `docs/index.md`, `docs/json-output-schema.md`). Starlight's content schema requires it. Per-type README files (`docs/<type>/README.md`) also need `title:`. docz-generated files already have it.
 - **Cross-doc links**: write Markdown-style relative paths with `.md` extensions (e.g. `[DESIGN-0001](../design/0001-foo.md)`). MkDocs handles them natively. Starlight's custom `remark-md-link-rewriter` plugin (under `site/src/plugins/`) rewrites them to absolute lowercase routes (`/design/0001-foo/`). Don't write Starlight-only `slug:` links — they break MkDocs.
+- **Markdown lint authoring rules** (enforced by `just lint-md`):
+  - Fenced code blocks need a language hint — use `text` for ASCII diagrams / trees / non-syntax-highlighted output.
+  - Bare URLs need `<>` wrapping (`<https://example.com>`).
+  - To show a fenced code block verbatim inside another fenced block, use four backticks for the outer fence (CommonMark's longer-fence rule). Avoids the indented-block fallback that previously worked around docz's ToC generator.
+  - When listing GitHub issue refs like `#117, #151`, never let `#NNNN` start a line — markdownlint reads it as a heading (MD018). Rewrap so a non-`#` token leads the line.
+  - Cross-doc ToC anchors must match the actual GitHub slugger output: underscores preserved, leading punctuation stripped. If the ToC anchor doesn't resolve, fix the link — don't disable MD051.
+  - `.markdownlint.yaml` has only two non-default relaxations: `MD025.front_matter_title: ""` (allows docz convention of frontmatter `title:` + body H1) and `MD024.siblings_only: true` (allows IMPL docs' repeated `Tasks` / `Success Criteria` under different phase parents). Don't add more — fix the source instead.
 
 ## Git / PR conventions
 
