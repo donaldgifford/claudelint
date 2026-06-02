@@ -2,9 +2,9 @@
 # $schema=https://www.schemastore.org/github-action.json
 name: Determine known CVEs through `govulncheck`
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   schedule:
     # Mondays at 0000
     - cron: "0 0 * * 1"
