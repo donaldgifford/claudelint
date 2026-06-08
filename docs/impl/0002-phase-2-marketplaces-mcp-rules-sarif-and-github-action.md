@@ -5,7 +5,10 @@ status: Draft
 author: Donald Gifford
 created: 2026-04-23
 ---
-<!-- markdownlint-disable-file MD025 MD041 -->
+<!-- markdownlint-disable-file MD025 MD041 MD051 -->
+<!-- MD051: docz's ToC generator strips underscores in slugs (matches
+     mkdocs rendering); markdownlint expects underscores preserved.
+     The heading "help_uri" exposes the difference. -->
 
 # IMPL 0002: Phase 2 — marketplaces, MCP rules, SARIF, and GitHub Action
 
@@ -31,7 +34,7 @@ created: 2026-04-23
   - [Phase 2.4 — rules/mcp/ package](#phase-24--rulesmcp-package)
     - [Tasks](#tasks-3)
     - [Success Criteria](#success-criteria-3)
-  - [Phase 2.5 — Rule metadata: help_uri + rules --json](#phase-25--rule-metadata-help_uri--rules---json)
+  - [Phase 2.5 — Rule metadata: help_uri + rules --json](#phase-25--rule-metadata-helpuri--rules---json)
     - [Tasks](#tasks-4)
     - [Success Criteria](#success-criteria-4)
   - [Phase 2.6 — SARIF reporter and --format=sarif](#phase-26--sarif-reporter-and---formatsarif)

@@ -44,28 +44,49 @@ export default defineConfig({
 			},
 			sidebar: [
 				{
-					label: 'RFCs',
-					items: [{ autogenerate: { directory: 'rfc' } }],
+					label: 'Install',
+					items: [{ autogenerate: { directory: 'install' } }],
 				},
 				{
-					label: 'ADRs',
-					items: [{ autogenerate: { directory: 'adr' } }],
+					label: 'Rules',
+					items: [{ autogenerate: { directory: 'rules' } }],
 				},
 				{
-					label: 'Design',
-					items: [{ autogenerate: { directory: 'design' } }],
-				},
-				{
-					label: 'Implementation',
-					items: [{ autogenerate: { directory: 'impl' } }],
-				},
-				{
-					label: 'Plans',
-					items: [{ autogenerate: { directory: 'plan' } }],
-				},
-				{
-					label: 'Investigations',
-					items: [{ autogenerate: { directory: 'investigation' } }],
+					label: 'Development',
+					collapsed: true,
+					items: [
+						{ autogenerate: { directory: 'development' } },
+						{
+							label: 'RFCs',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'rfc' } }],
+						},
+						{
+							label: 'ADRs',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'adr' } }],
+						},
+						{
+							label: 'Design',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'design' } }],
+						},
+						{
+							label: 'Implementation',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'impl' } }],
+						},
+						{
+							label: 'Plans',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'plan' } }],
+						},
+						{
+							label: 'Investigations',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'investigation' } }],
+						},
+					],
 				},
 				{
 					label: 'Reference',
@@ -73,6 +94,11 @@ export default defineConfig({
 						{ label: 'JSON output schema', slug: 'json-output-schema' },
 						{ label: 'Rules JSON schema', slug: 'rules-json-schema' },
 					],
+				},
+				{
+					label: 'Changelog',
+					link: 'https://github.com/donaldgifford/claudelint/blob/main/CHANGELOG.md',
+					attrs: { target: '_blank', rel: 'noopener' },
 				},
 			],
 		}),

@@ -5,7 +5,13 @@ status: Concluded
 author: Donald Gifford
 created: 2026-04-20
 ---
-<!-- markdownlint-disable-file MD025 MD041 -->
+<!-- markdownlint-disable-file MD025 MD041 MD051 -->
+<!-- MD051: docz's ToC generator strips underscores and other punctuation
+     in slugs (matches mkdocs/python-markdown rendering); markdownlint
+     expects underscores preserved (GFM-style). The ToC links work in
+     the rendered outputs (Starlight + TechDocs) — disable MD051 here
+     because the headings contain `${CLAUDE_PLUGIN_ROOT}` and similar
+     punctuation that exposes the difference. -->
 
 # INV 0002: Ralph-loop permission matcher bug and fork plan
 
@@ -20,9 +26,9 @@ created: 2026-04-20
 - [Approach](#approach)
 - [Environment](#environment)
 - [Findings](#findings)
-  - [Observation 1 — The plugin's allowed-tools uses ${CLAUDE_PLUGIN_ROOT} plus colon-argument syntax](#observation-1--the-plugins-allowed-tools-uses-claude_plugin_root-plus-colon-argument-syntax)
+  - [Observation 1 — The plugin's allowed-tools uses ${CLAUDEPLUGINROOT} plus colon-argument syntax](#observation-1--the-plugins-allowed-tools-uses-claudepluginroot-plus-colon-argument-syntax)
   - [Observation 2 — The error "pattern" is the raw fenced code block](#observation-2--the-error-pattern-is-the-raw-fenced-code-block)
-  - [Observation 3 — ${CLAUDE_PLUGIN_ROOT} is not expanded at permission-check time](#observation-3--claude_plugin_root-is-not-expanded-at-permission-check-time)
+  - [Observation 3 — ${CLAUDEPLUGINROOT} is not expanded at permission-check time](#observation-3--claudepluginroot-is-not-expanded-at-permission-check-time)
   - [Observation 4 — The two cached versions are functionally identical](#observation-4--the-two-cached-versions-are-functionally-identical)
   - [Observation 5 — Version resolution alternates between runs](#observation-5--version-resolution-alternates-between-runs)
   - [Observation 6 — No recent Claude Code changelog entry fixes this](#observation-6--no-recent-claude-code-changelog-entry-fixes-this)
@@ -31,7 +37,7 @@ created: 2026-04-20
 - [Conclusion](#conclusion)
 - [Recommendation](#recommendation)
   - [Fork plan](#fork-plan)
-    - [1. Remove the ` `! ` auto-exec block from the command body](#1-remove-the--auto-exec-block-from-the-command-body)
+    - [1. Remove the ` `! ` auto-exec block from the command body](#1-remove-the----auto-exec-block-from-the-command-body)
     - [2. Pre-approve the setup script via a PreToolUse hook](#2-pre-approve-the-setup-script-via-a-pretooluse-hook)
     - [3. Keep scripts/setup-ralph-loop.sh and hooks/stop-hook.sh verbatim from upstream](#3-keep-scriptssetup-ralph-loopsh-and-hooksstop-hooksh-verbatim-from-upstream)
     - [4. Re-name the command and plugin](#4-re-name-the-command-and-plugin)
