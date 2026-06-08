@@ -1,5 +1,8 @@
 ---
 title: RFCs
+sidebar:
+  order: 0
+  label: Overview
 ---
 
 # Requests for Comments (RFCs)

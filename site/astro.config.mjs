@@ -34,6 +34,11 @@ export default defineConfig({
 				'Linter for Claude Code artifacts — CLAUDE.md, skills, commands, agents, hooks, plugins, marketplaces, and MCP servers.',
 			social: [
 				{
+					icon: 'cloud-download',
+					label: 'Releases',
+					href: 'https://github.com/donaldgifford/claudelint/releases/latest',
+				},
+				{
 					icon: 'github',
 					label: 'GitHub',
 					href: 'https://github.com/donaldgifford/claudelint',

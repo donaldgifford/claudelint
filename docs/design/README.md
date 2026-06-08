@@ -1,5 +1,8 @@
 ---
 title: Design Documents
+sidebar:
+  order: 0
+  label: Overview
 ---
 
 # Design Documents

@@ -1,5 +1,8 @@
 ---
 title: Implementation Plans
+sidebar:
+  order: 0
+  label: Overview
 ---
 
 # Implementation Plans

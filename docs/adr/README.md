@@ -1,5 +1,8 @@
 ---
 title: Architecture Decision Records
+sidebar:
+  order: 0
+  label: Overview
 ---
 
 # Architecture Decision Records (ADRs)

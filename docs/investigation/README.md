@@ -1,5 +1,8 @@
 ---
 title: Investigations
+sidebar:
+  order: 0
+  label: Overview
 ---
 
 # Investigations

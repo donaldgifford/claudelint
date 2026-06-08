@@ -1,5 +1,8 @@
 ---
 title: Plans
+sidebar:
+  order: 0
+  label: Overview
 ---
 
 # Plans
