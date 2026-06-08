@@ -14,6 +14,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - *(docs)* Phase 2 — wire shared docs/ tree into Starlight
 - *(docs)* Phase 3 — CommonMark lint enforcement + fix existing violations
 - *(docs)* Restructure sidebar — Install / Rules / Development / Reference / Changelog
+- *(docs)* Render Changelog in-site + flesh out index page + rules ToC
+- *(docs)* README-as-Overview pattern + Releases link in header
 
 ### Bug Fixes
 
@@ -25,6 +27,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - *(impl-0003)* Check off CLAUDE.md docs-CI mention task
 - Verify MkDocs strict build + safe-build recipe
 - *(impl-0003)* In progress
+- *(design)* Add DESIGN-0004 landing page polish + brand pass
 
 ### Miscellaneous Tasks
 
