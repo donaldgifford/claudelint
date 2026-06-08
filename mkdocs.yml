@@ -11,6 +11,7 @@ nav:
         - 'DESIGN-0001: Claudelint linter architecture and rule engine': design/0001-claudelint-linter-architecture-and-rule-engine.md
         - 'DESIGN-0002: Phase 2 — marketplaces, MCP rules, and GitHub Action': design/0002-phase-2-marketplaces-mcp-rules-and-github-action.md
         - 'DESIGN-0003: Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public': design/0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md
+        - 'DESIGN-0004: Starlight landing page polish and brand pass': design/0004-starlight-landing-page-polish-and-brand-pass.md
     - Implementation Plans:
         - Overview: impl/README.md
         - 'IMPL-0001: Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks': impl/0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md
@@ -30,6 +31,16 @@ nav:
         - 'RFC-0001: Claudelint: a Go-based linter with HCL config for Claude plugins, skills, hooks, and CLAUDE.md': rfc/0001-claudelint-go-based-linter-with-hcl-config-for-claude-plugins.md
     - claudelint JSON output schema: json-output-schema.md
     - claudelint rules JSON schema: rules-json-schema.md
+    - Changelog: changelog.md
+    - Development:
+        - Docs: development/docs.md
+        - Profiling: development/profiling.md
+    - Install:
+        - Github Action: install/github-action.md
+        - Quickstart: install/quickstart.md
+    - Rules:
+        - Only silence this rule inside vendored docs.: rules/exit-codes.md
+        - Rules: rules/rules.md
 plugins:
     - techdocs-core
 site_description: Documentation for claudelint
