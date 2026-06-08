@@ -97,8 +97,7 @@ export default defineConfig({
 				},
 				{
 					label: 'Changelog',
-					link: 'https://github.com/donaldgifford/claudelint/blob/main/CHANGELOG.md',
-					attrs: { target: '_blank', rel: 'noopener' },
+					slug: 'changelog',
 				},
 			],
 		}),
