@@ -147,12 +147,18 @@ them by type so the navigation is sensible without a hand-maintained config.
 #### Tasks
 
 - [x] Configure Astro's content collection (or `srcDir`) in `astro.config.mjs`
-      to point at `../docs/` from `site/`. _(uses
-      `glob({ pattern, base: '../docs' })` from `astro/loaders` — Starlight's
-      `docsLoader()` is hardcoded to `src/content/docs/`)_
+      to point at `../docs/` from `site/`. _(final approach: symlink
+      `site/src/content/docs -> ../../../docs` + the bundled `docsLoader()`.
+      The first attempt used `glob({ base: '../docs' })`, which serves pages
+      but breaks sidebar autogenerate — Starlight strips a hardcoded
+      `src/content/docs/` prefix from each entry's filePath before matching
+      groups. See the comment in `site/src/content.config.ts`.)_
 - [x] Configure Starlight's `sidebar` for filesystem auto-discovery, grouping by
       directory (`rfc/`, `adr/`, `design/`, `impl/`, `plan/`, `investigation/`).
-      _(Starlight v0.39 requires `items: [{ autogenerate }]` wrapping)_
+      _(Starlight v0.39 requires `items: [{ autogenerate }]` wrapping. Later
+      evolved into the shipped five-group layout — Install / Rules /
+      Development / Reference / Changelog — with the six docz type groups
+      nested under Development; see CLAUDE.md §Sidebar structure.)_
 - [x] Verify each doc type's README renders as the group landing page. _(renders
       at `/<type>/readme/`; sidebar autogenerate exposes it)_
 - [x] Verify all existing RFC/ADR/DESIGN/IMPL/PLAN/INV docs are reachable from
@@ -165,8 +171,10 @@ them by type so the navigation is sensible without a hand-maintained config.
       `site/src/plugins/remark-md-link-rewriter.mjs` rewrites `.md` relative
       links to absolute Starlight routes)_
 - [x] Add a `docs/index.md` landing page (or wire Starlight to use the existing
-      `docs/README.md`) as the public site homepage. _(existing
-      `docs/index.md` + minimal `title:` frontmatter)_
+      `docs/README.md`) as the public site homepage. _(started as the existing
+      `docs/index.md` + minimal `title:` frontmatter; later rewritten from the
+      README pitch — Install / Quickstart / Output formats / Linted artifacts.
+      A hero + CardGrid upgrade is designed in DESIGN-0004.)_
 - [x] Add `editLink` config so each doc page links to its GitHub source for
       "Edit on GitHub".
 - [x] Spot-check one doc per type by browsing locally; fix any render issues.
@@ -199,8 +207,11 @@ lint time.
       plain blockquotes. _(none needed)_
 - [x] Convert any tabs/snippets to plain Markdown. _(none present)_
 - [ ] Verify Mermaid fenced blocks (` ```mermaid ... ``` `) render in both
-      MkDocs and Starlight after picking a plugin (see Phase 4). _(deferred to
-      Phase 4)_
+      MkDocs and Starlight after picking a plugin. _(deferred to the Phase 6
+      parity check. As of 2026-06-08 **neither pipeline has Mermaid wired** —
+      no `rehype-mermaid` in `site/package.json`, no `pymdownx.superfences`
+      in `mkdocs.yml` — and no doc contains a Mermaid block yet. Wire both
+      plugins before the first Mermaid diagram lands.)_
 - [x] Update `.markdownlint.json` / `.markdownlint-cli2.yaml` config to enforce
       CommonMark + GFM only (no MkDocs extensions). _(`.markdownlint.yaml` +
       custom grep checks in `just lint-md`; only legitimate relaxations are
@@ -277,32 +288,44 @@ settings, and verify production + preview deploys work end-to-end. At this point
 the site is live at the Pages-assigned subdomain (e.g. `claudelint.pages.dev`),
 not yet at `claudelint.dev`.
 
-> **Blocked on Donald.** Every task below requires Cloudflare dashboard access
-> and cannot be performed from a code-only session. Donald to walk through these
-> in the Cloudflare UI; once the project is up, mark each box and re-enter the
-> loop for the DNS cutover in Phase 6.
+> **Mostly done (2026-06-08).** Donald created the Pages project via the
+> dashboard while PR #40 was open; preview deploys are live (verified at
+> `docs-site.claudelint.pages.dev`) and the `Cloudflare Pages` check passes
+> on the PR. Remaining: confirm the Node pin + production-branch settings in
+> the dashboard, the first production deploy (fires when PR #40 merges to
+> `main`), and optionally saving the API secrets.
 
 #### Tasks
 
-- [ ] In Cloudflare dashboard: create a Pages project named `claudelint` bound
-      to the `donaldgifford/claudelint` GitHub repo.
-- [ ] Configure build settings: framework preset = Astro, build command =
+- [x] In Cloudflare dashboard: create a Pages project named `claudelint` bound
+      to the `donaldgifford/claudelint` GitHub repo. _(exists — the
+      `Cloudflare Pages` check on PR #40 links to the project dashboard)_
+- [x] Configure build settings: framework preset = Astro, build command =
       `cd site && npm install && npm run build`, build output directory =
-      `site/dist`, root directory = repo root.
+      `site/dist`, root directory = repo root. _(working — preview builds
+      succeed and serve the full site)_
 - [ ] Set Node version env var in Cloudflare Pages to match `mise.toml` Node pin
-      (currently `22.20.0`).
-- [ ] Set production branch to `main`.
-- [ ] Enable preview deployments for all branches with open PRs.
+      (currently `22.20.0`). _(builds pass on Cloudflare's default Node; confirm
+      the pin in dashboard settings so a future default-bump can't break us)_
+- [ ] Set production branch to `main`. _(confirm in dashboard; unverifiable
+      from the repo until the first post-merge deploy)_
+- [x] Enable preview deployments for all branches with open PRs. _(working —
+      per-commit preview URLs like `115f2e1f.claudelint.pages.dev` plus the
+      `docs-site.claudelint.pages.dev` branch alias)_
 - [ ] Trigger first deploy by pushing a no-op to `main` (or by manually
-      deploying); verify the Pages-assigned subdomain works.
-- [ ] Open a test PR that touches a doc; verify Cloudflare Pages auto-comments
-      with the preview URL.
-- [ ] Verify Pagefind search works on the deployed preview (Cloudflare may need
+      deploying); verify the Pages-assigned subdomain works. _(fires
+      automatically when PR #40 merges)_
+- [x] Open a test PR that touches a doc; verify Cloudflare Pages auto-comments
+      with the preview URL. _(PR #40 itself — the `Cloudflare Pages` status
+      check carries the deploy link)_
+- [x] Verify Pagefind search works on the deployed preview (Cloudflare may need
       an extra build step to run `pagefind`; Starlight handles this by default
-      but double-check).
+      but double-check). _(verified — `/pagefind/pagefind.js` serves 200 on the
+      branch alias; search UI returns results in the preview)_
 - [ ] Save the Cloudflare Pages project ID and account ID as repo secrets
       (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`) in case we want a custom
-      deploy workflow later.
+      deploy workflow later. _(not saved as of 2026-06-08 — `gh secret list`
+      shows neither; optional until we need a custom deploy workflow)_
 
 #### Success Criteria
 
@@ -339,7 +362,9 @@ dual-pipeline setup.
       URL) along the way; documented `site_dir` collision gotcha in CLAUDE.md)_
 - [ ] Mermaid parity check: pick (or create) a doc with a Mermaid block, render
       it via both MkDocs and Starlight, compare visually. _(deferred — no
-      Mermaid blocks in `docs/` today; revisit when one lands)_
+      Mermaid blocks in `docs/` today, and neither pipeline has the plugin
+      wired yet (`rehype-mermaid` / `pymdownx.superfences`); do both halves
+      together when the first diagram lands)_
 - [x] Update `README.md` with a "Documentation" section linking to
       `https://claudelint.dev`.
 - [x] Update `CONTRIBUTING.md` (or create one) explaining: docs source =
