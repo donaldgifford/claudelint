@@ -28,6 +28,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - Verify MkDocs strict build + safe-build recipe
 - *(impl-0003)* In progress
 - *(design)* Add DESIGN-0004 landing page polish + brand pass
+- *(impl-0003)* Sync tracker with branch reality + fix Mermaid claim
 
 ### Miscellaneous Tasks
 

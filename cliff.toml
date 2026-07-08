@@ -70,7 +70,14 @@ commit_parsers = [
   { message = "^chore\\(deps.*\\)", skip = true },
   { message = "^chore\\(pr\\)", skip = true },
   { message = "^chore\\(pull\\)", skip = true },
-  { message = "^chore.*[Cc]hangelog", skip = true },
+  # Skip changelog-maintenance commits only: "chore(changelog): Auto-sync"
+  # (regen workflow), "chore(changelog): regen ..." (manual), and
+  # "chore: regenerate CHANGELOG"-style spellings. (?i) because an
+  # all-caps CHANGELOG once slipped past a [Cc]hangelog pattern and the
+  # drift check saw an entry the committed file lacked. Deliberately NOT
+  # a bare "chore.*changelog" — that would also swallow real entries
+  # like "chore: add LICENSE and CHANGELOG for v0.1.0".
+  { message = "(?i)^chore(\\(changelog\\))?: ?(auto-sync|regen)", skip = true },
   { message = "^chore|^ci|^build", group = "<!-- 7 -->Miscellaneous Tasks" },
   { body = ".*security", group = "<!-- 8 -->Security" },
   { message = "^revert", group = "<!-- 9 -->Revert" },
