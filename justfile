@@ -146,6 +146,31 @@ lint-config:
 lint-actions:
     @actionlint
 
+# Lint Markdown in docs/ against CommonMark + GFM (no MkDocs-only syntax)
+[group('lint')]
+lint-md:
+    @markdownlint-cli2 'docs/**/*.md'
+    @# DESIGN-0003: keep docs/ CommonMark+GFM only so the same source
+    @# renders in both MkDocs and Starlight. These regex grep checks
+    @# fail the recipe if MkDocs-only admonitions or pymdownx syntax
+    @# slip in. The existing markdownlint rules cover the rest.
+    @if grep -REn '^[[:space:]]*!!![[:space:]]+(note|warning|tip|info|danger|abstract|example|quote)' docs/ --include='*.md' \
+        | grep -v 'docs/design/0003\|docs/impl/0003'; then \
+        echo "✗ MkDocs admonition (!!!) found in docs/ — convert to GFM > [!NOTE] / blockquote"; \
+        exit 1; \
+    fi
+    @if grep -REn '^[[:space:]]*\?\?\?' docs/ --include='*.md' \
+        | grep -v 'docs/design/0003\|docs/impl/0003'; then \
+        echo "✗ MkDocs collapsible admonition (???) found in docs/ — convert to <details>/<summary>"; \
+        exit 1; \
+    fi
+    @if grep -REn 'pymdownx' docs/ --include='*.md' \
+        | grep -v 'docs/design/0003\|docs/impl/0003'; then \
+        echo "✗ pymdownx-specific syntax found in docs/ — convert to plain Markdown"; \
+        exit 1; \
+    fi
+    @echo "✓ Markdown lint passed"
+
 # Format code with gofmt + goimports
 [group('lint')]
 fmt:
@@ -181,6 +206,37 @@ release-local:
 release tag:
     @git tag -a {{ tag }} -m "Release {{ tag }}"
     @git push origin {{ tag }}
+
+# ─── Docs site (Astro + Starlight) ──────────────────────────────────
+
+# Start the local Starlight dev server (site/) at http://localhost:4321
+[group('docs')]
+docs-dev:
+    @cd site && npm run dev
+
+# Build the Starlight site into site/dist/
+[group('docs')]
+docs-build:
+    @cd site && npm run build
+
+# Run astro check (type + content collection diagnostics) on site/
+[group('docs')]
+docs-check:
+    @cd site && npm run check
+
+# Install Node deps in site/ (idempotent — run after pulling)
+[group('docs')]
+docs-install:
+    @cd site && npm install
+
+# Verify the MkDocs (TechDocs) pipeline against the shared docs/ tree.
+# MkDocs's default site_dir is `site/`, which collides with our Astro
+# source — always pass `-d` to a throwaway path. Uses uvx so no
+# permanent Python install is required.
+[group('docs')]
+docs-mkdocs-check:
+    @uvx --from mkdocs --with mkdocs-techdocs-core mkdocs build --strict -d {{ build_dir }}/mkdocs
+    @echo "✓ mkdocs --strict passed (output discarded in {{ build_dir }}/mkdocs)"
 
 # ─── Composite gates ────────────────────────────────────────────────
 

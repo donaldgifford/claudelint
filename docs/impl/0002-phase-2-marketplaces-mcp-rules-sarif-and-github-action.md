@@ -5,7 +5,10 @@ status: Draft
 author: Donald Gifford
 created: 2026-04-23
 ---
-<!-- markdownlint-disable-file MD025 MD041 -->
+<!-- markdownlint-disable-file MD025 MD041 MD051 -->
+<!-- MD051: docz's ToC generator strips underscores in slugs (matches
+     mkdocs rendering); markdownlint expects underscores preserved.
+     The heading "help_uri" exposes the difference. -->
 
 # IMPL 0002: Phase 2 — marketplaces, MCP rules, SARIF, and GitHub Action
 

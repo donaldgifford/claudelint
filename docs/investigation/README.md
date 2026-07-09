@@ -1,3 +1,10 @@
+---
+title: Investigations
+sidebar:
+  order: 0
+  label: Overview
+---
+
 # Investigations
 
 Time-boxed research spikes and validation experiments. Use an investigation
@@ -9,7 +16,7 @@ Design docs, plans, and implementation docs can reference investigations by ID
 (e.g. `INV-0001`) to document how open questions were resolved.
 
 <!-- BEGIN DOCZ AUTO-GENERATED -->
-## All INVESTIGATIONs
+## All Investigations
 
 | ID | Title | Status | Date | Author | Link |
 |----|-------|--------|------|--------|------|

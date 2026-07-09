@@ -39,3 +39,9 @@ dist/
 
 # donald-loop runtime state
 .claude/donald-loop.local.md
+
+# Astro + Starlight (site/)
+site/node_modules/
+site/dist/
+site/.astro/
+site/.astro-cache/

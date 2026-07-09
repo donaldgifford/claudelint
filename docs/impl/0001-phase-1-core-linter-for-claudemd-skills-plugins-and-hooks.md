@@ -469,7 +469,7 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
 - [x] Tagging `v0.1.0` is maintainer-gated and runs outside this
       session. All code, CI, goreleaser, and docs needed for the
       release are landed and verified via `make release-local`. The
-      step-by-step cut procedure lives in [RELEASE.md](../../RELEASE.md);
+      step-by-step cut procedure lives in [RELEASE.md](https://github.com/donaldgifford/claudelint/blob/main/RELEASE.md);
       running `make release TAG=v0.1.0` from `main` triggers
       goreleaser to publish the release artifacts, at which point
       `go install` resolves the tag.

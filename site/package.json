@@ -1,0 +1,25 @@
+{
+  "name": "claudelint-docs",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Public docs site for claudelint, built with Astro + Starlight from the shared docs/ tree.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.39.2",
+    "astro": "^6.4.8",
+    "sharp": "^0.34.5",
+    "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^6.0.3"
+  }
+}

@@ -5,7 +5,13 @@ status: Concluded
 author: Donald Gifford
 created: 2026-04-20
 ---
-<!-- markdownlint-disable-file MD025 MD041 -->
+<!-- markdownlint-disable-file MD025 MD041 MD051 -->
+<!-- MD051: docz's ToC generator strips underscores and other punctuation
+     in slugs (matches mkdocs/python-markdown rendering); markdownlint
+     expects underscores preserved (GFM-style). The ToC links work in
+     the rendered outputs (Starlight + TechDocs) — disable MD051 here
+     because the headings contain `${CLAUDE_PLUGIN_ROOT}` and similar
+     punctuation that exposes the difference. -->
 
 # INV 0002: Ralph-loop permission matcher bug and fork plan
 
@@ -33,7 +39,7 @@ created: 2026-04-20
   - [Fork plan](#fork-plan)
     - [1. Remove the ` `! ` auto-exec block from the command body](#1-remove-the----auto-exec-block-from-the-command-body)
     - [2. Pre-approve the setup script via a PreToolUse hook](#2-pre-approve-the-setup-script-via-a-pretooluse-hook)
-    - [3. Keep scripts/setup-ralph-loop.sh and hooks/stop-hook.sh](#3-keep-scriptssetup-ralph-loopsh-and-hooksstop-hooksh)
+    - [3. Keep scripts/setup-ralph-loop.sh and hooks/stop-hook.sh verbatim from upstream](#3-keep-scriptssetup-ralph-loopsh-and-hooksstop-hooksh-verbatim-from-upstream)
     - [4. Re-name the command and plugin](#4-re-name-the-command-and-plugin)
   - [Reference implementation — exact file contents](#reference-implementation--exact-file-contents)
     - [.claude-plugin/plugin.json](#claude-pluginpluginjson)
@@ -132,19 +138,21 @@ hide-from-slash-command-tool: "true"
 Command body contains a triple-backtick-bang block that auto-executes
 on invocation:
 
-    ```!
-    "${CLAUDE_PLUGIN_ROOT}/scripts/setup-ralph-loop.sh" $ARGUMENTS
-    ```
+````markdown
+```!
+"${CLAUDE_PLUGIN_ROOT}/scripts/setup-ralph-loop.sh" $ARGUMENTS
+```
+````
 
 ### Observation 2 — The error "pattern" is the raw fenced code block
 
-Claude Code's permission-check error message shows (indented code
-block to keep triple-backticks verbatim without tripping ToC
-generators):
+Claude Code's permission-check error message shows:
 
-    Shell command permission check failed for pattern "<BACKTICKS>!
-    "/Users/donaldgifford/.claude/plugins/cache/claude-plugins-official/ralph-loop/1.0.0/scripts/setup-ralph-loop.sh" "<args>"
-    <BACKTICKS>": This command requires approval
+```text
+Shell command permission check failed for pattern "<BACKTICKS>!
+"/Users/donaldgifford/.claude/plugins/cache/claude-plugins-official/ralph-loop/1.0.0/scripts/setup-ralph-loop.sh" "<args>"
+<BACKTICKS>": This command requires approval
+```
 
 Where `<BACKTICKS>` stands in for a literal triple-backtick
 (` ``` `). The "pattern" Claude Code is matching against starts with
@@ -284,8 +292,8 @@ operator validator entirely.
 
 **Answer:** Yes — this is a known, unfixed Claude Code bug in the
 ` ```! ` / `$ARGUMENTS` / allowed-tools interaction, with multiple
-duplicate reports and at least 5 proposed community PRs (#72, #98,
-#117, #151, #1314) that never merged. Adding allow-entries to
+duplicate reports and at least 5 proposed community PRs
+(#72, #98, #117, #151, #1314) that never merged. Adding allow-entries to
 `settings.json` cannot fix it because the failure happens in a
 shell-operator validator that runs *before* the `allowed-tools`
 matcher.
@@ -375,8 +383,8 @@ extracts the command, and exits with an allow-decision when the
 command invokes the setup script. This bypasses the broken static
 allow-list pattern.
 
-#### 3. Keep `scripts/setup-ralph-loop.sh` and `hooks/stop-hook.sh`
-verbatim from upstream
+#### 3. Keep `scripts/setup-ralph-loop.sh` and `hooks/stop-hook.sh` verbatim from upstream
+
 
 No change needed to the script or stop hook — the bug is entirely in
 how the command is invoked and authorized, not in what the script
@@ -394,19 +402,21 @@ marketplace config.
 Target layout inside the personal plugins repo
 (`donaldgifford-claude-skills`):
 
-    plugins/ralph-loop-fork/
-    ├── .claude-plugin/
-    │   └── plugin.json
-    ├── commands/
-    │   └── ralph-loop.md         # rewritten (no ```! block)
-    ├── hooks/
-    │   ├── hooks.json            # Stop hook + new PreToolUse hook
-    │   ├── stop-hook.sh          # verbatim copy from upstream
-    │   └── approve-setup.sh      # NEW: auto-approves setup script
-    ├── scripts/
-    │   └── setup-ralph-loop.sh   # verbatim copy from upstream
-    ├── LICENSE
-    └── README.md
+````text
+plugins/ralph-loop-fork/
+├── .claude-plugin/
+│   └── plugin.json
+├── commands/
+│   └── ralph-loop.md         # rewritten (no ```! block)
+├── hooks/
+│   ├── hooks.json            # Stop hook + new PreToolUse hook
+│   ├── stop-hook.sh          # verbatim copy from upstream
+│   └── approve-setup.sh      # NEW: auto-approves setup script
+├── scripts/
+│   └── setup-ralph-loop.sh   # verbatim copy from upstream
+├── LICENSE
+└── README.md
+````
 
 Files to **copy verbatim** from upstream
 `anthropics/claude-plugins-official/plugins/ralph-loop/`:
@@ -558,8 +568,9 @@ exit 0
 Make it executable (`chmod 755 hooks/approve-setup.sh`) and verify
 `stop-hook.sh` and `setup-ralph-loop.sh` keep their executable bits
 after publishing — upstream has ~10 open issues about shell scripts
-losing `+x` after marketplace sync (#1036, #1056, #1060, #1064,
-#1067, #1084, #1088, #1089, #1100, #992 …). Ship the fork with
+losing `+x` after marketplace sync
+(#1036, #1056, #1060, #1064, #1067, #1084, #1088, #1089, #1100, #992 …).
+Ship the fork with
 explicit `chmod +x` on those two scripts as the last step of
 publishing.
 

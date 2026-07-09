@@ -5,7 +5,7 @@
     "ralph-loop@claude-plugins-official": true,
     "claude-md@donaldgifford-claude-skills": true,
     "go-development@donaldgifford-claude-skills": true,
-    "git-workflows@donaldgifford-claude-skills": true,
+    "git-workflow@donaldgifford-claude-skills": true,
     "git-cliff@donaldgifford-claude-skills": true,
     "systems-programming@donaldgifford-claude-skills": true,
     "makefiles@donaldgifford-claude-skills": true,

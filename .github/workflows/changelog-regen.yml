@@ -10,9 +10,10 @@ on:
 # chore(changelog) auto-sync (this workflow's own output). Without this,
 # the chore(changelog) push the regen step makes would re-trigger the
 # workflow on main and we'd cycle. cliff.toml's commit_parsers separately
-# skip chore-changelog commits from the generated CHANGELOG body via
-# `^chore.*[Cc]hangelog`, so even if the guard misfires the output stays
-# stable — but the guard saves an extra workflow run.
+# skip changelog-maintenance commits from the generated CHANGELOG body
+# (see the skip pattern in cliff.toml's commit_parsers), so even if the
+# guard misfires the output stays stable — but the guard saves an extra
+# workflow run.
 jobs:
   regen:
     if: ${{ !startsWith(github.event.head_commit.message, 'chore(changelog)') }}

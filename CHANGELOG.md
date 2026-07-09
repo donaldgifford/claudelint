@@ -1,8 +1,39 @@
-# Changelog
+---
+title: Changelog
+---
 
 All notable changes to this project are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [unreleased]
+
+### Features
+
+- *(docs)* Phase 1 — scaffold Starlight project under site/
+- *(docs)* Phase 2 — wire shared docs/ tree into Starlight
+- *(docs)* Phase 3 — CommonMark lint enforcement + fix existing violations
+- *(docs)* Restructure sidebar — Install / Rules / Development / Reference / Changelog
+- *(docs)* Render Changelog in-site + flesh out index page + rules ToC
+- *(docs)* README-as-Overview pattern + Releases link in header
+
+### Bug Fixes
+
+- *(docs)* Populate Starlight sidebar via symlink to shared docs tree
+
+### Documentation
+
+- Phase 6 (code-side) — README docs section + CONTRIBUTING
+- *(impl-0003)* Check off CLAUDE.md docs-CI mention task
+- Verify MkDocs strict build + safe-build recipe
+- *(impl-0003)* In progress
+- *(design)* Add DESIGN-0004 landing page polish + brand pass
+- *(impl-0003)* Sync tracker with branch reality + fix Mermaid claim
+
+### Miscellaneous Tasks
+
+- *(docs)* Phase 4 — Docs workflow runs markdownlint + Starlight build
+
 ## [0.2.3] - 2026-05-30
 
 ### Bug Fixes

@@ -225,7 +225,7 @@ Initial rule set:
 | `mcp/command-exists-on-path` | warn | `command` is a bare name (not absolute, no `/`) AND not a common shell builtin — catches typos like `"uvv"` instead of `"uvx"` |
 | `mcp/no-secrets-in-env` | error | `env{}` value matches the existing `security/secrets` regexes (API keys, tokens). Reuses `rules/security/secrets.go` matcher |
 | `mcp/no-unsafe-shell` | error | `command: "bash"` or `"sh"` with `-c` in args — same class of bug as `hooks/nounsafeshell` |
-| `mcp/disabled-commented` | info | `disabled: true` without an adjacent comment (JSON has no comments, so check for a `description` field or a `// ` in `name`) — purely advisory |
+| `mcp/disabled-commented` | info | `disabled: true` without an adjacent comment (JSON has no comments, so check for a `description` field or a `//` in `name`) — purely advisory |
 | `mcp/server-name-required` | error | map key is empty string |
 
 Share the secrets matcher with `rules/security/` rather than duplicating
@@ -239,7 +239,7 @@ Separate public repo: `donaldgifford/claudelint-action`. Composite
 action (not Docker) so startup is fast and we avoid the pull penalty on
 every job. Structure:
 
-```
+```text
 claudelint-action/
 ├── action.yml
 ├── README.md
@@ -315,7 +315,7 @@ publish a container image alongside the binary release:
 - Entrypoint: `/usr/local/bin/claudelint`, default command: `run .`.
 - Consumers run it as:
 
-  ```
+  ```bash
   docker run --rm -v "$PWD:/workspace" -w /workspace \
     ghcr.io/donaldgifford/claudelint:v0.2.0 run --format=github .
   ```

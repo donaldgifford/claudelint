@@ -1,3 +1,10 @@
+---
+title: RFCs
+sidebar:
+  order: 0
+  label: Overview
+---
+
 # Requests for Comments (RFCs)
 
 This directory contains RFCs documenting high-level proposals for major features

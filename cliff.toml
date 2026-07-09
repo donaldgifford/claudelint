@@ -2,12 +2,19 @@
 # https://git-cliff.org/docs/configuration
 
 [changelog]
-header = """
-# Changelog
+# Frontmatter is required so docs/changelog.md (symlinked to this file)
+# renders in Starlight. MkDocs ignores YAML frontmatter; Starlight uses
+# the `title:` to set the rendered page heading. The body H1 is dropped
+# to avoid duplicating the title — Starlight's page already shows it.
+header = """\
+---
+title: Changelog
+---
 
 All notable changes to this project are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 this project adheres to [Semantic Versioning](https://semver.org/).
+
 """
 
 body = """
@@ -63,7 +70,14 @@ commit_parsers = [
   { message = "^chore\\(deps.*\\)", skip = true },
   { message = "^chore\\(pr\\)", skip = true },
   { message = "^chore\\(pull\\)", skip = true },
-  { message = "^chore.*[Cc]hangelog", skip = true },
+  # Skip changelog-maintenance commits only: "chore(changelog): Auto-sync"
+  # (regen workflow), "chore(changelog): regen ..." (manual), and
+  # "chore: regenerate CHANGELOG"-style spellings. (?i) because an
+  # all-caps CHANGELOG once slipped past a [Cc]hangelog pattern and the
+  # drift check saw an entry the committed file lacked. Deliberately NOT
+  # a bare "chore.*changelog" — that would also swallow real entries
+  # like "chore: add LICENSE and CHANGELOG for v0.1.0".
+  { message = "(?i)^chore(\\(changelog\\))?: ?(auto-sync|regen)", skip = true },
   { message = "^chore|^ci|^build", group = "<!-- 7 -->Miscellaneous Tasks" },
   { body = ".*security", group = "<!-- 8 -->Security" },
   { message = "^revert", group = "<!-- 9 -->Revert" },

@@ -1,3 +1,7 @@
+---
+title: Rules JSON schema
+---
+
 # claudelint rules JSON schema
 
 `claudelint rules --json` emits a single JSON object to stdout describing

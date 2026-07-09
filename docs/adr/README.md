@@ -1,3 +1,10 @@
+---
+title: Architecture Decision Records
+sidebar:
+  order: 0
+  label: Overview
+---
+
 # Architecture Decision Records (ADRs)
 
 This directory contains Architecture Decision Records documenting significant
