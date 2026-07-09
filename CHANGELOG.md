@@ -12,6 +12,10 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 - *(docs)* Dual-output docs site — MkDocs (TechDocs) + Starlight (claudelint.dev) ([#40](https://github.com/donaldgifford/claudelint/issues/40))
 
+### Documentation
+
+- *(impl-0003)* Close out — production live at claudelint.dev
+
 ## [0.2.3] - 2026-05-30
 
 ### Bug Fixes
