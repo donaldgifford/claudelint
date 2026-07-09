@@ -41,6 +41,6 @@ docz create design "Your Design Title"
 |----|-------|--------|------|--------|------|
 | DESIGN-0001 | Claudelint linter architecture and rule engine | Draft | 2026-04-18 | Donald Gifford | [0001-claudelint-linter-architecture-and-rule-engine.md](0001-claudelint-linter-architecture-and-rule-engine.md) |
 | DESIGN-0002 | Phase 2 — marketplaces, MCP rules, and GitHub Action | Draft | 2026-04-23 | Donald Gifford | [0002-phase-2-marketplaces-mcp-rules-and-github-action.md](0002-phase-2-marketplaces-mcp-rules-and-github-action.md) |
-| DESIGN-0003 | Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public | Draft | 2026-05-31 | Donald Gifford | [0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md](0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md) |
+| DESIGN-0003 | Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public | Implemented | 2026-05-31 | Donald Gifford | [0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md](0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md) |
 | DESIGN-0004 | Starlight landing page polish and brand pass | Draft | 2026-06-08 | Donald Gifford | [0004-starlight-landing-page-polish-and-brand-pass.md](0004-starlight-landing-page-polish-and-brand-pass.md) |
 <!-- END DOCZ AUTO-GENERATED -->
