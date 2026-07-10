@@ -169,11 +169,15 @@ field ranges preferred).
       `UserInvocable` is a `*bool` so rules can tell declared-false from
       absent-defaults-true; `disallowed-tools` goes through the shared
       splitter)_
-- [ ] Fixture sweep: add doc-valid testdata files exercising every new
+- [x] Fixture sweep: add doc-valid testdata files exercising every new
       shape (an `mcpServers` file with `http` + `stdio` servers, a
       marketplace with all four object source types, a hooks file using
       new events and all five hook types, skills/commands with
-      string-form `allowed-tools`).
+      string-form `allowed-tools`). _(mcp/marketplace fixtures landed
+      with their parser tasks; `all_types.json` gained `Setup` +
+      `PermissionRequest` groups; new `ok/skills/deployer.md` and
+      `ok/commands/commit.md` cover string-form tool lists + merged
+      model fields, wired into `TestFixturesOK`)_
 
 #### Success Criteria
 

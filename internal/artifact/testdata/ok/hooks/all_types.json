@@ -46,6 +46,27 @@
           }
         ]
       }
+    ],
+    "Setup": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mise install"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Should this command run? $ARGUMENTS"
+          }
+        ]
+      }
     ]
   }
 }

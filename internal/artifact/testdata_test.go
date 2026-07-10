@@ -63,6 +63,36 @@ func TestFixturesOK(t *testing.T) {
 			},
 		},
 		{
+			name: "skill deployer merged model",
+			rel:  "ok/skills/deployer.md",
+			parse: func(p string, b []byte) (Artifact, *ParseError) {
+				s, err := ParseSkill(p, b)
+				return s, err
+			},
+			assert: func(t *testing.T, a Artifact) {
+				t.Helper()
+				s := a.(*Skill)
+				if s.Context != "fork" || s.Agent != "shipper" {
+					t.Errorf("Context/Agent = %q/%q", s.Context, s.Agent)
+				}
+				if s.UserInvocable == nil || *s.UserInvocable {
+					t.Errorf("UserInvocable = %v, want declared false", s.UserInvocable)
+				}
+				want := []string{"Bash(just deploy:*)", "Read", "mcp__github"}
+				if len(s.AllowedTools) != len(want) {
+					t.Fatalf("AllowedTools = %v, want %v", s.AllowedTools, want)
+				}
+				for i := range want {
+					if s.AllowedTools[i] != want[i] {
+						t.Errorf("AllowedTools[%d] = %q, want %q", i, s.AllowedTools[i], want[i])
+					}
+				}
+				if len(s.DisallowedTools) != 2 {
+					t.Errorf("DisallowedTools = %v, want 2 entries", s.DisallowedTools)
+				}
+			},
+		},
+		{
 			name: "command review",
 			rel:  "ok/commands/review.md",
 			parse: func(p string, b []byte) (Artifact, *ParseError) {
@@ -77,6 +107,33 @@ func TestFixturesOK(t *testing.T) {
 				}
 				if c.ArgumentHint != "<pr-number>" {
 					t.Errorf("ArgumentHint = %q", c.ArgumentHint)
+				}
+			},
+		},
+		{
+			name: "command commit string tools",
+			rel:  "ok/commands/commit.md",
+			parse: func(p string, b []byte) (Artifact, *ParseError) {
+				c, err := ParseCommand(p, b)
+				return c, err
+			},
+			assert: func(t *testing.T, a Artifact) {
+				t.Helper()
+				c := a.(*Command)
+				if c.Model != "haiku" {
+					t.Errorf("Model = %q, want haiku", c.Model)
+				}
+				if !c.DisableModelInvocation {
+					t.Errorf("DisableModelInvocation = false, want true")
+				}
+				want := []string{"Bash(git add:*)", "Bash(git commit:*)", "Read"}
+				if len(c.AllowedTools) != len(want) {
+					t.Fatalf("AllowedTools = %v, want %v", c.AllowedTools, want)
+				}
+				for i := range want {
+					if c.AllowedTools[i] != want[i] {
+						t.Errorf("AllowedTools[%d] = %q, want %q", i, c.AllowedTools[i], want[i])
+					}
 				}
 			},
 		},

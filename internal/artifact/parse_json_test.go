@@ -52,8 +52,8 @@ func TestParseHookAllTypes(t *testing.T) {
 	if perr != nil {
 		t.Fatalf("ParseHook = %v, want nil", perr)
 	}
-	if got := len(h.Entries); got != 7 {
-		t.Fatalf("entries = %d, want 7", got)
+	if got := len(h.Entries); got != 9 {
+		t.Fatalf("entries = %d, want 9", got)
 	}
 
 	pre := h.Entries[:5]
@@ -123,13 +123,23 @@ func TestParseHookAllTypes(t *testing.T) {
 		t.Errorf("agent entry Type/Event = %q/%q", agent.Type, agent.Event)
 	}
 
-	// Last entry omits type entirely: declared empty, effective command.
+	// Entry 6 omits type entirely: declared empty, effective command.
 	bare := h.Entries[6]
 	if bare.Type != "" {
 		t.Errorf("bare Type = %q, want empty (omitted)", bare.Type)
 	}
 	if got := bare.EffectiveType(); got != "command" {
 		t.Errorf("bare EffectiveType() = %q, want command", got)
+	}
+
+	// The trailing groups use events added in the 30-event expansion.
+	setup := h.Entries[7]
+	if setup.Event != "Setup" || setup.Command != "mise install" {
+		t.Errorf("setup entry Event/Command = %q/%q", setup.Event, setup.Command)
+	}
+	perm := h.Entries[8]
+	if perm.Event != "PermissionRequest" || perm.Type != "prompt" || perm.Matcher != "Bash" {
+		t.Errorf("permission entry = %+v", perm)
 	}
 }
 
