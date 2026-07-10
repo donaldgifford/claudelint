@@ -18,6 +18,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - *(inv)* INV-0006 — rule coverage audit vs current Claude Code docs
 - *(inv)* Restructure INV-0006 into per-kind audit tables
 - *(inv)* Promote all backlog rules into the three phased PRs
+- *(impl)* IMPL-0004 — ruleset alignment and agent rules
 
 ## [0.2.3] - 2026-05-30
 
