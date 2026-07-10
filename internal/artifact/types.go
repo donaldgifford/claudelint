@@ -159,6 +159,19 @@ type Marketplace struct {
 	Author       string
 	AuthorRange  diag.Range
 
+	// OwnerName/OwnerEmail are the documented root owner{} object.
+	// The docs require owner.name; Author above remains the merged
+	// legacy view (top-level author string, falling back to
+	// owner.name) that existing rules consume.
+	OwnerName  string
+	OwnerRange diag.Range
+	OwnerEmail string
+
+	// Renames maps former plugin names to current ones for automatic
+	// migration. A JSON null target (plugin removed) parses as "" —
+	// plugin names cannot legitimately be empty. Nil when absent.
+	Renames map[string]string
+
 	// Plugins is the parsed plugins[] array, in manifest order.
 	Plugins []MarketplacePlugin
 }

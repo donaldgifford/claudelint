@@ -247,6 +247,59 @@ func TestParseMarketplaceObjectSources(t *testing.T) {
 	}
 }
 
+func TestParseMarketplaceOwnerAndRenames(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/object_sources/.claude-plugin/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+
+	if m.OwnerName != "Donald Gifford" {
+		t.Errorf("OwnerName = %q, want Donald Gifford", m.OwnerName)
+	}
+	if m.OwnerRange.IsZero() {
+		t.Error("OwnerRange is zero, want the owner.name span")
+	}
+	if m.OwnerEmail != "donald@example.com" {
+		t.Errorf("OwnerEmail = %q", m.OwnerEmail)
+	}
+	// The legacy merged Author view falls back to owner.name when no
+	// top-level author string exists.
+	if m.Author != "Donald Gifford" {
+		t.Errorf("Author = %q, want owner.name fallback", m.Author)
+	}
+
+	wantRenames := map[string]string{
+		"old-local":      "local-one",
+		"retired-plugin": "", // JSON null = removed
+	}
+	if len(m.Renames) != len(wantRenames) {
+		t.Fatalf("Renames = %v, want %v", m.Renames, wantRenames)
+	}
+	for k, want := range wantRenames {
+		if got, ok := m.Renames[k]; !ok || got != want {
+			t.Errorf("Renames[%q] = %q (present=%v), want %q", k, got, ok, want)
+		}
+	}
+}
+
+func TestParseMarketplaceNoOwnerNoRenames(t *testing.T) {
+	src := []byte(`{"name": "bare", "plugins": []}`)
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+	if m.OwnerName != "" || m.OwnerEmail != "" {
+		t.Errorf("Owner = %q/%q, want empty", m.OwnerName, m.OwnerEmail)
+	}
+	if m.Renames != nil {
+		t.Errorf("Renames = %v, want nil", m.Renames)
+	}
+}
+
 // TestParseMarketplaceSourceRange verifies the SourceRange for a known
 // fixture points at a byte span whose contents, when sliced out of
 // Raw/Source, match the expected source string.

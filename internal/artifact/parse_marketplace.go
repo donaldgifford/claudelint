@@ -50,9 +50,40 @@ func ParseMarketplace(filePath string, src []byte) (*Marketplace, *ParseError) {
 	// see their range point at the obvious token.
 	m.Version, m.VersionRange = stringFieldPath(src, &base, []string{"version"}, []string{"metadata", "version"})
 	m.Author, m.AuthorRange = stringFieldPath(src, &base, []string{"author"}, []string{"owner", "name"})
+	m.OwnerName, m.OwnerRange = stringFieldPath(src, &base, []string{"owner", "name"})
+	m.OwnerEmail, _ = stringFieldPath(src, &base, []string{"owner", "email"})
+	m.Renames = parseRenames(src)
 	m.Plugins = parseMarketplacePlugins(src, &base, marketplaceRoot(filePath))
 
 	return m, nil
+}
+
+// parseRenames reads the root renames{} migration map. String targets
+// map old → new name; JSON null targets (removed plugins) map to "".
+// Non-string/non-null targets are skipped. Absent or malformed
+// renames yields nil.
+func parseRenames(src []byte) map[string]string {
+	raw, dt, _, err := jsonparser.Get(src, "renames")
+	if err != nil || dt != jsonparser.Object {
+		return nil
+	}
+	out := make(map[string]string)
+	if err := jsonparser.ObjectEach(raw, func(k, v []byte, vdt jsonparser.ValueType, _ int) error {
+		switch vdt {
+		case jsonparser.String:
+			out[string(k)] = string(v)
+		case jsonparser.Null:
+			out[string(k)] = ""
+		default:
+		}
+		return nil
+	}); err != nil {
+		return nil
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // stringFieldPath tries each path in turn and returns the first string

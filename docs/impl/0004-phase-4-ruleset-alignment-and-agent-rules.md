@@ -128,9 +128,11 @@ field ranges preferred).
       string paths. _(`MarketplacePlugin.SourceInfo`; string forms classify
       as `local`/`external-string`, unknown object discriminators as
       `invalid`; `SourceRange` covers the object span for object forms)_
-- [ ] `ParseMarketplace`: parse root `owner{name,email}` as a distinct
+- [x] `ParseMarketplace`: parse root `owner{name,email}` as a distinct
       field (today folded into `Author`); parse `renames{}` map (for
-      Phase 5).
+      Phase 5). _(`OwnerName`/`OwnerEmail`/`OwnerRange` + `Renames`
+      map — JSON null targets parse as "" meaning "removed"; legacy
+      merged `Author` view preserved for existing rules)_
 - [ ] `ParseHook`: parse `type` (default `command` when absent), `url`,
       `server`, `tool`, `prompt`, `args` (presence = exec-form), `async`,
       and `shell` per hook entry; keep `command`/`timeout`/`matcher`

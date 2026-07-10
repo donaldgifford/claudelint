@@ -49,5 +49,9 @@
         "source": "carrier-pigeon"
       }
     }
-  ]
+  ],
+  "renames": {
+    "old-local": "local-one",
+    "retired-plugin": null
+  }
 }
