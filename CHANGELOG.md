@@ -14,7 +14,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 
-- *(impl-0003)* Close out — production live at claudelint.dev
+- *(impl-0003)* Close out — production live at claudelint.dev ([#51](https://github.com/donaldgifford/claudelint/issues/51))
 
 ## [0.2.3] - 2026-05-30
 
