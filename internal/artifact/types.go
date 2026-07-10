@@ -166,22 +166,76 @@ type Marketplace struct {
 // Kind implements Artifact.
 func (*Marketplace) Kind() ArtifactKind { return KindMarketplace }
 
+// MarketplaceSourceKind names the shape a plugins[].source value took.
+// The docs define one string form (a ./-relative path inside the
+// marketplace repo) and four object forms.
+type MarketplaceSourceKind string
+
+const (
+	// SourceAbsent means the entry declared no source at all.
+	SourceAbsent MarketplaceSourceKind = ""
+	// SourceLocal is the documented string form: a relative path
+	// inside the marketplace repo.
+	SourceLocal MarketplaceSourceKind = "local"
+	// SourceExternalString is the legacy string shorthand for a
+	// remote source: github:owner/repo, a URL, or git@host:path.
+	// The docs express these as object forms today.
+	SourceExternalString MarketplaceSourceKind = "external-string"
+	// SourceGitHub is {"source": "github", "repo": "owner/repo", ...}.
+	SourceGitHub MarketplaceSourceKind = "github"
+	// SourceURL is {"source": "url", "url": "https://...", ...}.
+	SourceURL MarketplaceSourceKind = "url"
+	// SourceGitSubdir is {"source": "git-subdir", "url": ..., "path": ...}.
+	SourceGitSubdir MarketplaceSourceKind = "git-subdir"
+	// SourceNPM is {"source": "npm", "package": "@scope/name", ...}.
+	SourceNPM MarketplaceSourceKind = "npm"
+	// SourceInvalid is an object whose source discriminator is missing
+	// or not one of the documented kinds.
+	SourceInvalid MarketplaceSourceKind = "invalid"
+)
+
+// MarketplaceSource is the typed view of a plugins[].source value.
+// Kind tells which shape was used; only that shape's fields are set.
+type MarketplaceSource struct {
+	Kind MarketplaceSourceKind
+
+	// Repo is owner/repo (github kind).
+	Repo string
+	// URL is the git URL (url and git-subdir kinds).
+	URL string
+	// Path is the subdirectory inside the repo (git-subdir kind).
+	Path string
+	// Ref is a branch or tag; SHA is a full 40-char commit pin. Git
+	// kinds only; SHA wins when both are set.
+	Ref string
+	SHA string
+	// Package, Version, and Registry describe the npm kind.
+	Package  string
+	Version  string
+	Registry string
+}
+
 // MarketplacePlugin is one entry in a marketplace manifest's plugins[]
 // array. Resolved is the repo-relative path for local sources; it is
-// the empty string for external (git URL) entries, which rules treat
-// as "skip with info".
+// the empty string for every remote shape.
 type MarketplacePlugin struct {
 	// Name is the plugins[].name field verbatim.
 	Name      string
 	NameRange diag.Range
 
-	// Source is the plugins[].source field verbatim ("./",
-	// "./plugins/foo", "github:owner/repo", etc.).
+	// Source is the plugins[].source string verbatim ("./",
+	// "./plugins/foo", "github:owner/repo", ...). Empty when the
+	// entry used an object source — see SourceInfo.
 	Source      string
 	SourceRange diag.Range
 
+	// SourceInfo is the typed classification of the source, covering
+	// both string and object shapes. SourceInfo.Kind == SourceAbsent
+	// means the entry had no source field.
+	SourceInfo MarketplaceSource
+
 	// Resolved is the repo-relative path the source resolves to, or
-	// "" if the source is external or cannot be resolved. Always
+	// "" if the source is remote or cannot be resolved. Always
 	// slash-separated.
 	Resolved string
 }

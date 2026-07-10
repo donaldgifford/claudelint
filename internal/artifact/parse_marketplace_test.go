@@ -178,6 +178,75 @@ func TestParseMarketplaceTolerant(t *testing.T) {
 	})
 }
 
+func TestParseMarketplaceObjectSources(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/object_sources/.claude-plugin/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+	if got := len(m.Plugins); got != 6 {
+		t.Fatalf("len(Plugins) = %d, want 6", got)
+	}
+	byName := make(map[string]MarketplacePlugin, len(m.Plugins))
+	for _, p := range m.Plugins {
+		byName[p.Name] = p
+	}
+
+	tests := []struct {
+		name string
+		want MarketplaceSource
+	}{
+		{"local-one", MarketplaceSource{Kind: SourceLocal}},
+		{"gh-plugin", MarketplaceSource{
+			Kind: SourceGitHub,
+			Repo: "acme/gh-plugin",
+			Ref:  "main",
+			SHA:  "0123456789abcdef0123456789abcdef01234567",
+		}},
+		{"url-plugin", MarketplaceSource{
+			Kind: SourceURL,
+			URL:  "https://gitlab.com/acme/url-plugin.git",
+			Ref:  "v2",
+		}},
+		{"subdir-plugin", MarketplaceSource{
+			Kind: SourceGitSubdir,
+			URL:  "https://github.com/acme/monorepo.git",
+			Path: "tools/claude-plugin",
+		}},
+		{"npm-plugin", MarketplaceSource{
+			Kind:     SourceNPM,
+			Package:  "@acme/claude-plugin",
+			Version:  "^2.0.0",
+			Registry: "https://npm.example.com",
+		}},
+		{"bogus-plugin", MarketplaceSource{Kind: SourceInvalid}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, ok := byName[tt.name]
+			if !ok {
+				t.Fatalf("plugin %q not parsed", tt.name)
+			}
+			if p.SourceInfo != tt.want {
+				t.Errorf("SourceInfo = %+v, want %+v", p.SourceInfo, tt.want)
+			}
+			if tt.want.Kind != SourceLocal && p.Resolved != "" {
+				t.Errorf("Resolved = %q, want empty for remote source", p.Resolved)
+			}
+			if tt.want.Kind != SourceLocal && p.SourceRange.IsZero() {
+				t.Error("SourceRange is zero for object source, want the object's span")
+			}
+		})
+	}
+
+	if loc := byName["local-one"]; loc.Resolved == "" {
+		t.Error("local-one Resolved is empty, want repo-relative path")
+	}
+}
+
 // TestParseMarketplaceSourceRange verifies the SourceRange for a known
 // fixture points at a byte span whose contents, when sliced out of
 // Raw/Source, match the expected source string.

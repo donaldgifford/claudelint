@@ -120,12 +120,14 @@ field ranges preferred).
       only (no field validation this phase). _(`Transport` holds the raw
       declared value; `EffectiveTransport()` applies the stdio default so
       rules can distinguish declared-vs-defaulted)_
-- [ ] `ParseMarketplace`: parse `source` as string **or** object; model the
+- [x] `ParseMarketplace`: parse `source` as string **or** object; model the
       four documented object shapes (`github{repo,ref,sha}`,
       `url{url,ref,sha}`, `git-subdir{url,path,ref,sha}`,
       `npm{package,version,registry}`) into a typed `MarketplaceSource`
       with a `Kind` discriminator; keep `Resolved` semantics for local
-      string paths.
+      string paths. _(`MarketplacePlugin.SourceInfo`; string forms classify
+      as `local`/`external-string`, unknown object discriminators as
+      `invalid`; `SourceRange` covers the object span for object forms)_
 - [ ] `ParseMarketplace`: parse root `owner{name,email}` as a distinct
       field (today folded into `Author`); parse `renames{}` map (for
       Phase 5).

@@ -1,0 +1,53 @@
+{
+  "name": "object-sources",
+  "owner": {
+    "name": "Donald Gifford",
+    "email": "donald@example.com"
+  },
+  "plugins": [
+    {
+      "name": "local-one",
+      "source": "./plugins/local-one"
+    },
+    {
+      "name": "gh-plugin",
+      "source": {
+        "source": "github",
+        "repo": "acme/gh-plugin",
+        "ref": "main",
+        "sha": "0123456789abcdef0123456789abcdef01234567"
+      }
+    },
+    {
+      "name": "url-plugin",
+      "source": {
+        "source": "url",
+        "url": "https://gitlab.com/acme/url-plugin.git",
+        "ref": "v2"
+      }
+    },
+    {
+      "name": "subdir-plugin",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/acme/monorepo.git",
+        "path": "tools/claude-plugin"
+      }
+    },
+    {
+      "name": "npm-plugin",
+      "source": {
+        "source": "npm",
+        "package": "@acme/claude-plugin",
+        "version": "^2.0.0",
+        "registry": "https://npm.example.com"
+      }
+    },
+    {
+      "name": "bogus-plugin",
+      "source": {
+        "source": "carrier-pigeon"
+      }
+    }
+  ]
+}
