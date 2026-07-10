@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "DEBUG": "1"
+      }
+    },
+    "deepwiki": {
+      "command": "uvx",
+      "args": ["mcp-server-deepwiki"]
+    }
+  }
+}

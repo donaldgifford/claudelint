@@ -110,9 +110,10 @@ field ranges preferred).
 
 #### Tasks
 
-- [ ] `ParseMCPFile`: accept `mcpServers` as the primary top-level key;
+- [x] `ParseMCPFile`: accept `mcpServers` as the primary top-level key;
       keep `servers` accepted but tag the artifact so a deprecation
-      diagnostic can fire (per OQ1 decision).
+      diagnostic can fire (per OQ1 decision). _(`MCPServer.LegacyServersKey`
+      set for servers{}-keyed files; mcpServers wins when both present)_
 - [ ] `MCPServer` type: parse `type` (default `stdio`), `url`, `headers`
       (string map), `headersHelper`, `timeout` (number, ms), `alwaysLoad`;
       add ranges for `type` and `url`. `oauth{}` parsed as present/absent

@@ -218,6 +218,13 @@ type MCPServer struct {
 	// plugin.json (mcp.servers{}) rather than a standalone .mcp.json.
 	// Some rules apply to only one context.
 	Embedded bool
+
+	// LegacyServersKey is true when a standalone .mcp.json declared
+	// this server under the deprecated top-level servers{} key. The
+	// docs standardized on mcpServers{} (IMPL-0004 OQ1); when both
+	// keys are present mcpServers wins and this stays false. A rule
+	// surfaces the deprecation as an info diagnostic.
+	LegacyServersKey bool
 }
 
 // Kind implements Artifact.

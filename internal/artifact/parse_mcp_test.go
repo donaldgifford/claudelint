@@ -51,6 +51,72 @@ func TestParseMCPFileStandalone(t *testing.T) {
 	if dis := byName["disabled-one"]; !dis.Disabled {
 		t.Errorf("disabled-one Disabled = false, want true")
 	}
+
+	// standalone.json uses the deprecated top-level servers{} key.
+	for _, s := range servers {
+		if !s.LegacyServersKey {
+			t.Errorf("server %q LegacyServersKey = false, want true (legacy servers{} file)", s.Name)
+		}
+	}
+}
+
+func TestParseMCPFileMCPServersKey(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/mcp/standalone_mcpservers.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	servers, perr := ParseMCPFile(".mcp.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMCPFile: %v", perr)
+	}
+	if got := len(servers); got != 2 {
+		t.Fatalf("len(servers) = %d, want 2", got)
+	}
+	byName := make(map[string]*MCPServer, len(servers))
+	for _, s := range servers {
+		byName[s.Name] = s
+		if s.LegacyServersKey {
+			t.Errorf("server %q LegacyServersKey = true, want false (mcpServers{} file)", s.Name)
+		}
+	}
+	gh := byName["github"]
+	if gh == nil {
+		t.Fatal("server github not parsed")
+	}
+	if gh.Command != "npx" {
+		t.Errorf("github command = %q, want npx", gh.Command)
+	}
+	if gh.Env["DEBUG"] != "1" {
+		t.Errorf("github env = %v", gh.Env)
+	}
+}
+
+func TestParseMCPFileBothKeysMCPServersWins(t *testing.T) {
+	src := []byte(`{
+		"mcpServers": {"primary": {"command": "npx"}},
+		"servers": {"legacy": {"command": "uvx"}}
+	}`)
+	servers, perr := ParseMCPFile(".mcp.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMCPFile: %v", perr)
+	}
+	if len(servers) != 1 {
+		t.Fatalf("len(servers) = %d, want 1 (mcpServers wins)", len(servers))
+	}
+	if servers[0].Name != "primary" {
+		t.Errorf("Name = %q, want primary", servers[0].Name)
+	}
+	if servers[0].LegacyServersKey {
+		t.Error("LegacyServersKey = true, want false when mcpServers wins")
+	}
+}
+
+func TestParseMCPNonObjectMCPServers(t *testing.T) {
+	src := []byte(`{"mcpServers": ["not", "an", "object"]}`)
+	_, perr := ParseMCPFile(".mcp.json", src)
+	if perr == nil {
+		t.Fatal("expected ParseError for non-object mcpServers")
+	}
 }
 
 func TestParseMCPEmbedded(t *testing.T) {
