@@ -37,7 +37,7 @@ created: 2026-07-09
 - [File Changes](#file-changes)
 - [Testing Plan](#testing-plan)
 - [Dependencies](#dependencies)
-- [Open Questions](#open-questions)
+- [Resolved Decisions](#resolved-decisions)
 - [References](#references)
 <!--toc:end-->
 
@@ -406,110 +406,43 @@ proposed tables. One PR, minor release, fingerprint bump.
   re-verify the event list and enum values at Phase 1 build time in case
   the docs have moved again.
 
-## Open Questions
+## Resolved Decisions
 
-Answer format: **a** is the recommendation; later letters are
-alternatives; reply "other: ..." for anything else.
+All Open Questions resolved 2026-07-10 — every one on option (a), the
+recommendation. Task references like "(per OQ1 decision)" point here.
 
-**OQ1 — `.mcp.json` `servers` key deprecation path.** The parser reads
-`servers` today; the docs standardized on `mcpServers`.
-
-- a) Accept both; `mcpServers` wins when both present; emit an info
-  diagnostic on `servers` ("deprecated key; rename to mcpServers");
-  drop `servers` support at the next major ruleset rev. *(Recommended:
-  zero breakage for existing users including our own DESIGN-0002-era
-  fixtures, loud nudge, clean exit path.)*
-- b) Accept both silently, indefinitely; no diagnostic.
-- c) Hard-switch to `mcpServers` only; `servers` files get a parse-level
-  warning and lint as empty.
-
-**OQ2 — skill `name`/`description` requiredness in
-`schema/frontmatter-required`.** Docs: `name` optional (defaults to the
-directory name), `description` recommended (falls back to the first body
-paragraph).
-
-- a) Keep both required at current severity but reword diagnostics to
-  best-practice phrasing ("skills should declare X — Claude Code falls
-  back to Y"), and document the stricter-than-spec stance in rules.md.
-  *(Recommended: description quality is the entire trigger mechanism;
-  an explicit name costs nothing and helps marketplace review.)*
-- b) Keep `description` required; drop the `name` requirement to match
-  spec.
-- c) Downgrade both to warning severity, behavior otherwise unchanged.
-- d) Match spec exactly: drop `name`, make `description` a warning.
-
-**OQ3 — `plugin/manifest-fields` `version` requirement.** Docs require
-only `name`; a missing `version` falls back to git-SHA versioning.
-
-- a) Keep requiring `version` at error and document it as
-  stricter-by-design (marketplace-quality stance: pinned versions make
-  update semantics explicit). *(Recommended.)*
-- b) Downgrade the missing-`version` half to warning; keep `name` at
-  error.
-- c) Match spec: require `name` only.
-
-**OQ4 — opt-in mechanism for governance rules (`agents/model-policy`).**
-The `mcp/server-allowlist` pattern (default-enabled, nil option → loud
-config error) fits security rules but not governance rules; CLAUDE.md
-says revisit when a second rule needs opt-in — this is that rule.
-
-- a) Config-driven enable: a rule may declare itself opt-in; the engine
-  runs it only when `.claudelint.hcl` has a `rule` block for it. No
-  block → rule fully skipped and shown as "opt-in, disabled" in
-  `claudelint rules`. `mcp/server-allowlist` migrates to the same
-  mechanism (its loud-error-when-unconfigured behavior becomes
-  unreachable by default but is preserved for explicit enables without
-  an allowlist). *(Recommended: one clear convention, no per-rule
-  hacks, discoverable in the catalog.)*
-- b) Documented silent no-op inside the rule when its option is unset —
-  no engine change, cheapest, but invisible in the catalog and
-  inconsistent with `mcp/server-allowlist`.
-- c) Follow the `server-allowlist` precedent exactly: default-enabled,
-  loud config error when unconfigured. (Every unconfigured repo yells
-  about every agent — rejected by INV-0006's analysis but listed for
-  completeness.)
-
-**OQ5 — marketplace `owner` vs `author` alignment.** Docs: root
-`owner{name}` is required; `author` exists only on plugin entries.
-
-- a) Repurpose `marketplace/author-required` into
-  `marketplace/owner-required` checking root `owner.name` at warning
-  severity (rule-ID rename — the fingerprint is bumping anyway); legacy
-  `author` satisfies the check with an info-level "rename to owner"
-  hint. *(Recommended.)*
-- b) Keep `author-required` as-is (info) and add a separate
-  `marketplace/owner-required` (warning) — two rules, no rename.
-- c) Leave everything as today; note the divergence in rules.md only.
-
-**OQ6 — release cadence for the three code PRs.**
-
-- a) Each code PR ships as its own minor release via the label-driven
-  flow; the ruleset version bumps minor each time. *(Recommended: keeps
-  fingerprints, changelogs, and dogfood feedback loops small.)*
-- b) Land Phases 1–2 and 4 on a long-lived branch and ship one combined
-  minor together with Phase 5.
-
-**OQ7 — where `allowed-tools` validation lives after the skills/commands
-merge.**
-
-- a) Extend `commands/allowed-tools-known` `AppliesTo` to
-  `command, skill` and keep the existing rule ID — no config breakage
-  for current users; rules.md notes it covers both kinds.
-  *(Recommended.)*
-- b) New sibling rule `skills/allowed-tools-known` sharing the
-  implementation — cleaner naming, one more catalog entry.
-- c) Rename to a kind-neutral `schema/allowed-tools-known` — cleanest
-  naming, but breaks existing rule-ID references in user configs.
-
-**OQ8 — `hooks/timeout-present` disposition given the documented 600 s
-default timeout.**
-
-- a) Keep at warning with a rewritten message ("no explicit timeout;
-  Claude Code defaults to 600 s — declare one to fail faster in CI").
-  *(Recommended: explicit timeouts remain a real best practice for
-  plugin/marketplace review, claudelint's core audience.)*
-- b) Downgrade to info.
-- c) Retire the rule.
+- **OQ1 — `.mcp.json` `servers` key**: accept both keys; `mcpServers`
+  wins when both present; info diagnostic on `servers` ("deprecated key;
+  rename to mcpServers"); drop `servers` support at the next major
+  ruleset rev.
+- **OQ2 — skill `name`/`description` requiredness**: keep both required
+  at current severity; reword diagnostics to best-practice phrasing
+  ("skills should declare X — Claude Code falls back to Y"); document
+  the stricter-than-spec stance in rules.md.
+- **OQ3 — plugin `version` requirement**: keep requiring `version` at
+  error; document as stricter-by-design (pinned versions make update
+  semantics explicit for marketplace review).
+- **OQ4 — opt-in mechanism**: engine-level config-driven enable. A rule
+  may declare itself opt-in; the engine runs it only when
+  `.claudelint.hcl` has a `rule` block for it; no block → fully skipped
+  and shown as "opt-in, disabled" in `claudelint rules`.
+  `mcp/server-allowlist` migrates to the same mechanism (its
+  loud-error-when-unconfigured behavior preserved for explicit enables
+  without an allowlist). Details specified in DESIGN-0005 (Phase 3);
+  CLAUDE.md convention note updated there.
+- **OQ5 — marketplace `owner` vs `author`**: repurpose
+  `marketplace/author-required` into `marketplace/owner-required`
+  checking root `owner.name` at warning severity (rule-ID rename rides
+  the fingerprint bump); legacy `author` satisfies the check with an
+  info-level "rename to owner" hint.
+- **OQ6 — release cadence**: each code PR ships as its own minor release
+  via the label-driven flow; ruleset version bumps minor each time.
+- **OQ7 — `allowed-tools` rule placement**: extend
+  `commands/allowed-tools-known` `AppliesTo` to `command, skill`; keep
+  the existing rule ID; rules.md notes it covers both kinds.
+- **OQ8 — `hooks/timeout-present`**: keep at warning with a rewritten
+  message ("no explicit timeout; Claude Code defaults to 600 s —
+  declare one to fail faster in CI").
 
 ## References
 
