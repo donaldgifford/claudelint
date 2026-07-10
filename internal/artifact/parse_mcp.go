@@ -195,3 +195,9 @@ func objectPresent(src []byte, key string) bool {
 	_, dt, _, err := jsonparser.Get(src, key)
 	return err == nil && dt == jsonparser.Object
 }
+
+// arrayPresent reports whether key exists and is a JSON array.
+func arrayPresent(src []byte, key string) bool {
+	_, dt, _, err := jsonparser.Get(src, key)
+	return err == nil && dt == jsonparser.Array
+}

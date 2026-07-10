@@ -1,0 +1,51 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/check.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "validate",
+            "args": ["--strict", "--json"],
+            "shell": "bash",
+            "async": true
+          },
+          {
+            "type": "http",
+            "url": "http://localhost:8080/hook",
+            "timeout": 10
+          },
+          {
+            "type": "mcp_tool",
+            "server": "guardrails",
+            "tool": "check_command"
+          },
+          {
+            "type": "prompt",
+            "prompt": "Evaluate whether this is safe: $ARGUMENTS"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Verify the tests pass. $ARGUMENTS",
+            "timeout": 60
+          },
+          {
+            "command": "echo done"
+          }
+        ]
+      }
+    ]
+  }
+}

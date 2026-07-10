@@ -133,10 +133,12 @@ field ranges preferred).
       Phase 5). _(`OwnerName`/`OwnerEmail`/`OwnerRange` + `Renames`
       map — JSON null targets parse as "" meaning "removed"; legacy
       merged `Author` view preserved for existing rules)_
-- [ ] `ParseHook`: parse `type` (default `command` when absent), `url`,
+- [x] `ParseHook`: parse `type` (default `command` when absent), `url`,
       `server`, `tool`, `prompt`, `args` (presence = exec-form), `async`,
       and `shell` per hook entry; keep `command`/`timeout`/`matcher`
-      extraction as-is.
+      extraction as-is. _(`HookEntry.Type` holds the raw declared value;
+      `EffectiveType()` applies the command default; `ExecForm` flags
+      args[] presence so no-unsafe-shell can skip direct-spawn entries)_
 - [ ] Tool-list splitting: new shared helper that accepts YAML list, or
       comma/whitespace-separated string, and returns entries — used by
       command/skill `allowed-tools`, `disallowed-tools`, and agent

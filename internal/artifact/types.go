@@ -100,8 +100,8 @@ type Hook struct {
 	Entries []HookEntry
 }
 
-// HookEntry is one individual hook command with its event, matcher,
-// and timeout. Every field carries its parsed byte-offset range so
+// HookEntry is one individual hook with its event, matcher, type, and
+// per-type fields. Every field carries its parsed byte-offset range so
 // rules can point diagnostics at the precise JSON value.
 type HookEntry struct {
 	// Event is the hook event name (PreToolUse, PostToolUse, Stop, …).
@@ -112,14 +112,53 @@ type HookEntry struct {
 	Matcher      string
 	MatcherRange diag.Range
 
-	// Command is the shell command the hook runs.
+	// Type is the declared hook type: command, http, mcp_tool, prompt,
+	// or agent. Empty when omitted — use EffectiveType for the
+	// documented command default. Rules that distinguish declared from
+	// defaulted (hooks/type-known) read this directly.
+	Type      string
+	TypeRange diag.Range
+
+	// Command is the shell command a command-type hook runs.
 	Command      string
 	CommandRange diag.Range
+
+	// URL is the POST endpoint of an http-type hook.
+	URL      string
+	URLRange diag.Range
+
+	// Server and Tool identify an mcp_tool-type hook's target.
+	Server string
+	Tool   string
+
+	// Prompt is the prompt/agent-type hook's instruction text.
+	Prompt string
+
+	// ExecForm is true when the entry declares args[] — the command
+	// is spawned directly with no shell, so shell-smell heuristics
+	// (hooks/no-unsafe-shell) do not apply.
+	ExecForm bool
+
+	// Async mirrors the async background-execution flag.
+	Async bool
+
+	// Shell is the declared shell for command hooks: bash or
+	// powershell. Empty when omitted (bash default).
+	Shell string
 
 	// Timeout is the declared timeout in seconds. Zero means "not
 	// declared"; rules use Timeout == 0 for hooks/timeout-present.
 	Timeout      int
 	TimeoutRange diag.Range
+}
+
+// EffectiveType returns the hook type the entry will run as: the
+// declared type, or the documented command default when absent.
+func (e *HookEntry) EffectiveType() string {
+	if e.Type == "" {
+		return "command"
+	}
+	return e.Type
 }
 
 // Kind implements Artifact.
