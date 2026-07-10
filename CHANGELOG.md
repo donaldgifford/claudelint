@@ -17,6 +17,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - *(impl-0003)* Close out — production live at claudelint.dev ([#51](https://github.com/donaldgifford/claudelint/issues/51))
 - *(inv)* INV-0006 — rule coverage audit vs current Claude Code docs
 - *(inv)* Restructure INV-0006 into per-kind audit tables
+- *(inv)* Promote all backlog rules into the three phased PRs
 
 ## [0.2.3] - 2026-05-30
 
