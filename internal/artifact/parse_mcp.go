@@ -128,6 +128,13 @@ func collectServers(filePath string, src, serversRaw []byte, serversAbs int, emb
 		server.Args = stringArrayField(value, "args")
 		server.Env = stringMapField(value, "env")
 		server.Disabled = boolField(value, "disabled")
+		server.Transport, server.TransportRange = stringFieldAt(value, valueStartAbs, &base, "type")
+		server.URL, server.URLRange = stringFieldAt(value, valueStartAbs, &base, "url")
+		server.Headers = stringMapField(value, "headers")
+		server.HeadersHelper, _ = stringFieldAt(value, valueStartAbs, &base, "headersHelper")
+		server.TimeoutMS = int64Field(value, "timeout")
+		server.AlwaysLoad = boolField(value, "alwaysLoad")
+		server.HasOAuth = objectPresent(value, "oauth")
 		out = append(out, server)
 		return nil
 	})
@@ -171,4 +178,20 @@ func boolField(src []byte, key string) bool {
 		return false
 	}
 	return len(raw) == 4 // "true"
+}
+
+// int64Field returns the integer value of a top-level numeric key, or
+// 0 for a missing / non-integer key.
+func int64Field(src []byte, key string) int64 {
+	v, err := jsonparser.GetInt(src, key)
+	if err != nil {
+		return 0
+	}
+	return v
+}
+
+// objectPresent reports whether key exists and is a JSON object.
+func objectPresent(src []byte, key string) bool {
+	_, dt, _, err := jsonparser.Get(src, key)
+	return err == nil && dt == jsonparser.Object
 }

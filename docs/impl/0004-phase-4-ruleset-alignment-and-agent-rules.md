@@ -114,10 +114,12 @@ field ranges preferred).
       keep `servers` accepted but tag the artifact so a deprecation
       diagnostic can fire (per OQ1 decision). _(`MCPServer.LegacyServersKey`
       set for servers{}-keyed files; mcpServers wins when both present)_
-- [ ] `MCPServer` type: parse `type` (default `stdio`), `url`, `headers`
+- [x] `MCPServer` type: parse `type` (default `stdio`), `url`, `headers`
       (string map), `headersHelper`, `timeout` (number, ms), `alwaysLoad`;
       add ranges for `type` and `url`. `oauth{}` parsed as present/absent
-      only (no field validation this phase).
+      only (no field validation this phase). _(`Transport` holds the raw
+      declared value; `EffectiveTransport()` applies the stdio default so
+      rules can distinguish declared-vs-defaulted)_
 - [ ] `ParseMarketplace`: parse `source` as string **or** object; model the
       four documented object shapes (`github{repo,ref,sha}`,
       `url{url,ref,sha}`, `git-subdir{url,path,ref,sha}`,

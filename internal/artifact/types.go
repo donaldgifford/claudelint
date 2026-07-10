@@ -200,7 +200,8 @@ type MCPServer struct {
 	NameRange diag.Range
 
 	// Command is the executable the server runs (typically a
-	// language runner: uvx, npx, bunx, etc.).
+	// language runner: uvx, npx, bunx, etc.). Required for the stdio
+	// transport only.
 	Command      string
 	CommandRange diag.Range
 
@@ -209,6 +210,36 @@ type MCPServer struct {
 
 	// Env is the per-server environment map.
 	Env map[string]string
+
+	// Transport is the declared `type` key: stdio, http, sse
+	// (deprecated), or ws. Empty when the entry omits type — use
+	// EffectiveTransport for the documented stdio default. Rules that
+	// distinguish declared from defaulted read this directly.
+	Transport      string
+	TransportRange diag.Range
+
+	// URL is the remote endpoint, required for http/sse/ws transports.
+	URL      string
+	URLRange diag.Range
+
+	// Headers are HTTP request headers for remote transports.
+	Headers map[string]string
+
+	// HeadersHelper is the command that generates dynamic headers at
+	// connection time (http transport).
+	HeadersHelper string
+
+	// TimeoutMS is the per-server tool-execution timeout in
+	// milliseconds; 0 means not declared. The documented minimum is
+	// 1000.
+	TimeoutMS int64
+
+	// AlwaysLoad mirrors the alwaysLoad startup flag.
+	AlwaysLoad bool
+
+	// HasOAuth is true when an oauth{} object is present. Its fields
+	// are not modeled yet — IMPL-0004 Phase 1 parses presence only.
+	HasOAuth bool
 
 	// Disabled mirrors the optional disabled flag — disabled servers
 	// still parse but rules can choose to skip them.
@@ -229,6 +260,15 @@ type MCPServer struct {
 
 // Kind implements Artifact.
 func (*MCPServer) Kind() ArtifactKind { return KindMCPServer }
+
+// EffectiveTransport returns the transport the server will use: the
+// declared type, or the documented stdio default when absent.
+func (s *MCPServer) EffectiveTransport() string {
+	if s.Transport == "" {
+		return "stdio"
+	}
+	return s.Transport
+}
 
 // Compile-time proof that every concrete type satisfies Artifact.
 var (

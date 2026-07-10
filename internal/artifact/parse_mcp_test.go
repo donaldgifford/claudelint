@@ -69,8 +69,8 @@ func TestParseMCPFileMCPServersKey(t *testing.T) {
 	if perr != nil {
 		t.Fatalf("ParseMCPFile: %v", perr)
 	}
-	if got := len(servers); got != 2 {
-		t.Fatalf("len(servers) = %d, want 2", got)
+	if got := len(servers); got != 3 {
+		t.Fatalf("len(servers) = %d, want 3", got)
 	}
 	byName := make(map[string]*MCPServer, len(servers))
 	for _, s := range servers {
@@ -88,6 +88,47 @@ func TestParseMCPFileMCPServersKey(t *testing.T) {
 	}
 	if gh.Env["DEBUG"] != "1" {
 		t.Errorf("github env = %v", gh.Env)
+	}
+	if gh.Transport != "" {
+		t.Errorf("github Transport = %q, want empty (type omitted)", gh.Transport)
+	}
+	if got := gh.EffectiveTransport(); got != "stdio" {
+		t.Errorf("github EffectiveTransport() = %q, want stdio", got)
+	}
+
+	lin := byName["linear"]
+	if lin == nil {
+		t.Fatal("server linear not parsed")
+	}
+	if lin.Transport != "http" {
+		t.Errorf("linear Transport = %q, want http", lin.Transport)
+	}
+	if lin.TransportRange.IsZero() {
+		t.Error("linear TransportRange is zero, want a real range")
+	}
+	if lin.URL != "https://mcp.linear.app/mcp" {
+		t.Errorf("linear URL = %q", lin.URL)
+	}
+	if lin.URLRange.IsZero() {
+		t.Error("linear URLRange is zero, want a real range")
+	}
+	if lin.Headers["X-Team"] != "platform" {
+		t.Errorf("linear Headers = %v", lin.Headers)
+	}
+	if lin.HeadersHelper != "./scripts/mint-token.sh" {
+		t.Errorf("linear HeadersHelper = %q", lin.HeadersHelper)
+	}
+	if lin.TimeoutMS != 30000 {
+		t.Errorf("linear TimeoutMS = %d, want 30000", lin.TimeoutMS)
+	}
+	if !lin.AlwaysLoad {
+		t.Error("linear AlwaysLoad = false, want true")
+	}
+	if !lin.HasOAuth {
+		t.Error("linear HasOAuth = false, want true")
+	}
+	if lin.Command != "" {
+		t.Errorf("linear Command = %q, want empty (remote transport)", lin.Command)
 	}
 }
 

@@ -10,6 +10,19 @@
     "deepwiki": {
       "command": "uvx",
       "args": ["mcp-server-deepwiki"]
+    },
+    "linear": {
+      "type": "http",
+      "url": "https://mcp.linear.app/mcp",
+      "headers": {
+        "X-Team": "platform"
+      },
+      "headersHelper": "./scripts/mint-token.sh",
+      "timeout": 30000,
+      "alwaysLoad": true,
+      "oauth": {
+        "callbackPort": 43110
+      }
     }
   }
 }
