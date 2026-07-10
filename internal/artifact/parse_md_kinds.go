@@ -31,7 +31,7 @@ func ParseSkill(path string, src []byte) (*Skill, *ParseError) {
 	s.Name = doc.asString("name")
 	s.Description = doc.asString("description")
 	s.Model = doc.asString("model")
-	s.AllowedTools = doc.asStringList("allowed-tools")
+	s.AllowedTools = doc.asToolList("allowed-tools")
 	return s, nil
 }
 
@@ -48,7 +48,7 @@ func ParseCommand(path string, src []byte) (*Command, *ParseError) {
 	}
 	c.Description = doc.asString("description")
 	c.ArgumentHint = doc.asString("argument-hint")
-	c.AllowedTools = doc.asStringList("allowed-tools")
+	c.AllowedTools = doc.asToolList("allowed-tools")
 	return c, nil
 }
 
@@ -65,6 +65,6 @@ func ParseAgent(path string, src []byte) (*Agent, *ParseError) {
 	}
 	a.Name = doc.asString("name")
 	a.Description = doc.asString("description")
-	a.Tools = doc.asStringList("tools")
+	a.Tools = doc.asToolList("tools")
 	return a, nil
 }

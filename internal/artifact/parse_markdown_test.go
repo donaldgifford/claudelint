@@ -101,6 +101,36 @@ func TestParseCommandAndAgent(t *testing.T) {
 	}
 }
 
+// TestParseToolListStringForms covers the doc-canonical string forms:
+// comma-separated agent tools and space/comma-separated allowed-tools,
+// including permission-rule entries that must survive as one token.
+func TestParseToolListStringForms(t *testing.T) {
+	cmdSrc := []byte(
+		"---\ndescription: x\nallowed-tools: Bash(git add:*) Bash(git status:*), Read\n---\n")
+	c, perr := ParseCommand(".claude/commands/commit.md", cmdSrc)
+	if perr != nil {
+		t.Fatalf("ParseCommand = %v", perr)
+	}
+	want := []string{"Bash(git add:*)", "Bash(git status:*)", "Read"}
+	if len(c.AllowedTools) != len(want) {
+		t.Fatalf("AllowedTools = %v, want %v", c.AllowedTools, want)
+	}
+	for i := range want {
+		if c.AllowedTools[i] != want[i] {
+			t.Errorf("AllowedTools[%d] = %q, want %q", i, c.AllowedTools[i], want[i])
+		}
+	}
+
+	agSrc := []byte("---\nname: helper\ndescription: y\ntools: Read, Grep, mcp__github\n---\n")
+	a, perr := ParseAgent(".claude/agents/helper.md", agSrc)
+	if perr != nil {
+		t.Fatalf("ParseAgent = %v", perr)
+	}
+	if len(a.Tools) != 3 || a.Tools[0] != "Read" || a.Tools[1] != "Grep" || a.Tools[2] != "mcp__github" {
+		t.Errorf("Tools = %v, want [Read Grep mcp__github]", a.Tools)
+	}
+}
+
 func TestParseMarkdownUnterminatedFrontmatter(t *testing.T) {
 	src := []byte("---\nname: writer\nbody continues forever")
 	_, perr := parseMarkdown("x", src)
@@ -207,6 +237,84 @@ func TestAsStringAndListEdgeCases(t *testing.T) {
 	}
 	if got := doc.asStringList("weird"); got != nil {
 		t.Errorf("asStringList non-list non-string = %v, want nil", got)
+	}
+}
+
+func TestSplitToolList(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want []string
+	}{
+		{"empty", "", nil},
+		{"separators only", " , ,  ", nil},
+		{"single tool", "Read", []string{"Read"}},
+		{"comma separated", "Read,Write,Edit", []string{"Read", "Write", "Edit"}},
+		{"comma space separated", "Read, Write, Edit", []string{"Read", "Write", "Edit"}},
+		{"space separated", "Read Write Edit", []string{"Read", "Write", "Edit"}},
+		{"mixed separators", "Read,  Write\tEdit", []string{"Read", "Write", "Edit"}},
+		{
+			"permission rule with space inside parens",
+			"Bash(git add:*), Read",
+			[]string{"Bash(git add:*)", "Read"},
+		},
+		{
+			"comma inside parens",
+			"Agent(worker, researcher) Read",
+			[]string{"Agent(worker, researcher)", "Read"},
+		},
+		{
+			"mcp patterns",
+			"mcp__github mcp__linear__create_issue",
+			[]string{"mcp__github", "mcp__linear__create_issue"},
+		},
+		{
+			"nested parens",
+			"Bash(echo $(date):*), Grep",
+			[]string{"Bash(echo $(date):*)", "Grep"},
+		},
+		{
+			"unbalanced open paren swallows rest",
+			"Bash(git add Read",
+			[]string{"Bash(git add Read"},
+		},
+		{
+			"stray close paren stays attached",
+			"Read) Write",
+			[]string{"Read)", "Write"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SplitToolList(tt.in)
+			if len(got) != len(tt.want) {
+				t.Fatalf("SplitToolList(%q) = %v, want %v", tt.in, got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("SplitToolList(%q)[%d] = %q, want %q", tt.in, i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestAsToolList(t *testing.T) {
+	doc := &markdownDoc{fm: map[string]any{
+		"str_form":  "Bash(git add:*), Read Edit",
+		"list_form": []any{"Bash(git add:*)", "Read"},
+	}}
+	if got := doc.asToolList("missing"); got != nil {
+		t.Errorf("asToolList missing = %v, want nil", got)
+	}
+	got := doc.asToolList("str_form")
+	if len(got) != 3 || got[0] != "Bash(git add:*)" || got[1] != "Read" || got[2] != "Edit" {
+		t.Errorf("asToolList string form = %v", got)
+	}
+	// YAML list elements pass through verbatim — never re-split.
+	got = doc.asToolList("list_form")
+	if len(got) != 2 || got[0] != "Bash(git add:*)" || got[1] != "Read" {
+		t.Errorf("asToolList list form = %v", got)
 	}
 }
 

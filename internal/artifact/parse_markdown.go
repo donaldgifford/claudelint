@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
@@ -266,6 +268,57 @@ func (d *markdownDoc) asStringList(key string) []string {
 	default:
 		return nil
 	}
+}
+
+// asToolList returns the tool-list value for key. A YAML sequence is
+// handled like asStringList — each element is one entry, verbatim, so
+// a quoted "Bash(git add:*)" survives untouched. A scalar string is
+// split via SplitToolList, matching the comma/whitespace-separated
+// forms the docs allow for allowed-tools and agent tools. Absence
+// yields nil.
+func (d *markdownDoc) asToolList(key string) []string {
+	if s, ok := d.fm[key].(string); ok {
+		return SplitToolList(s)
+	}
+	return d.asStringList(key)
+}
+
+// SplitToolList splits a tool-list declaration string into entries.
+// The docs accept comma-separated (agent tools) and space- or
+// comma-separated (allowed-tools) forms, so both commas and
+// whitespace separate entries — but only outside parentheses, which
+// keeps permission-rule entries like Bash(git add:*) or
+// Agent(worker, researcher) intact as single tokens. mcp__* patterns
+// contain no separators and pass through whole. An empty or
+// separator-only string yields nil.
+func SplitToolList(s string) []string {
+	var out []string
+	var cur strings.Builder
+	depth := 0
+	flush := func() {
+		if cur.Len() > 0 {
+			out = append(out, cur.String())
+			cur.Reset()
+		}
+	}
+	for _, r := range s {
+		switch {
+		case r == '(':
+			depth++
+			cur.WriteRune(r)
+		case r == ')':
+			if depth > 0 {
+				depth--
+			}
+			cur.WriteRune(r)
+		case depth == 0 && (r == ',' || unicode.IsSpace(r)):
+			flush()
+		default:
+			cur.WriteRune(r)
+		}
+	}
+	flush()
+	return out
 }
 
 // cleanYAMLError strips goccy's helpful-but-multi-line error decoration

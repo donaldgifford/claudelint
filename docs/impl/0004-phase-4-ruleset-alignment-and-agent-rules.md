@@ -139,11 +139,16 @@ field ranges preferred).
       extraction as-is. _(`HookEntry.Type` holds the raw declared value;
       `EffectiveType()` applies the command default; `ExecForm` flags
       args[] presence so no-unsafe-shell can skip direct-spawn entries)_
-- [ ] Tool-list splitting: new shared helper that accepts YAML list, or
+- [x] Tool-list splitting: new shared helper that accepts YAML list, or
       comma/whitespace-separated string, and returns entries — used by
       command/skill `allowed-tools`, `disallowed-tools`, and agent
       `tools`/`disallowedTools`. Entries preserve permission-rule syntax
       (`Bash(git add:*)`) and `mcp__*` patterns as single tokens.
+      _(`SplitToolList` splits on commas/whitespace only outside
+      parentheses; YAML list elements pass through verbatim. Skill and
+      command `allowed-tools` + agent `tools` now use it; the
+      `disallowed-tools`/`disallowedTools` call sites land with the
+      new-field parsing task below)_
 - [ ] `KnownTools`: add `Agent`, `Skill`; keep `Task` (documented alias);
       add a helper that classifies `mcp__<server>`, `mcp__<server>__*`,
       `Agent(...)`, and `Tool(args)` permission-rule forms as
