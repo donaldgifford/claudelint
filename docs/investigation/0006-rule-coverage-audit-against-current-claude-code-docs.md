@@ -20,11 +20,27 @@ created: 2026-07-09
 - [Approach](#approach)
 - [Environment](#environment)
 - [Findings](#findings)
-  - [Observation 1 — divergences that produce wrong results today](#observation-1--divergences-that-produce-wrong-results-today)
-  - [Observation 2 — rules stricter than the current spec](#observation-2--rules-stricter-than-the-current-spec)
-  - [Observation 3 — agents are a coverage hole](#observation-3--agents-are-a-coverage-hole)
-  - [Observation 4 — the agent model question](#observation-4--the-agent-model-question)
-  - [Observation 5 — new surface with no coverage yet](#observation-5--new-surface-with-no-coverage-yet)
+  - [Existing rules — audit by kind](#existing-rules--audit-by-kind)
+    - [Cross-cutting rules](#cross-cutting-rules)
+    - [CLAUDE.md rules](#claudemd-rules)
+    - [Skill rules](#skill-rules)
+    - [Command rules](#command-rules)
+    - [Hook rules](#hook-rules)
+    - [Plugin rules](#plugin-rules)
+    - [Marketplace rules](#marketplace-rules)
+    - [MCP rules](#mcp-rules)
+  - [Parser and shared-helper gaps](#parser-and-shared-helper-gaps)
+  - [Proposed new rules by kind](#proposed-new-rules-by-kind)
+    - [Agents (no rules exist today)](#agents-no-rules-exist-today)
+    - [Skills and commands](#skills-and-commands)
+    - [Hooks](#hooks)
+    - [Marketplaces](#marketplaces)
+    - [MCP servers](#mcp-servers)
+    - [CLAUDE.md](#claudemd)
+    - [Deliberately not chasing yet](#deliberately-not-chasing-yet)
+  - [Detail — divergences that produce wrong results today](#detail--divergences-that-produce-wrong-results-today)
+  - [Detail — rules stricter than the current spec](#detail--rules-stricter-than-the-current-spec)
+  - [Detail — the agent model question](#detail--the-agent-model-question)
 - [Conclusion](#conclusion)
 - [Recommendation](#recommendation)
 - [References](#references)
@@ -67,8 +83,8 @@ was INV-0005 (the `claude-skills` dogfood) during Phase 2.
 3. Fetch the current official docs for each artifact kind (sub-agents, skills,
    slash-commands, plugins-reference, plugin-marketplaces, hooks, hooks-guide,
    mcp, memory) and extract the full field/constraint tables.
-4. Diff 2 against 3; classify each gap as (a) wrong-today, (b) stricter than
-   spec, or (c) new surface with no coverage.
+4. Diff 2 against 3; classify each existing rule and enumerate missing rules,
+   per artifact kind.
 
 ## Environment
 
@@ -81,259 +97,275 @@ was INV-0005 (the `claude-skills` dogfood) during Phase 2.
 
 ## Findings
 
-### Observation 1 — divergences that produce wrong results today
+### Existing rules — audit by kind
 
-These are cases where linting a config that is **valid per current docs**
-produces a false positive, or where clearly invalid input passes silently.
+Verdict legend:
 
-**1a. Hook event list is 9 of ~29 events — false errors on valid configs.**
-`KnownHookEvents` (`internal/artifact/knowndata.go:42-52`) has `PreToolUse`,
-`PostToolUse`, `UserPromptSubmit`, `Notification`, `Stop`, `SubagentStop`,
-`PreCompact`, `SessionStart`, `SessionEnd`. The docs now also define `Setup`,
-`SessionEnd` reasons aside, `UserPromptExpansion`, `StopFailure`,
-`PostToolUseFailure`, `PostToolBatch`, `PermissionRequest`,
-`PermissionDenied`, `MessageDisplay`, `ConfigChange`, `CwdChanged`,
-`FileChanged`, `WorktreeCreate`, `WorktreeRemove`, `PostCompact`,
-`SubagentStart`, `TeammateIdle`, `TaskCreated`, `TaskCompleted`,
-`InstructionsLoaded`, `Elicitation`, `ElicitationResult`. Because
-`hooks/event-name-known` is a default-**error** rule, a settings file using
-`SubagentStart` (documented) fails the lint today.
+- **Fix** — produces wrong results against doc-valid input today
+- **Update** — behavior/premise/message needs expansion or adjustment
+- **Keep** — aligned with current docs, no change
+- **Keep (stricter)** — deliberately stricter than spec; document the stance
+- **Decide** — stricter than spec in a way that needs a keep/relax call
 
-**1b. Hook entries now have five types; we only understand `command`.**
-Valid `type` values are `command`, `http`, `mcp_tool`, `prompt`, `agent`,
-each with different required fields (`command` / `url` / `server`+`tool` /
-`prompt`). The parser (`internal/artifact/parse_json.go`) ignores `type`
-entirely and only extracts `command` + `timeout`. Consequences: an `http`
-hook is parsed as a command-less entry (no rule catches a missing `url`); a
-typo'd `type` passes silently; `hooks/no-unsafe-shell` never inspects
-`prompt`/`agent` hooks. Also: command hooks have a **default 600 s timeout**
-per the docs, so `hooks/timeout-present`'s premise ("a runaway hook can hang
-the session") is now a style nudge, not a correctness issue — its message
-and doc entry should say so.
+#### Cross-cutting rules
 
-**1c. `.mcp.json` top-level key: docs say `mcpServers`, we parse `servers`.**
-The watch-item in DESIGN-0002 §2.2 has resolved against us: every current
-doc example uses `mcpServers{}` at the root of project `.mcp.json`
-(`code.claude.com/docs/en/mcp`). `ParseMCPFile`
-(`internal/artifact/parse_mcp.go:37`) reads `servers` — a doc-conforming
-`.mcp.json` lints as "no servers" (all MCP rules silently skip). This is the
-highest-value single fix in the audit.
-
-**1d. MCP transports: we only model stdio.**
-Server entries support `type` (`stdio` default, `http`, `sse` — deprecated,
-`ws`), `url`, `headers`, `headersHelper`, `oauth{}`, `timeout` (ms, min
-1000), `alwaysLoad`. We parse none of these. `mcp/command-required` would
-false-positive on a valid `http` server (which has `url`, no `command`) the
-moment the 1c fix lands, so 1c and 1d must ship together:
-`command-required` applies to stdio only; a matching `url`-required check
-covers the remote transports.
-
-**1e. Marketplace plugin sources can be objects; we only parse strings.**
-Docs define object sources — `{"source": "github", "repo": ...}`,
-`{"source": "url", ...}`, `{"source": "git-subdir", ...}`,
-`{"source": "npm", ...}` — alongside relative-path strings. The parser
-(`internal/artifact/parse_marketplace.go`) reads `source` as a string, so an
-object source parses as empty and `marketplace/plugin-source-valid` (error)
-fires on a doc-valid marketplace. Note this is the same class of bug as the
-nested-`metadata.version` false positive found in INV-0005 — the docs have
-since **confirmed** `metadata.version`/`owner{}` as documented
-backward-compat shapes, so our existing fallback parsing is correct and can
-be annotated as spec-compliant rather than defensive.
-
-**1f. `allowed-tools` string forms and permission-rule syntax.**
-Docs (skills + slash-commands): `allowed-tools` accepts a YAML list **or a
-space/comma-separated string**, and entries may be permission rules like
-`Bash(git add:*)`, `mcp__github`, or `Agent(worker)`. Our `asStringList`
-(`internal/artifact/parse_markdown.go:248`) never splits strings, so
-`allowed-tools: Read, Grep` is one unknown tool named `"Read, Grep"` →
-`commands/allowed-tools-known` (error) false-positives. The rule also flags
-any parenthesized or `mcp__*` entry. Separately, `KnownTools`
-(`internal/artifact/knowndata.go:12-29`, 16 names) predates the `Task` →
-`Agent` rename (v2.1.63; both valid) and lacks `Agent`, `Skill`, and the
-MCP wildcard forms.
-
-**1g. Commands and skills have merged.**
-`.claude/commands/*.md` still works but is documented as a legacy alias for
-skills; both share one frontmatter model (17 fields — `when_to_use`,
-`arguments`, `argument-hint`, `disable-model-invocation`, `user-invocable`,
-`allowed-tools`, `disallowed-tools`, `model`, `effort`, `context`, `agent`,
-`hooks`, `paths`, `shell`, ...). Our `KindCommand`/`KindSkill` split remains
-useful for discovery, but rules that only run on one kind (e.g.
-`commands/allowed-tools-known` not running on skills) now leave documented
-fields unlinted on the other kind.
-
-### Observation 2 — rules stricter than the current spec
-
-Not bugs — places where claudelint demands more than Claude Code requires.
-Each needs a deliberate keep/relax decision, and the rules doc should state
-"stricter than spec, by design" for the keepers.
-
-| Rule | We require | Docs say |
+| Rule | Verdict | Action needed |
 |---|---|---|
-| `plugin/manifest-fields` | `name` + `version` | only `name` required; missing `version` falls back to git commit SHA |
-| `marketplace/version-semver` | `version` present + semver | root `version` is optional |
-| `schema/frontmatter-required` (skill) | `name` + `description` | `name` optional (defaults to dir name); `description` recommended (falls back to first body paragraph) |
-| `schema/frontmatter-required` (agent) | `name` + `description` | both genuinely required — matches spec |
+| `schema/parse` | Keep | None. |
+| `schema/frontmatter-required` | Decide | Skill `name`/`description` are optional/recommended per docs (name defaults to dir name; description falls back to first body paragraph). Agent `name`+`description` genuinely required — matches spec. Keep skill checks as best-practice but reword messages to not claim Claude Code requires them. |
+| `security/secrets` | Keep | None. Raw-source scan already covers new file surfaces. |
+| `style/no-emoji` | Keep | None. |
 
-Recommendation per row is in the Recommendation section. The skill-name
-check has a subtlety worth keeping: `name` only controls invocation for
-plugin-root SKILL.md, so requiring it is cheap hygiene, but the diagnostic
-message should stop implying Claude Code requires it.
+#### CLAUDE.md rules
 
-### Observation 3 — agents are a coverage hole
+| Rule | Verdict | Action needed |
+|---|---|---|
+| `claude_md/size` | Keep | Docs now advise "under 200 lines"; our default `max_lines = 500` is more lenient. Add a doc note; no behavior change. |
+| `claude_md/duplicate-directives` | Keep | None. |
 
-`KindAgent` exists, but the parser extracts only `name`, `description`,
-`tools` (`internal/artifact/parse_md_kinds.go:56-70`), and **zero
-agent-specific rules are registered** — agents get `schema/frontmatter-required`
-plus the every-kind rules and nothing else.
+#### Skill rules
 
-The current sub-agents doc defines 16 frontmatter fields: `name`,
-`description`, `model`, `tools`, `disallowedTools`, `permissionMode`,
-`maxTurns`, `skills`, `mcpServers`, `hooks`, `memory`, `background`,
-`effort`, `isolation`, `color`, `initialPrompt`. Three documented behaviors
-make agents unusually lint-worthy:
+| Rule | Verdict | Action needed |
+|---|---|---|
+| `skills/trigger-clarity` | Keep | Still valid — `description` drives auto-invocation. New `when_to_use` field carries trigger phrases too; rule should check the concatenation once the parser reads it. |
+| `skills/body-size` | Keep | Docs guidance is now "under 500 lines" (we count words, default 1000). Compatible; consider an optional `max_lines` variant. |
+| `skills/no-version-field` | Keep | Docs now explicitly confirm `version` is accepted-but-ignored. Rule validated; cite the doc in its help text. |
 
-1. **Unknown tool names in `tools` are silently ignored** by Claude Code —
-   a typo'd tool never errors at runtime; the agent just quietly lacks it.
-   This is exactly the failure mode a linter exists for.
-2. **`name` has a real constraint** (lowercase letters and hyphens only)
-   that Claude Code does not loudly enforce; duplicates resolve by
-   undocumented filesystem order.
-3. **Plugin subagents silently ignore `mcpServers`, `hooks`, and
-   `permissionMode`** — declaring them in a plugin's `agents/*.md` does
-   nothing. A rule can catch dead config that authors believe is active.
+#### Command rules
 
-### Observation 4 — the agent model question
+| Rule | Verdict | Action needed |
+|---|---|---|
+| `commands/allowed-tools-known` | Fix | (a) String form never splits on commas/whitespace — `allowed-tools: Read, Grep` is one unknown tool. (b) Permission-rule syntax (`Bash(git add:*)`), `mcp__*` patterns, and `Agent(...)` forms all flagged as unknown. (c) `KnownTools` (16 names) predates the `Task` → `Agent` rename and lacks `Agent`/`Skill`. (d) Commands and skills now share one frontmatter model — rule should also run on skill `allowed-tools`. |
 
-What the docs actually specify (`code.claude.com/docs/en/sub-agents.md`):
+#### Hook rules
+
+| Rule | Verdict | Action needed |
+|---|---|---|
+| `hooks/event-name-known` | Fix | Knows 9 of ~29 documented events; default-error rule fails valid configs (`SubagentStart`, `Setup`, `PermissionRequest`, ...). Expand list. |
+| `hooks/timeout-present` | Update | Command hooks have a documented 600 s default timeout — premise ("runaway hook can hang the session") is stale. Keep as style nudge; fix message + docs; account for per-type defaults (prompt 30 s, agent 60 s). |
+| `hooks/no-unsafe-shell` | Update | Only meaningful for `type: command` (and only shell-form: `args` present means exec-form, no shell). Needs `type` parsed to scope correctly and to skip exec-form false positives. |
+
+#### Plugin rules
+
+| Rule | Verdict | Action needed |
+|---|---|---|
+| `plugin/manifest-fields` | Keep (stricter) | Docs require only `name`; `version` optional (falls back to git SHA). Keep requiring `version` as an opinionated default — pinned versions are what marketplaces should ship — but document the stance and consider downgrading the version half to warning. |
+| `plugin/semver` | Keep | None. |
+
+#### Marketplace rules
+
+| Rule | Verdict | Action needed |
+|---|---|---|
+| `marketplace/name` | Keep | Presence check matches spec (kebab-case format is a new-rule candidate below). |
+| `marketplace/version-semver` | Update | Root `version` is optional per docs. Split: missing → info, present-but-not-semver → error. |
+| `marketplace/author-required` | Update | Docs make root `owner{name}` **required** (we treat author/owner as info-level nicety). Align: missing owner → warning or error; keep parsing both `author` and `owner` shapes (both documented). |
+| `marketplace/plugins-nonempty` | Keep | `plugins[]` required per docs; warning severity is a reasonable floor. |
+| `marketplace/plugin-source-valid` | Fix | Object sources (`github`/`url`/`git-subdir`/`npm`) parse as empty string → false positive on doc-valid marketplaces. After parser fix, validate documented per-type required fields (`repo`, `url`, `path`, `package`). |
+| `marketplace/plugin-name-unique` | Keep | Matches `claude plugin validate` behavior. |
+| `marketplace/plugin-name-matches-dir` | Keep | Style rule; scope to local-path sources only (object sources have no local dir). |
+| `marketplace/external-source-skipped` | Update | Once object sources are parsed they are structured data, not "skipped" — rework or retire this info rule. |
+
+#### MCP rules
+
+| Rule | Verdict | Action needed |
+|---|---|---|
+| `mcp/command-required` | Fix | `command` is required **only for stdio** transport. Doc-valid `http`/`ws` servers (url, no command) would false-positive once the `mcpServers` key fix lands. Scope to stdio; pair with new url-required rule. |
+| `mcp/server-name-required` | Keep | None. |
+| `mcp/command-exists-on-path` | Update | Scope to stdio transport. |
+| `mcp/no-unsafe-shell` | Keep | Still correct for stdio `command`. |
+| `mcp/no-secrets-in-env` | Update | Docs add `headers` (and `headersHelper`) — secrets in headers are at least as likely as in env. Extend or add sibling rule. |
+| `mcp/disabled-commented` | Keep | None. |
+| `mcp/server-allowlist` | Keep | None. (Opt-in pattern discussion below applies to the *next* opt-in rule, not this one.) |
+
+### Parser and shared-helper gaps
+
+Several "rule bugs" above are actually parser bugs — the rule layer never
+sees the data. These block the fixes and the new rules:
+
+| Parser / helper | Gap | Effect | Blocks |
+|---|---|---|---|
+| `ParseMCPFile` (`parse_mcp.go:37`) | Reads top-level `servers`; docs standardized on `mcpServers` | Doc-valid `.mcp.json` lints as zero servers — every MCP rule silently skips | All MCP rules |
+| `ParseMCPFile` server entries | Only `command`/`args`/`env`/`disabled`; no `type`, `url`, `headers`, `headersHelper`, `oauth`, `timeout`, `alwaysLoad` | Remote transports invisible; transport-aware scoping impossible | `mcp/command-required` fix, url-required, header secrets |
+| `ParseMarketplace` (`parse_marketplace.go`) | `source` read as string only | Object sources parse empty → `plugin-source-valid` false positive | Source-shape validation, reserved names |
+| `ParseHook` (`parse_json.go`) | `type` ignored; only `command`+`timeout` extracted | `http`/`mcp_tool`/`prompt`/`agent` hooks invisible; typo'd `type` passes | Hook type rules, `no-unsafe-shell` scoping |
+| `ParseAgent` (`parse_md_kinds.go:56`) | Only `name`/`description`/`tools` | No agent rules can see `model`, `disallowedTools`, `permissionMode`, `mcpServers`, `hooks`, etc. | Entire agent rule package |
+| `asStringList` (`parse_markdown.go:248`) | Never splits comma/space-separated strings | `allowed-tools`/`tools` string forms become single bogus entries | `commands/allowed-tools-known` fix, `agents/tools-known` |
+| `ParseSkill`/`ParseCommand` | Missing new fields (`when_to_use`, `model` on command, `context`, `agent`, `disable-model-invocation`, ...) | Limits skill/command rule expansion | `skills/description-length`, fork pairing, model-valid on commands |
+
+### Proposed new rules by kind
+
+Phase column maps to the [Recommendation](#recommendation): **PR 1** =
+correctness fixes, **PR 2** = agent package, **PR 3** = policy + design
+pass, **Backlog** = later.
+
+#### Agents (no rules exist today)
+
+| Proposed rule | Checks | Severity | Phase |
+|---|---|---|---|
+| `agents/model-valid` | `model` is an alias (`sonnet`/`opus`/`haiku`/`fable`), `inherit`, or full-ID shape (`^claude-[a-z0-9-]+$`). Catches typos that silently fall back to the inherited model. Same value set applies to skill/command `model` — share the validator. | warning | PR 2 |
+| `agents/name-format` | `name` is lowercase letters + hyphens only (documented constraint; duplicates resolve by undocumented filesystem order). | warning | PR 2 |
+| `agents/tools-known` | Entries in `tools`/`disallowedTools` are known tools, `mcp__*` patterns, or `Agent(...)` forms — Claude Code **silently ignores** unknown names. | warning | PR 2 |
+| `agents/plugin-ignored-fields` | Plugin-distributed agents declaring `mcpServers`, `hooks`, or `permissionMode` — documented as ignored for plugin subagents (dead config). | warning | PR 2 |
+| `agents/model-policy` | Opt-in enforcement: `require = "inherit"` or `allowlist = [...]`. | error (opt-in) | PR 3 |
+| `agents/field-enums` | `permissionMode` (7 values), `effort` (5), `color` (8), `isolation` (`worktree`), `memory` (`user`/`project`/`local`) are valid enum members. | warning | Backlog |
+
+#### Skills and commands
+
+| Proposed rule | Checks | Severity | Phase |
+|---|---|---|---|
+| `skills/description-length` | `description` + `when_to_use` combined ≤ 1,536 chars (documented truncation silently drops trigger phrases). | warning | PR 3 |
+| `skills/fork-agent-pairing` | `agent:` set without `context: fork` does nothing. | warning | Backlog |
+| (extend) `commands/allowed-tools-known` → skills | Same rule runs on skill `allowed-tools`/`disallowed-tools` after the merged-model parser update. | error | PR 1 |
+
+#### Hooks
+
+| Proposed rule | Checks | Severity | Phase |
+|---|---|---|---|
+| `hooks/type-known` | `type` ∈ `command`/`http`/`mcp_tool`/`prompt`/`agent` (absent defaults to `command`). | error | PR 3 |
+| `hooks/type-fields` | Per-type required fields present: `command` → `command`; `http` → `url`; `mcp_tool` → `server`+`tool`; `prompt`/`agent` → `prompt`. | error | PR 3 |
+
+#### Marketplaces
+
+| Proposed rule | Checks | Severity | Phase |
+|---|---|---|---|
+| `marketplace/reserved-name` | Name not in the 16 documented reserved names (and obvious impersonations); claude.ai sync blocks these. | error | PR 3 |
+| `marketplace/name-format` | Marketplace + plugin-entry names kebab-case (claude.ai sync rejects violations). | warning | PR 3 |
+| `marketplace/source-path-safety` | Relative sources start with `./`; no `..` traversal (validator-rejected). | error | PR 3 |
+| `marketplace/renames-valid` | `renames{}` chains terminate (at `null` or a listed plugin) and contain no cycles. | error | Backlog |
+
+#### MCP servers
+
+| Proposed rule | Checks | Severity | Phase |
+|---|---|---|---|
+| `mcp/url-required` | `http`/`sse`/`ws` transports declare `url` (counterpart to stdio-scoped `command-required`). | error | PR 1 |
+| `mcp/transport-known` | `type` ∈ `stdio`/`http`/`sse`/`ws`; flag `sse` as documented-deprecated (info). | warning | PR 3 |
+| `mcp/no-secrets-in-headers` | Secrets scan over `headers` values (or fold into `no-secrets-in-env`). | error | PR 3 |
+| `mcp/timeout-minimum` | `timeout` is in **milliseconds** with documented minimum 1000 — catches seconds-vs-ms confusion. | warning | Backlog |
+
+#### CLAUDE.md
+
+| Proposed rule | Checks | Severity | Phase |
+|---|---|---|---|
+| `claude_md/import-exists` | `@path` imports resolve on disk; flag chains beyond the documented 4-hop depth. | warning | Backlog |
+
+#### Deliberately not chasing yet
+
+Path-scoped rule files (`.claude/rules/*.md` with `paths:` frontmatter) as a
+ninth artifact kind, LSP servers, output styles, monitors
+(`experimental.*`), and `userConfig` schema validation — monitors/themes are
+explicitly marked experimental in the docs; revisit when they stabilize.
+
+### Detail — divergences that produce wrong results today
+
+Supporting detail for the **Fix** verdicts above.
+
+**`.mcp.json` top-level key.** The watch-item in DESIGN-0002 §2.2 has
+resolved against us: every current doc example uses `mcpServers{}` at the
+root of project `.mcp.json`. `ParseMCPFile` reads `servers` — a
+doc-conforming `.mcp.json` lints as "no servers" and every MCP rule silently
+skips. Highest-value single fix in the audit. Migration: accept `mcpServers`
+as primary, keep `servers` for one release with a deprecation info
+diagnostic (mirrors how the hook flat-shape removal was handled in #14/#18).
+
+**Hook events and types.** The event list grew from our 9 to ~29, and hook
+entries gained four non-command types with distinct required fields and
+timeout defaults (command/http/mcp_tool 600 s; prompt 30 s; agent 60 s;
+`UserPromptSubmit` caps at 30 s). Command hooks also gained `args`
+(exec-form — no shell, so shell-smell heuristics don't apply), `async`,
+`asyncRewake`, `shell`, `if`, and `statusMessage`. `disableAllHooks` is a
+new settings-level key.
+
+**Marketplace sources.** Docs define object sources — `github{repo,ref,sha}`,
+`url{url,ref,sha}`, `git-subdir{url,path,ref,sha}`, `npm{package,version,registry}` —
+alongside `./`-prefixed relative strings. Note: INV-0005's nested
+`metadata.version` false positive is now **documented** backward-compat
+(`metadata.version`, `metadata.description`, `owner{name,email}`), so our
+existing fallback parsing is spec-compliant, not defensive.
+
+**`allowed-tools` forms.** Docs (skills + slash-commands, now one merged
+model): YAML list **or** space/comma-separated string; entries may be
+permission rules (`Bash(git add:*)`), MCP patterns (`mcp__github`,
+`mcp__server__*`), or `Agent(...)` forms. `Task` was renamed `Agent` in
+v2.1.63 (both valid).
+
+### Detail — rules stricter than the current spec
+
+Supporting detail for the **Decide** / **Keep (stricter)** verdicts: being
+stricter than the runtime is legitimate for a linter — Claude Code's
+runtime posture is "silently tolerate", ours is "loudly flag" — but each
+divergence should be a documented stance, not an accident. The rules doc
+should carry a "stricter than spec, by design" note on: skill
+`name`/`description` requiredness, plugin `version` requiredness. The one
+genuine correction: `marketplace/version-semver` errors on a *missing*
+root version that the docs call optional — that half should soften to info.
+
+### Detail — the agent model question
+
+What the docs specify:
 
 - Valid `model` values: aliases (`sonnet`, `opus`, `haiku`, `fable`), full
   model IDs (e.g. `claude-opus-4-8`), or `inherit`.
-- **Omitted means `inherit`** — the default changed to inherit-from-parent;
-  an explicit `inherit` and an absent key are equivalent (since v2.1.196
-  even via the `CLAUDE_CODE_SUBAGENT_MODEL` env override path).
+- **Omitted means `inherit`** — an explicit `inherit` and an absent key are
+  equivalent (since v2.1.196 even via the `CLAUDE_CODE_SUBAGENT_MODEL`
+  override path).
 - Values excluded by an org's `availableModels` allowlist are skipped at
-  resolution time and fall back to the inherited model — misconfiguration
-  degrades silently rather than failing.
+  resolution and silently fall back to the inherited model.
 
-That maps onto two rules with different jobs:
+Hence the two-rule split in the tables above: `agents/model-valid` is
+always-on typo protection (a bad value never errors at runtime — it
+silently resolves to the parent model); `agents/model-policy` is governance
+for repos/marketplaces that want a stance, where `require = "inherit"`
+treats an absent key as compliant and `allowlist` permits deliberate
+pinning (e.g. `haiku` for cheap utility agents).
 
-**`agents/model-valid` (validation — default-enabled, warning).** If `model`
-is present, check it is an alias, `inherit`, or matches a full-ID shape
-(`^claude-[a-z0-9-]+$`). Catches `model: sonet` typos, which today silently
-resolve to the inherited model. No options needed. Also applies verbatim to
-the skill/command `model` field (same value set per the skills doc), so the
-check should live in shared validation with per-kind registration.
-
-**`agents/model-policy` (enforcement — opt-in).** Governance rule for repos
-and marketplaces that want a stance, with an option taking one of two
-shapes:
-
-    rule "agents/model-policy" {
-      options = { require = "inherit" }   # every agent must inherit
-    }
-
-    rule "agents/model-policy" {
-      options = { allowlist = ["inherit", "haiku", "sonnet"] }
-    }
-
-`require = "inherit"` treats an absent key as compliant (absence ==
-inherit per the docs) and flags any pinned model — the right default for
-cost/consistency governance and for marketplace review. `allowlist` permits
-deliberate pinning (e.g. cheap models for utility agents) while blocking
-everything else.
-
-**Pattern tension worth deciding explicitly:** the house pattern
-(`mcp/server-allowlist`, per CLAUDE.md) is "default-enabled, nil option →
-loud config error". That is right for a security rule; for a governance
-rule it would make every un-configured repo yell about every agent.
-CLAUDE.md already anticipated this: "Adding `Rule.Enabled()` for one rule
-is over-engineering; **revisit only if multiple rules need the pattern**."
-`agents/model-policy` is that second rule. The Phase 4 design should either
-add an opt-in mechanism (config-driven enable, or `Rule.Enabled()`) or
-accept a documented silent no-op when the option is unset — silent no-op is
-acceptable here precisely because absence-of-policy is a valid state,
+**Pattern tension to resolve in PR 3's design:** the house opt-in pattern
+(`mcp/server-allowlist`) is "default-enabled, nil option → loud config
+error" — right for security, wrong for governance (every un-configured
+repo would yell about every agent). CLAUDE.md anticipated this: "revisit
+only if multiple rules need the pattern." `agents/model-policy` is that
+second rule. Options: add an opt-in mechanism (config-driven enable or
+`Rule.Enabled()`), or accept a documented silent no-op when unset — silent
+no-op is defensible here because absence-of-policy is a valid state,
 unlike absence-of-allowlist on a security rule.
-
-### Observation 5 — new surface with no coverage yet
-
-Lower urgency; candidates for the backlog rather than the next release.
-
-- **Agents (beyond Observation 3/4):** `agents/name-format` (lowercase +
-  hyphens), `agents/tools-known` (the silent-ignore catch),
-  `agents/plugin-ignored-fields` (plugin agents declaring
-  `mcpServers`/`hooks`/`permissionMode`), enum checks for
-  `permissionMode`/`effort`/`color`/`isolation`/`memory`.
-- **Skills:** `skills/description-length` — `description` + `when_to_use`
-  are truncated at 1,536 combined chars, so overlong descriptions lose
-  their trigger phrases silently; body-size guidance is now "under 500
-  lines" (our `max_words = 1000` is compatible; consider a lines variant).
-  `context: fork` / `agent` pairing check (an `agent` field without
-  `context: fork` does nothing).
-- **Marketplaces:** reserved-name check (16 reserved/impersonation-blocked
-  marketplace names documented), `renames{}` cycle validation, source path
-  traversal (`..` rejected), relative sources must start with `./`,
-  kebab-case name format (claude.ai sync rejects violations).
-- **Hooks:** per-type required-field validation once 1b lands;
-  `disableAllHooks` awareness; `timeout` unit sanity (seconds, not ms).
-- **MCP:** `sse` transport deprecation warning; secrets scanning in
-  `headers` (today only `env` is scanned); `timeout` minimum (1000 ms).
-- **CLAUDE.md:** `@path` import resolution (imports exist on disk; ≤ 4-hop
-  depth documented); the docs' size guidance is "under 200 lines" vs our
-  default `max_lines = 500` — defensible, but worth a comment in the rule.
-- **Not worth chasing yet:** path-scoped rule files (`.claude/rules/*.md`
-  with `paths:` frontmatter) as a ninth artifact kind, LSP servers, output
-  styles, monitors (`experimental.*`), `userConfig` schema validation.
-  Revisit when they stabilize (monitors/themes are explicitly marked
-  experimental).
 
 ## Conclusion
 
 **Answer: Yes — the ruleset has drifted, in both directions.**
 
-Seven findings produce wrong results today (Observation 1), the worst being
-the `.mcp.json` `servers` → `mcpServers` divergence (valid files lint as
-empty) and the 9-of-29 hook-event list (valid configs fail with errors).
-Four rules are deliberately-or-accidentally stricter than the documented
-spec (Observation 2). Agents — the artifact kind Donald asked about — have
-the largest gap: a 16-field documented spec, three silent-failure behaviors
-worth linting, and zero agent rules shipped (Observation 3).
+Of 30 shipping rules: **4 Fix** (wrong against doc-valid input),
+**7 Update**, **17 Keep**, **2 Decide/Keep-stricter** — see the per-kind
+tables. The worst two fixes are the `.mcp.json` `servers` → `mcpServers`
+divergence (valid files lint as empty) and the 9-of-29 hook-event list
+(valid configs fail with errors). Seven parser gaps block most of the
+fixes and all of the agent work. Agents have the largest greenfield gap: a
+16-field documented spec, three silent-failure behaviors worth linting,
+and zero agent rules shipped.
 
-On the model question (Observation 4): yes, and it should be two rules —
-always-on **validation** of the value set (`sonnet`/`opus`/`haiku`/`fable`/
-full-ID/`inherit`), and **opt-in enforcement** (`require = "inherit"` or an
-allowlist) following — and finally forcing the anticipated revisit of — the
-opt-in-rule pattern.
+On the model question: yes, and it should be two rules — always-on
+**validation** of the value set (`sonnet`/`opus`/`haiku`/`fable`/full-ID/
+`inherit`), and **opt-in enforcement** (`require = "inherit"` or an
+allowlist), which forces the anticipated opt-in-pattern design decision.
 
 ## Recommendation
 
 Phase the work as three PRs, in this order:
 
-1. **Correctness fixes (patch/minor, no new rules):** expand
-   `KnownHookEvents` to the full documented set; accept `mcpServers` as the
-   primary `.mcp.json` key (keep `servers` with a deprecation info
-   diagnostic for one release); parse marketplace object sources so
-   `plugin-source-valid` stops false-positive-ing (and start validating the
-   documented per-type required fields); split string-form `allowed-tools`
-   on commas/whitespace and accept permission-rule + `mcp__*` syntax;
-   refresh `KnownTools` (add `Agent`, `Skill`; keep `Task` as alias).
-   Update Observation 2 rows: keep `plugin/manifest-fields` and skill
-   frontmatter checks as documented stricter-than-spec defaults, but split
-   `marketplace/version-semver` (missing → info, non-semver → error).
-2. **Agent rule package (minor):** `agents/model-valid`,
-   `agents/name-format`, `agents/tools-known`,
-   `agents/plugin-ignored-fields` — requires extending the agent parser to
-   the documented field set (at minimum `model`, `disallowedTools`,
-   `permissionMode`, `mcpServers`, `hooks`, plus ranges). This bumps the
-   ruleset fingerprint and needs the coverage-gate check per package.
-3. **Policy + design pass:** `agents/model-policy` plus the opt-in
-   mechanism decision (second consumer of the pattern → design the
-   general solution), hook per-type validation, MCP transport rules.
-   Items in Observation 5 feed the backlog.
+1. **PR 1 — correctness fixes (no new rules except `mcp/url-required`):**
+   everything marked Fix + the parser gaps that back them — `mcpServers`
+   key (deprecation path for `servers`), full hook-event list, marketplace
+   object sources, `allowed-tools` string splitting + permission-rule
+   syntax, `KnownTools` refresh. Split `marketplace/version-semver`
+   severities. Update DESIGN-0002 §2.2 and the affected rules docs.
+2. **PR 2 — agent rule package:** extend `ParseAgent` to the documented
+   field set, then `agents/model-valid`, `agents/name-format`,
+   `agents/tools-known`, `agents/plugin-ignored-fields`. Fingerprint bump;
+   per-package coverage gate applies.
+3. **PR 3 — policy + design pass:** `agents/model-policy` plus the opt-in
+   mechanism decision, hook type rules, MCP transport rules, marketplace
+   name/safety rules. Backlog rows feed later phases.
 
-Write a DESIGN doc (Phase 4 / DESIGN-0005) covering 2–3 before
-implementing; item 1 is executable directly against DESIGN-0001/0002 with
-doc updates to the affected sections (DESIGN-0002 §2.2 in particular).
+Write DESIGN-0005 covering PRs 2–3 before implementing; PR 1 is executable
+directly against DESIGN-0001/0002 with doc updates to the affected sections.
 
 ## References
 
