@@ -19,6 +19,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - *(inv)* Restructure INV-0006 into per-kind audit tables
 - *(inv)* Promote all backlog rules into the three phased PRs
 - *(impl)* IMPL-0004 — ruleset alignment and agent rules
+- *(impl-0004)* Resolve all eight open questions on option (a)
 
 ## [0.2.3] - 2026-05-30
 
