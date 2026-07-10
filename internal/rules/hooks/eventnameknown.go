@@ -37,11 +37,15 @@ func (r *eventNameKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diag
 		if e.Event == "" || artifact.IsKnownHookEvent(e.Event) {
 			continue
 		}
+		msg := fmt.Sprintf("unknown hook event %q", e.Event)
+		if want, ok := artifact.SuggestHookEvent(e.Event); ok {
+			msg = fmt.Sprintf("unknown hook event %q (did you mean %q?)", e.Event, want)
+		}
 		out = append(out, diag.Diagnostic{
 			RuleID:  r.ID(),
 			Path:    h.Path(),
 			Range:   e.EventRange,
-			Message: fmt.Sprintf("unknown hook event %q", e.Event),
+			Message: msg,
 		})
 	}
 	return out

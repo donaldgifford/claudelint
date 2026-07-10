@@ -83,3 +83,18 @@ func TestKnownHookEventsMatchesReference(t *testing.T) {
 		t.Errorf("near-miss spellings must stay unknown")
 	}
 }
+
+func TestSuggestHookEvent(t *testing.T) {
+	if got, ok := SuggestHookEvent("PretoolUse"); !ok || got != "PreToolUse" {
+		t.Errorf("SuggestHookEvent(PretoolUse) = %q/%v, want PreToolUse/true", got, ok)
+	}
+	if got, ok := SuggestHookEvent("sessionstart"); !ok || got != "SessionStart" {
+		t.Errorf("SuggestHookEvent(sessionstart) = %q/%v, want SessionStart/true", got, ok)
+	}
+	if _, ok := SuggestHookEvent("PreToolUsage"); ok {
+		t.Errorf("spelling difference should not match case-insensitively")
+	}
+	if _, ok := SuggestHookEvent(""); ok {
+		t.Errorf("empty string should not match")
+	}
+}

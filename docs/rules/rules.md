@@ -140,6 +140,9 @@ known Claude Code hook events (`PreToolUse`, `PostToolUse`, `Stop`, etc.).
 **Bad**: `"PretoolUse": [...]` (wrong case / typo) **Fix**:
 `"PreToolUse": [...]`.
 
+When the name matches a known event apart from casing, the diagnostic
+suggests the exact spelling (`did you mean "PreToolUse"?`).
+
 The canonical event list mirrors the
 [hooks reference](https://code.claude.com/docs/en/hooks) (30 events as of
 July 2026). Names are case-sensitive.

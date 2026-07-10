@@ -120,3 +120,16 @@ func IsKnownHookEvent(name string) bool {
 	_, ok := KnownHookEvents[name]
 	return ok
 }
+
+// SuggestHookEvent returns the known hook event matching name
+// case-insensitively, for did-you-mean diagnostics on casing typos —
+// the most common way a hook goes silently inert ("PretoolUse").
+// ok is false when no known event matches.
+func SuggestHookEvent(name string) (suggestion string, ok bool) {
+	for event := range KnownHookEvents {
+		if strings.EqualFold(event, name) {
+			return event, true
+		}
+	}
+	return "", false
+}

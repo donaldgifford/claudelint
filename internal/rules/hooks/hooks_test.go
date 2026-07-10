@@ -42,6 +42,29 @@ func TestEventNameKnownRejectsTypo(t *testing.T) {
 	if !strings.Contains(d[0].Message, "PreToolUsage") {
 		t.Errorf("message should name the bad event, got %q", d[0].Message)
 	}
+	if strings.Contains(d[0].Message, "did you mean") {
+		t.Errorf("no case-insensitive match exists; message should not suggest, got %q", d[0].Message)
+	}
+}
+
+func TestEventNameKnownSuggestsOnCasingTypo(t *testing.T) {
+	h, _ := artifact.ParseHook(".claude/hooks/x.json", nestedHook("PretoolUse", "Bash", "true", 10))
+	d := (&eventNameKnown{}).Check(nil, h)
+	if len(d) != 1 {
+		t.Fatalf("expected 1 diagnostic, got %d", len(d))
+	}
+	if !strings.Contains(d[0].Message, `did you mean "PreToolUse"?`) {
+		t.Errorf("message should suggest PreToolUse, got %q", d[0].Message)
+	}
+}
+
+func TestEventNameKnownAcceptsExpandedEvents(t *testing.T) {
+	for _, event := range []string{"Setup", "PermissionRequest", "PostToolBatch", "WorktreeCreate"} {
+		h, _ := artifact.ParseHook(".claude/hooks/x.json", nestedHook(event, "", "true", 10))
+		if d := (&eventNameKnown{}).Check(nil, h); len(d) != 0 {
+			t.Errorf("%s should be a known event, got %v", event, d)
+		}
+	}
 }
 
 func TestNoUnsafeShell(t *testing.T) {

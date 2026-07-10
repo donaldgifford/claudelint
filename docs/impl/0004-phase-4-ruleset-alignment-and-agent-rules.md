@@ -197,9 +197,11 @@ fingerprint change).
 
 #### Tasks
 
-- [ ] `hooks/event-name-known`: validate against the expanded event list;
+- [x] `hooks/event-name-known`: validate against the expanded event list;
       diagnostic suggests the nearest known event on likely typos
-      (case-insensitive match).
+      (case-insensitive match). _(expanded list picked up automatically
+      via `IsKnownHookEvent`; new `artifact.SuggestHookEvent` powers the
+      did-you-mean message; rules.md notes the suggestion behavior)_
 - [ ] `commands/allowed-tools-known`: consume the shared splitter; accept
       permission-rule and `mcp__*` forms; extend `AppliesTo` to run on
       skill `allowed-tools`/`disallowed-tools` too (per OQ7 decision).
