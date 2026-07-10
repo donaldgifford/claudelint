@@ -17,6 +17,7 @@ nav:
         - 'IMPL-0001: Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks': impl/0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md
         - 'IMPL-0002: Phase 2 — marketplaces, MCP rules, SARIF, and GitHub Action': impl/0002-phase-2-marketplaces-mcp-rules-sarif-and-github-action.md
         - 'IMPL-0003: Phase 3 — Dual-output docs site with Starlight': impl/0003-phase-3-dual-output-docs-site-with-starlight.md
+        - 'IMPL-0004: Phase 4 - Ruleset alignment and agent rules': impl/0004-phase-4-ruleset-alignment-and-agent-rules.md
     - Investigations:
         - Overview: investigation/README.md
         - 'INV-0001: OpenAI and OpenCode skill/plugin format compatibility with Claude': investigation/0001-openai-and-opencode-skill-and-plugin-format-compatibility-with.md
