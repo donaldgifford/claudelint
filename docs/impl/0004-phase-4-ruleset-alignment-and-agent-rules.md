@@ -149,10 +149,13 @@ field ranges preferred).
       command `allowed-tools` + agent `tools` now use it; the
       `disallowed-tools`/`disallowedTools` call sites land with the
       new-field parsing task below)_
-- [ ] `KnownTools`: add `Agent`, `Skill`; keep `Task` (documented alias);
+- [x] `KnownTools`: add `Agent`, `Skill`; keep `Task` (documented alias);
       add a helper that classifies `mcp__<server>`, `mcp__<server>__*`,
       `Agent(...)`, and `Tool(args)` permission-rule forms as
-      structurally-valid rather than unknown.
+      structurally-valid rather than unknown. _(`IsToolPattern` — accepts
+      MCP patterns and permission-rule forms whose base is a known tool
+      or MCP pattern with a non-empty specifier; bare names stay
+      `IsKnownTool`'s job)_
 - [ ] `KnownHookEvents`: expand to the full documented event set
       (~29 events; exact list + exact casing from the hooks reference,
       recorded in a table in the rules doc).
