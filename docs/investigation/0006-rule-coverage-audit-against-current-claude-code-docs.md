@@ -196,7 +196,8 @@ sees the data. These block the fixes and the new rules:
 
 Phase column maps to the [Recommendation](#recommendation): **PR 1** =
 correctness fixes, **PR 2** = agent package, **PR 3** = policy + design
-pass, **Backlog** = later.
+pass. Every proposed rule lands in one of the three PRs — nothing is
+deferred to a later backlog.
 
 #### Agents (no rules exist today)
 
@@ -207,14 +208,14 @@ pass, **Backlog** = later.
 | `agents/tools-known` | Entries in `tools`/`disallowedTools` are known tools, `mcp__*` patterns, or `Agent(...)` forms — Claude Code **silently ignores** unknown names. | warning | PR 2 |
 | `agents/plugin-ignored-fields` | Plugin-distributed agents declaring `mcpServers`, `hooks`, or `permissionMode` — documented as ignored for plugin subagents (dead config). | warning | PR 2 |
 | `agents/model-policy` | Opt-in enforcement: `require = "inherit"` or `allowlist = [...]`. | error (opt-in) | PR 3 |
-| `agents/field-enums` | `permissionMode` (7 values), `effort` (5), `color` (8), `isolation` (`worktree`), `memory` (`user`/`project`/`local`) are valid enum members. | warning | Backlog |
+| `agents/field-enums` | `permissionMode` (7 values), `effort` (5), `color` (8), `isolation` (`worktree`), `memory` (`user`/`project`/`local`) are valid enum members. | warning | PR 2 |
 
 #### Skills and commands
 
 | Proposed rule | Checks | Severity | Phase |
 |---|---|---|---|
 | `skills/description-length` | `description` + `when_to_use` combined ≤ 1,536 chars (documented truncation silently drops trigger phrases). | warning | PR 3 |
-| `skills/fork-agent-pairing` | `agent:` set without `context: fork` does nothing. | warning | Backlog |
+| `skills/fork-agent-pairing` | `agent:` set without `context: fork` does nothing. | warning | PR 3 |
 | (extend) `commands/allowed-tools-known` → skills | Same rule runs on skill `allowed-tools`/`disallowed-tools` after the merged-model parser update. | error | PR 1 |
 
 #### Hooks
@@ -231,7 +232,7 @@ pass, **Backlog** = later.
 | `marketplace/reserved-name` | Name not in the 16 documented reserved names (and obvious impersonations); claude.ai sync blocks these. | error | PR 3 |
 | `marketplace/name-format` | Marketplace + plugin-entry names kebab-case (claude.ai sync rejects violations). | warning | PR 3 |
 | `marketplace/source-path-safety` | Relative sources start with `./`; no `..` traversal (validator-rejected). | error | PR 3 |
-| `marketplace/renames-valid` | `renames{}` chains terminate (at `null` or a listed plugin) and contain no cycles. | error | Backlog |
+| `marketplace/renames-valid` | `renames{}` chains terminate (at `null` or a listed plugin) and contain no cycles. | error | PR 3 |
 
 #### MCP servers
 
@@ -240,13 +241,13 @@ pass, **Backlog** = later.
 | `mcp/url-required` | `http`/`sse`/`ws` transports declare `url` (counterpart to stdio-scoped `command-required`). | error | PR 1 |
 | `mcp/transport-known` | `type` ∈ `stdio`/`http`/`sse`/`ws`; flag `sse` as documented-deprecated (info). | warning | PR 3 |
 | `mcp/no-secrets-in-headers` | Secrets scan over `headers` values (or fold into `no-secrets-in-env`). | error | PR 3 |
-| `mcp/timeout-minimum` | `timeout` is in **milliseconds** with documented minimum 1000 — catches seconds-vs-ms confusion. | warning | Backlog |
+| `mcp/timeout-minimum` | `timeout` is in **milliseconds** with documented minimum 1000 — catches seconds-vs-ms confusion. | warning | PR 3 |
 
 #### CLAUDE.md
 
 | Proposed rule | Checks | Severity | Phase |
 |---|---|---|---|
-| `claude_md/import-exists` | `@path` imports resolve on disk; flag chains beyond the documented 4-hop depth. | warning | Backlog |
+| `claude_md/import-exists` | `@path` imports resolve on disk; flag chains beyond the documented 4-hop depth. | warning | PR 3 |
 
 #### Deliberately not chasing yet
 
@@ -358,11 +359,16 @@ Phase the work as three PRs, in this order:
    severities. Update DESIGN-0002 §2.2 and the affected rules docs.
 2. **PR 2 — agent rule package:** extend `ParseAgent` to the documented
    field set, then `agents/model-valid`, `agents/name-format`,
-   `agents/tools-known`, `agents/plugin-ignored-fields`. Fingerprint bump;
-   per-package coverage gate applies.
+   `agents/tools-known`, `agents/plugin-ignored-fields`,
+   `agents/field-enums`. Fingerprint bump; per-package coverage gate
+   applies.
 3. **PR 3 — policy + design pass:** `agents/model-policy` plus the opt-in
-   mechanism decision, hook type rules, MCP transport rules, marketplace
-   name/safety rules. Backlog rows feed later phases.
+   mechanism decision, hook type rules (`type-known`, `type-fields`), MCP
+   transport rules (`transport-known`, `no-secrets-in-headers`,
+   `timeout-minimum`), marketplace name/safety rules (`reserved-name`,
+   `name-format`, `source-path-safety`, `renames-valid`),
+   `skills/description-length`, `skills/fork-agent-pairing`, and
+   `claude_md/import-exists`.
 
 Write DESIGN-0005 covering PRs 2–3 before implementing; PR 1 is executable
 directly against DESIGN-0001/0002 with doc updates to the affected sections.
