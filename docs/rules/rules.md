@@ -140,6 +140,21 @@ known Claude Code hook events (`PreToolUse`, `PostToolUse`, `Stop`, etc.).
 **Bad**: `"PretoolUse": [...]` (wrong case / typo) **Fix**:
 `"PreToolUse": [...]`.
 
+The canonical event list mirrors the
+[hooks reference](https://code.claude.com/docs/en/hooks) (30 events as of
+July 2026). Names are case-sensitive.
+
+| Lifecycle stage | Events |
+| --- | --- |
+| Session | `SessionStart`, `Setup`, `SessionEnd` |
+| Prompt / turn | `UserPromptSubmit`, `UserPromptExpansion`, `Stop`, `StopFailure` |
+| Tool calls | `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch` |
+| Permissions | `PermissionRequest`, `PermissionDenied` |
+| Subagents & tasks | `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle` |
+| Context & config | `PreCompact`, `PostCompact`, `InstructionsLoaded`, `ConfigChange` |
+| Environment | `CwdChanged`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove` |
+| UI & elicitation | `Notification`, `MessageDisplay`, `Elicitation`, `ElicitationResult` |
+
 #### `hooks/timeout-present`
 
 Every hook entry should declare a `timeout` (seconds) so a runaway hook cannot

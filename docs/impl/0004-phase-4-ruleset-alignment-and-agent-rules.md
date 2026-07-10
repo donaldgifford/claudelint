@@ -156,9 +156,12 @@ field ranges preferred).
       MCP patterns and permission-rule forms whose base is a known tool
       or MCP pattern with a non-empty specifier; bare names stay
       `IsKnownTool`'s job)_
-- [ ] `KnownHookEvents`: expand to the full documented event set
+- [x] `KnownHookEvents`: expand to the full documented event set
       (~29 events; exact list + exact casing from the hooks reference,
-      recorded in a table in the rules doc).
+      recorded in a table in the rules doc). _(30 events as of 2026-07 —
+      the reference grew by one since the INV-0006 audit; lifecycle-grouped
+      table added to `docs/rules/rules.md` under `hooks/event-name-known`,
+      count pinned by test)_
 - [ ] `ParseSkill`/`ParseCommand`: parse `when_to_use`, `model` (command),
       `context`, `agent`, `disable-model-invocation`, `user-invocable`,
       `disallowed-tools` — fields needed by Phases 2 and 5.

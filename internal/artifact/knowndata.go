@@ -76,18 +76,42 @@ func isMCPToolPattern(name string) bool {
 }
 
 // KnownHookEvents is the canonical list of Claude Code hook event
-// names. As with KnownTools, adding an event here changes the ruleset
-// fingerprint.
+// names, mirroring the hooks reference
+// (https://code.claude.com/docs/en/hooks) — 30 events as of 2026-07.
+// As with KnownTools, adding an event here changes the ruleset
+// fingerprint. The full table with lifecycle groupings lives in the
+// rules doc alongside hooks/event-name-known.
 var KnownHookEvents = map[string]struct{}{
-	"PreToolUse":       {},
-	"PostToolUse":      {},
-	"UserPromptSubmit": {},
-	"Notification":     {},
-	"Stop":             {},
-	"SubagentStop":     {},
-	"PreCompact":       {},
-	"SessionStart":     {},
-	"SessionEnd":       {},
+	"ConfigChange":        {},
+	"CwdChanged":          {},
+	"Elicitation":         {},
+	"ElicitationResult":   {},
+	"FileChanged":         {},
+	"InstructionsLoaded":  {},
+	"MessageDisplay":      {},
+	"Notification":        {},
+	"PermissionDenied":    {},
+	"PermissionRequest":   {},
+	"PostCompact":         {},
+	"PostToolBatch":       {},
+	"PostToolUse":         {},
+	"PostToolUseFailure":  {},
+	"PreCompact":          {},
+	"PreToolUse":          {},
+	"SessionEnd":          {},
+	"SessionStart":        {},
+	"Setup":               {},
+	"Stop":                {},
+	"StopFailure":         {},
+	"SubagentStart":       {},
+	"SubagentStop":        {},
+	"TaskCompleted":       {},
+	"TaskCreated":         {},
+	"TeammateIdle":        {},
+	"UserPromptExpansion": {},
+	"UserPromptSubmit":    {},
+	"WorktreeCreate":      {},
+	"WorktreeRemove":      {},
 }
 
 // IsKnownHookEvent reports whether name is in the canonical hook

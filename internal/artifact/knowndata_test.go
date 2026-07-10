@@ -63,3 +63,23 @@ func TestIsKnownHookEvent(t *testing.T) {
 		t.Errorf("case and spelling matter")
 	}
 }
+
+// TestKnownHookEventsMatchesReference pins the expansion to the hooks
+// reference (30 events as of 2026-07). A count change means the docs
+// moved — update the list, this test, and the rules-doc table together.
+func TestKnownHookEventsMatchesReference(t *testing.T) {
+	if got := len(KnownHookEvents); got != 30 {
+		t.Errorf("len(KnownHookEvents) = %d, want 30", got)
+	}
+	for _, name := range []string{
+		"Setup", "PermissionRequest", "SubagentStart", "PostToolBatch",
+		"UserPromptExpansion", "WorktreeCreate", "ElicitationResult",
+	} {
+		if !IsKnownHookEvent(name) {
+			t.Errorf("IsKnownHookEvent(%q) = false, want true", name)
+		}
+	}
+	if IsKnownHookEvent("PermissionsRequest") {
+		t.Errorf("near-miss spellings must stay unknown")
+	}
+}
