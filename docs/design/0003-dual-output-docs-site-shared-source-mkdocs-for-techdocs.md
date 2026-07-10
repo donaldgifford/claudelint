@@ -1,7 +1,7 @@
 ---
 id: DESIGN-0003
 title: "Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public"
-status: Draft
+status: Implemented
 author: Donald Gifford
 created: 2026-05-31
 ---
@@ -9,7 +9,7 @@ created: 2026-05-31
 
 # DESIGN 0003: Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public
 
-**Status:** Draft
+**Status:** Implemented
 **Author:** Donald Gifford
 **Date:** 2026-05-31
 

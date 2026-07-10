@@ -95,12 +95,12 @@ Docs are managed by the `docz` CLI (config in `.docz.yaml`). Six doc types: `rfc
 
 Use `Skill` with the `docz:*` skills for doc lifecycle work rather than reinventing the frontmatter by hand.
 
-### Dual-output docs site (DESIGN-0003 / IMPL-0003 — in progress on `docs/site` branch)
+### Dual-output docs site (DESIGN-0003 / IMPL-0003 — shipped via PR #40; live at `https://claudelint.dev`)
 
 The same `docs/` tree feeds **two** rendered outputs:
 
 - **MkDocs + Material** — consumed by Backstage TechDocs. Driven by `mkdocs.yml`, which `docz update` keeps in sync. No CI changes.
-- **Astro + Starlight** — public site at `https://claudelint.dev` (Cloudflare Pages, planned cutover in Phase 6). Lives under `site/`; reads the shared root `docs/` tree via Astro content collections.
+- **Astro + Starlight** — public site at `https://claudelint.dev` (Cloudflare Pages; production tracks `main`, PRs get preview deploys + a `Cloudflare Pages` status check). Lives under `site/`; reads the shared root `docs/` tree via a `site/src/content/docs` symlink + Starlight's bundled `docsLoader()`. `Docs / Lint Markdown` and `Docs / Build Starlight` are required checks on `main`. Landing-page polish (hero, brand, sidebar reshape) is designed in DESIGN-0004 and not yet implemented.
 
 Authoring rules to keep both pipelines happy:
 

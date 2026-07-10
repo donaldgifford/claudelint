@@ -1,7 +1,7 @@
 ---
 id: IMPL-0003
 title: "Phase 3 — Dual-output docs site with Starlight"
-status: In Progress
+status: Completed
 author: Donald Gifford
 created: 2026-05-31
 ---
@@ -10,7 +10,7 @@ created: 2026-05-31
 
 # IMPL 0003: Phase 3 — Dual-output docs site with Starlight
 
-**Status:** Draft **Author:** Donald Gifford **Date:** 2026-05-31
+**Status:** Completed **Author:** Donald Gifford **Date:** 2026-05-31
 
 <!--toc:start-->
 - [Objective](#objective)
@@ -264,10 +264,13 @@ two clean PRs.
       _(separate `lint-md` job running `just lint-md`)_
 - [x] Also: extend `.github/labeler.yml` so PRs touching `site/**` get the
       `documentation` label.
-- [ ] First-pass: do **not** add to branch protection. Observe two PRs running
-      clean.
-- [ ] After two clean runs: add `Docs / build` (or chosen job name) as a
-      required status check.
+- [x] First-pass: do **not** add to branch protection. Observe two PRs running
+      clean. _(superseded — Donald promoted the checks directly after PR #40's
+      clean run rather than waiting for a second PR)_
+- [x] After two clean runs: add `Docs / build` (or chosen job name) as a
+      required status check. _(done — `Docs / Lint Markdown` +
+      `Docs / Build Starlight` added to `main` branch protection via the
+      dashboard, per PR #40's task list)_
 - [x] Update CLAUDE.md "Git / PR conventions" section to mention the docs check.
       _(added in 6fdacb2 — `Docs CI` bullet in CLAUDE.md L126)_
 
@@ -304,17 +307,17 @@ not yet at `claudelint.dev`.
       `cd site && npm install && npm run build`, build output directory =
       `site/dist`, root directory = repo root. _(working — preview builds
       succeed and serve the full site)_
-- [ ] Set Node version env var in Cloudflare Pages to match `mise.toml` Node pin
-      (currently `22.20.0`). _(builds pass on Cloudflare's default Node; confirm
-      the pin in dashboard settings so a future default-bump can't break us)_
-- [ ] Set production branch to `main`. _(confirm in dashboard; unverifiable
-      from the repo until the first post-merge deploy)_
+- [x] Set Node version env var in Cloudflare Pages to match `mise.toml` Node pin
+      (currently `22.20.0`). _(set via dashboard, per PR #40's task list)_
+- [x] Set production branch to `main`. _(confirmed — the post-merge production
+      deploy fired off PR #40's merge commit)_
 - [x] Enable preview deployments for all branches with open PRs. _(working —
       per-commit preview URLs like `115f2e1f.claudelint.pages.dev` plus the
       `docs-site.claudelint.pages.dev` branch alias)_
-- [ ] Trigger first deploy by pushing a no-op to `main` (or by manually
-      deploying); verify the Pages-assigned subdomain works. _(fires
-      automatically when PR #40 merges)_
+- [x] Trigger first deploy by pushing a no-op to `main` (or by manually
+      deploying); verify the Pages-assigned subdomain works. _(fired off PR
+      #40's merge — `claudelint.pages.dev` and `claudelint.dev` both serve
+      200, verified 2026-07-09)_
 - [x] Open a test PR that touches a doc; verify Cloudflare Pages auto-comments
       with the preview URL. _(PR #40 itself — the `Cloudflare Pages` status
       check carries the deploy link)_
@@ -347,14 +350,16 @@ dual-pipeline setup.
 
 #### Tasks
 
-- [ ] In Cloudflare DNS for `claudelint.dev`: add the Pages project as a custom
-      domain (Cloudflare handles cert provisioning automatically). _(blocked on
-      Phase 5 + dashboard access)_
-- [ ] Verify `https://claudelint.dev` resolves to the Starlight site with a
-      valid cert. _(blocked on Phase 5)_
+- [x] In Cloudflare DNS for `claudelint.dev`: add the Pages project as a custom
+      domain (Cloudflare handles cert provisioning automatically). _(done via
+      dashboard, per PR #40's task list)_
+- [x] Verify `https://claudelint.dev` resolves to the Starlight site with a
+      valid cert. _(verified 2026-07-09 after PR #40 merged — site, Pagefind,
+      rules reference, and in-site changelog all serve 200 over HTTPS)_
 - [ ] Test redirect behavior: HTTP → HTTPS, `www.claudelint.dev` →
-      `claudelint.dev` (or whichever direction you prefer). _(blocked on
-      Phase 5)_
+      `claudelint.dev` (or whichever direction you prefer). _(HTTP→HTTPS works;
+      `www.claudelint.dev` has **no DNS record** as of 2026-07-09 — Donald to
+      decide whether to add a www → apex redirect or leave www unresolvable)_
 - [x] Confirm `mkdocs build --strict` still passes against current `docs/`.
       _(passes via new `just docs-mkdocs-check` recipe — runs
       `mkdocs build --strict -d build/mkdocs` via uvx; fixed one pre-existing
@@ -375,10 +380,14 @@ dual-pipeline setup.
       recipe, the dual-output design pointer, and a note that the markdown lint
       config enforces CommonMark.
 - [x] Update IMPL-0003 phase checkboxes as work completes; flip status to
-      "Implemented" when all phases are done. _(checkboxes current; final status
-      flip waits on Phase 5)_
-- [ ] Move DESIGN-0003 status from "Draft" → "Implemented". _(waits on Phase 5 —
-      code side complete, deploy pending)_
+      "Implemented" when all phases are done. _(status flipped to Completed
+      2026-07-09 after the production deploy verified. Two items remain open
+      by design: the Mermaid parity check (deferred until the first Mermaid
+      block lands — neither pipeline has the plugin wired) and the
+      www-redirect decision + optional Cloudflare API secrets (Donald's
+      call). Landing-page polish continues in DESIGN-0004.)_
+- [x] Move DESIGN-0003 status from "Draft" → "Implemented". _(flipped
+      2026-07-09 alongside this doc's status)_
 
 #### Success Criteria
 
