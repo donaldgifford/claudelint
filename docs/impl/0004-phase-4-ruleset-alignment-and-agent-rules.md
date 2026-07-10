@@ -202,9 +202,14 @@ fingerprint change).
       (case-insensitive match). _(expanded list picked up automatically
       via `IsKnownHookEvent`; new `artifact.SuggestHookEvent` powers the
       did-you-mean message; rules.md notes the suggestion behavior)_
-- [ ] `commands/allowed-tools-known`: consume the shared splitter; accept
+- [x] `commands/allowed-tools-known`: consume the shared splitter; accept
       permission-rule and `mcp__*` forms; extend `AppliesTo` to run on
       skill `allowed-tools`/`disallowed-tools` too (per OQ7 decision).
+      _(splitter consumed at parse time; rule accepts `IsToolPattern`
+      forms and checks both tool-list keys on command + skill. The
+      `AppliesTo` change flipped the fingerprint, so the ruleset minor
+      bump landed here: `v1.3.0`, fingerprint tracked in
+      `expected_fingerprint.txt` per subsequent drift)_
 - [ ] `mcp/command-required`: fire only when `type` is `stdio` (or absent).
 - [ ] New `mcp/url-required` (schema/error): `http`/`sse`/`ws` transports
       must declare a non-empty `url`.

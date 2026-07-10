@@ -1,5 +1,6 @@
-// Package commands holds rules that only apply to slash-command
-// artifacts.
+// Package commands holds rules for slash-command artifacts. Where the
+// docs define one frontmatter model for commands and skills, a rule
+// here may also run on skills (see allowedToolsKnown).
 package commands
 
 import (
@@ -12,10 +13,13 @@ import (
 
 func init() { rules.Register(&allowedToolsKnown{}) }
 
-// allowedToolsKnown errors when a slash command's allowed-tools list
-// references a tool that is not in artifact.KnownTools. A typo in
-// allowed-tools silently strips the tool from the command — worth an
-// error-level signal.
+// allowedToolsKnown errors when an allowed-tools or disallowed-tools
+// list references a tool that is neither in artifact.KnownTools nor a
+// structurally valid pattern (permission rules like Bash(git add:*),
+// mcp__* references). A typo silently strips the tool — worth an
+// error-level signal. Commands and skills share one frontmatter
+// model, so the rule runs on both kinds; the ID keeps its historical
+// commands/ prefix.
 type allowedToolsKnown struct{}
 
 func (*allowedToolsKnown) ID() string                     { return "commands/allowed-tools-known" }
@@ -23,7 +27,7 @@ func (*allowedToolsKnown) Category() string               { return "schema" }
 func (*allowedToolsKnown) DefaultSeverity() diag.Severity { return diag.SeverityError }
 func (*allowedToolsKnown) DefaultOptions() map[string]any { return nil }
 func (*allowedToolsKnown) AppliesTo() []artifact.ArtifactKind {
-	return []artifact.ArtifactKind{artifact.KindCommand}
+	return []artifact.ArtifactKind{artifact.KindCommand, artifact.KindSkill}
 }
 
 func (*allowedToolsKnown) HelpURI() string {
@@ -31,23 +35,35 @@ func (*allowedToolsKnown) HelpURI() string {
 }
 
 func (r *allowedToolsKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
-	c, ok := a.(*artifact.Command)
-	if !ok {
+	switch v := a.(type) {
+	case *artifact.Command:
+		return append(
+			r.checkList(v.Path(), &v.Frontmatter, "allowed-tools", v.AllowedTools),
+			r.checkList(v.Path(), &v.Frontmatter, "disallowed-tools", v.DisallowedTools)...)
+	case *artifact.Skill:
+		return append(
+			r.checkList(v.Path(), &v.Frontmatter, "allowed-tools", v.AllowedTools),
+			r.checkList(v.Path(), &v.Frontmatter, "disallowed-tools", v.DisallowedTools)...)
+	default:
 		return nil
 	}
-	if len(c.AllowedTools) == 0 {
-		return nil
-	}
+}
+
+// checkList flags entries in one tool-list key that are neither known
+// tool names nor valid patterns per artifact.IsToolPattern.
+func (r *allowedToolsKnown) checkList(
+	path string, fm *artifact.Frontmatter, key string, tools []string,
+) []diag.Diagnostic {
 	var out []diag.Diagnostic
-	for _, tool := range c.AllowedTools {
-		if artifact.IsKnownTool(tool) {
+	for _, tool := range tools {
+		if artifact.IsKnownTool(tool) || artifact.IsToolPattern(tool) {
 			continue
 		}
 		out = append(out, diag.Diagnostic{
 			RuleID:  r.ID(),
-			Path:    c.Path(),
-			Range:   c.Frontmatter.KeyRange("allowed-tools"),
-			Message: fmt.Sprintf("unknown tool %q in allowed-tools", tool),
+			Path:    path,
+			Range:   fm.KeyRange(key),
+			Message: fmt.Sprintf("unknown tool %q in %s", tool, key),
 		})
 	}
 	return out

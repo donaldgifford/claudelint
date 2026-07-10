@@ -21,7 +21,7 @@ acknowledged.
 | `skills/no-version-field`             | schema   | warning | skill                 |
 | `claude_md/duplicate-directives`      | content  | warning | `CLAUDE.md`           |
 | `claude_md/size`                      | content  | warning | `CLAUDE.md`           |
-| `commands/allowed-tools-known`        | schema   | error   | command               |
+| `commands/allowed-tools-known`        | schema   | error   | command, skill        |
 | `hooks/event-name-known`              | schema   | error   | hook                  |
 | `hooks/timeout-present`               | content  | warning | hook                  |
 | `hooks/no-unsafe-shell`               | security | warning | hook                  |
@@ -127,8 +127,13 @@ Default cap is 30 000 bytes; override with:
 
 #### `commands/allowed-tools-known`
 
-Slash-command manifests declare `allowed-tools`; the rule checks every entry is
-a valid Claude tool name from the shipping set.
+Commands and skills share one frontmatter model, so the rule checks
+`allowed-tools` and `disallowed-tools` on both kinds. Every entry must be a
+known Claude tool name, an MCP pattern (`mcp__github`,
+`mcp__server__tool`), or a permission-rule form whose base is a known
+tool (`Bash(git add:*)`, `Agent(reviewer)`). Both the YAML-list and the
+comma/space-separated string forms are understood; separators inside
+parentheses don't split an entry.
 
 **Bad**: `allowed-tools: [WriteFil]` (typo) **Fix**: `allowed-tools: [Write]`.
 
