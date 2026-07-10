@@ -19,15 +19,33 @@ func (*ClaudeMD) Kind() ArtifactKind { return KindClaudeMD }
 
 // Skill is .claude/skills/<name>/SKILL.md plus the bag of companion
 // files (references/, scripts/, templates/) that live alongside it.
+// Skills and slash commands share one frontmatter model in the docs,
+// so the typed fields below mirror Command's.
 type Skill struct {
 	Base
 	Frontmatter Frontmatter
 	Body        diag.Range
 
-	Name         string
-	Description  string
-	Model        string
-	AllowedTools []string
+	Name        string
+	Description string
+	Model       string
+	// WhenToUse supplements Description for the model's
+	// should-I-invoke-this decision (frontmatter key when_to_use).
+	WhenToUse string
+	// Context is the execution context; the documented value is
+	// "fork", which pairs with Agent.
+	Context string
+	// Agent names the subagent that runs the skill when Context is
+	// "fork".
+	Agent           string
+	AllowedTools    []string
+	DisallowedTools []string
+	// DisableModelInvocation mirrors the declared bool; absent means
+	// false (the runtime default — the model may invoke the skill).
+	DisableModelInvocation bool
+	// UserInvocable is nil when the key is absent; the runtime
+	// defaults to true.
+	UserInvocable *bool
 
 	// Companions are the files indexed by the skill parser. Each
 	// entry is a relative path within the skill directory plus a
@@ -49,14 +67,27 @@ type Companion struct {
 }
 
 // Command is a slash-command definition (.claude/commands/*.md).
+// Commands share the skill frontmatter model — see Skill for field
+// semantics; ArgumentHint is the one command-only field.
 type Command struct {
 	Base
 	Frontmatter Frontmatter
 	Body        diag.Range
 
-	Description  string
-	ArgumentHint string
-	AllowedTools []string
+	Description     string
+	ArgumentHint    string
+	Model           string
+	WhenToUse       string
+	Context         string
+	Agent           string
+	AllowedTools    []string
+	DisallowedTools []string
+	// DisableModelInvocation mirrors the declared bool; absent means
+	// false (the runtime default).
+	DisableModelInvocation bool
+	// UserInvocable is nil when the key is absent; the runtime
+	// defaults to true.
+	UserInvocable *bool
 }
 
 // Kind implements Artifact.

@@ -31,7 +31,15 @@ func ParseSkill(path string, src []byte) (*Skill, *ParseError) {
 	s.Name = doc.asString("name")
 	s.Description = doc.asString("description")
 	s.Model = doc.asString("model")
+	s.WhenToUse = doc.asString("when_to_use")
+	s.Context = doc.asString("context")
+	s.Agent = doc.asString("agent")
 	s.AllowedTools = doc.asToolList("allowed-tools")
+	s.DisallowedTools = doc.asToolList("disallowed-tools")
+	s.DisableModelInvocation, _ = doc.asBool("disable-model-invocation")
+	if v, ok := doc.asBool("user-invocable"); ok {
+		s.UserInvocable = &v
+	}
 	return s, nil
 }
 
@@ -48,7 +56,16 @@ func ParseCommand(path string, src []byte) (*Command, *ParseError) {
 	}
 	c.Description = doc.asString("description")
 	c.ArgumentHint = doc.asString("argument-hint")
+	c.Model = doc.asString("model")
+	c.WhenToUse = doc.asString("when_to_use")
+	c.Context = doc.asString("context")
+	c.Agent = doc.asString("agent")
 	c.AllowedTools = doc.asToolList("allowed-tools")
+	c.DisallowedTools = doc.asToolList("disallowed-tools")
+	c.DisableModelInvocation, _ = doc.asBool("disable-model-invocation")
+	if v, ok := doc.asBool("user-invocable"); ok {
+		c.UserInvocable = &v
+	}
 	return c, nil
 }
 

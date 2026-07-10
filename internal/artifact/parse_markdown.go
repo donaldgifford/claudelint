@@ -270,6 +270,15 @@ func (d *markdownDoc) asStringList(key string) []string {
 	}
 }
 
+// asBool returns the bool value for key and whether the key was
+// declared as a bool. The second return lets parsers distinguish
+// "declared false" from "absent, runtime default applies" — which
+// matters for keys like user-invocable whose default is true.
+func (d *markdownDoc) asBool(key string) (value, declared bool) {
+	b, ok := d.fm[key].(bool)
+	return b, ok
+}
+
 // asToolList returns the tool-list value for key. A YAML sequence is
 // handled like asStringList — each element is one entry, verbatim, so
 // a quoted "Bash(git add:*)" survives untouched. A scalar string is

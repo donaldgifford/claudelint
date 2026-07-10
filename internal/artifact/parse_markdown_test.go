@@ -101,6 +101,95 @@ func TestParseCommandAndAgent(t *testing.T) {
 	}
 }
 
+// TestParseSkillMergedModelFields covers the frontmatter fields the
+// merged skill/command model added: when_to_use, context/agent fork
+// pairing, invocability toggles, and disallowed-tools.
+func TestParseSkillMergedModelFields(t *testing.T) {
+	src := []byte(
+		"---\n" +
+			"name: deployer\n" +
+			"description: deploy things\n" +
+			"when_to_use: when the user asks to ship\n" +
+			"context: fork\n" +
+			"agent: shipper\n" +
+			"disable-model-invocation: true\n" +
+			"user-invocable: false\n" +
+			"disallowed-tools: Write, Edit\n" +
+			"---\nbody\n")
+	s, perr := ParseSkill("skills/deployer/SKILL.md", src)
+	if perr != nil {
+		t.Fatalf("ParseSkill = %v", perr)
+	}
+	if s.WhenToUse != "when the user asks to ship" {
+		t.Errorf("WhenToUse = %q", s.WhenToUse)
+	}
+	if s.Context != "fork" || s.Agent != "shipper" {
+		t.Errorf("Context/Agent = %q/%q, want fork/shipper", s.Context, s.Agent)
+	}
+	if !s.DisableModelInvocation {
+		t.Errorf("DisableModelInvocation = false, want true")
+	}
+	if s.UserInvocable == nil || *s.UserInvocable {
+		t.Errorf("UserInvocable = %v, want declared false", s.UserInvocable)
+	}
+	if len(s.DisallowedTools) != 2 || s.DisallowedTools[0] != "Write" || s.DisallowedTools[1] != "Edit" {
+		t.Errorf("DisallowedTools = %v, want [Write Edit]", s.DisallowedTools)
+	}
+}
+
+// TestParseSkillDefaultsWhenFieldsAbsent pins the absent-key behavior:
+// user-invocable stays nil (runtime default true) rather than false.
+func TestParseSkillDefaultsWhenFieldsAbsent(t *testing.T) {
+	src := []byte("---\nname: minimal\ndescription: d\n---\nbody\n")
+	s, perr := ParseSkill("skills/minimal/SKILL.md", src)
+	if perr != nil {
+		t.Fatalf("ParseSkill = %v", perr)
+	}
+	if s.UserInvocable != nil {
+		t.Errorf("UserInvocable = %v, want nil for absent key", *s.UserInvocable)
+	}
+	if s.DisableModelInvocation {
+		t.Errorf("DisableModelInvocation = true, want false for absent key")
+	}
+	if s.WhenToUse != "" || s.Context != "" || s.Agent != "" || s.DisallowedTools != nil {
+		t.Errorf("absent fields should be zero: %+v", s)
+	}
+}
+
+// TestParseCommandMergedModelFields mirrors the skill test for the
+// command parser, including the command-level model override.
+func TestParseCommandMergedModelFields(t *testing.T) {
+	src := []byte(
+		"---\n" +
+			"description: run the deploy\n" +
+			"model: haiku\n" +
+			"when_to_use: shipping time\n" +
+			"context: fork\n" +
+			"agent: shipper\n" +
+			"user-invocable: true\n" +
+			"disallowed-tools:\n  - Write\n" +
+			"---\nbody\n")
+	c, perr := ParseCommand(".claude/commands/deploy.md", src)
+	if perr != nil {
+		t.Fatalf("ParseCommand = %v", perr)
+	}
+	if c.Model != "haiku" {
+		t.Errorf("Model = %q, want haiku", c.Model)
+	}
+	if c.WhenToUse != "shipping time" || c.Context != "fork" || c.Agent != "shipper" {
+		t.Errorf("WhenToUse/Context/Agent = %q/%q/%q", c.WhenToUse, c.Context, c.Agent)
+	}
+	if c.UserInvocable == nil || !*c.UserInvocable {
+		t.Errorf("UserInvocable = %v, want declared true", c.UserInvocable)
+	}
+	if c.DisableModelInvocation {
+		t.Errorf("DisableModelInvocation = true, want false for absent key")
+	}
+	if len(c.DisallowedTools) != 1 || c.DisallowedTools[0] != "Write" {
+		t.Errorf("DisallowedTools = %v, want [Write]", c.DisallowedTools)
+	}
+}
+
 // TestParseToolListStringForms covers the doc-canonical string forms:
 // comma-separated agent tools and space/comma-separated allowed-tools,
 // including permission-rule entries that must survive as one token.

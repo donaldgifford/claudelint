@@ -162,9 +162,13 @@ field ranges preferred).
       the reference grew by one since the INV-0006 audit; lifecycle-grouped
       table added to `docs/rules/rules.md` under `hooks/event-name-known`,
       count pinned by test)_
-- [ ] `ParseSkill`/`ParseCommand`: parse `when_to_use`, `model` (command),
+- [x] `ParseSkill`/`ParseCommand`: parse `when_to_use`, `model` (command),
       `context`, `agent`, `disable-model-invocation`, `user-invocable`,
       `disallowed-tools` — fields needed by Phases 2 and 5.
+      _(Skill and Command now share the merged frontmatter model;
+      `UserInvocable` is a `*bool` so rules can tell declared-false from
+      absent-defaults-true; `disallowed-tools` goes through the shared
+      splitter)_
 - [ ] Fixture sweep: add doc-valid testdata files exercising every new
       shape (an `mcpServers` file with `http` + `stdio` servers, a
       marketplace with all four object source types, a hooks file using
