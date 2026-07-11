@@ -222,6 +222,24 @@ high-entropy strings. False positives are suppressible per-path:
 **Bad**: a literal `AKIA...` string in a CLAUDE.md fixture. **Fix**: delete it,
 scrub via `git filter-branch`, rotate the key.
 
+#### `marketplace/plugin-source-valid`
+
+Every `plugins[]` entry needs a structurally complete `source`. String
+sources (a `./`-relative path, or legacy `github:`/URL shorthands) must be
+non-empty. Object sources must carry their kind's documented required
+fields:
+
+| `source` | Required fields |
+| --- | --- |
+| `github` | `repo` (`owner/repo`) |
+| `url` | `url` |
+| `git-subdir` | `url` and `path` |
+| `npm` | `package` |
+
+A `sha` pin, when present on a git-backed source, must be a full
+40-character hex commit. Whether a local path exists on disk is out of
+scope for this rule.
+
 #### `mcp/command-required` and `mcp/url-required`
 
 MCP servers declare how Claude Code reaches them via `type`: `stdio` (the

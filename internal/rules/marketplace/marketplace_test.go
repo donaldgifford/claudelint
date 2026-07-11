@@ -81,6 +81,38 @@ func TestPluginSourceValid(t *testing.T) {
 	}
 }
 
+func TestPluginSourceValidObjectSources(t *testing.T) {
+	const goodSHA = "0123456789abcdef0123456789abcdef01234567"
+	cases := []struct {
+		name   string
+		source string
+		wantN  int
+	}{
+		{"github ok", `{"source":"github","repo":"owner/repo"}`, 0},
+		{"github missing repo", `{"source":"github"}`, 1},
+		{"url ok", `{"source":"url","url":"https://git.example.com/x.git"}`, 0},
+		{"url missing url", `{"source":"url"}`, 1},
+		{"git-subdir ok", `{"source":"git-subdir","url":"https://git.example.com/x.git","path":"plugins/a"}`, 0},
+		{"git-subdir missing both", `{"source":"git-subdir"}`, 2},
+		{"npm ok", `{"source":"npm","package":"@scope/name"}`, 0},
+		{"npm missing package", `{"source":"npm"}`, 1},
+		{"unknown discriminator", `{"source":"carrier-pigeon"}`, 1},
+		{"github with full sha", `{"source":"github","repo":"o/r","sha":"` + goodSHA + `"}`, 0},
+		{"github with short sha", `{"source":"github","repo":"o/r","sha":"abc123"}`, 1},
+		{"url with non-hex sha", `{"source":"url","url":"https://x","sha":"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"}`, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t,
+				`{"name":"m","version":"1.0.0","plugins":[{"name":"p","source":`+tc.source+`}]}`)
+			d := (&pluginSourceValid{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Errorf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+		})
+	}
+}
+
 func TestPluginNameUniqueDuplicates(t *testing.T) {
 	m := &artifact.Marketplace{
 		Plugins: []artifact.MarketplacePlugin{

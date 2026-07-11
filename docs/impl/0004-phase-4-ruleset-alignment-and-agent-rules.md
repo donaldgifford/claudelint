@@ -220,10 +220,12 @@ fingerprint change).
       shared prose section with `mcp/command-required`)_
 - [x] `mcp/command-exists-on-path`: skip non-stdio transports.
       _(no fingerprint impact — behavior-only change inside Check)_
-- [ ] `marketplace/plugin-source-valid`: object sources validate per-type
+- [x] `marketplace/plugin-source-valid`: object sources validate per-type
       required fields (`repo` / `url` / `url`+`path` / `package`); string
       sources keep the non-empty check; `sha` when present must be a
-      40-char hex string.
+      40-char hex string. _(one diagnostic per missing requirement,
+      anchored to `SourceRange`; required-fields table added to
+      rules.md)_
 - [ ] `marketplace/external-source-skipped`: rework — object sources are
       now structured; the info diagnostic applies only to sources whose
       content genuinely can't be checked locally.
