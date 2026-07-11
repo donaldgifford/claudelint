@@ -507,9 +507,14 @@ proposed tables. One PR, minor release, fingerprint bump.
 - [x] `skills/fork-agent-pairing` (schema/warning): `agent:` without
       `context: fork`. _(anchors at the agent key range; fork without
       agent stays silent — a fork defaults its agent type)_
-- [ ] `claude_md/import-exists` (content/warning): `@path` imports resolve
+- [x] `claude_md/import-exists` (content/warning): `@path` imports resolve
       relative to the file (respecting `~`); flag chains beyond 4 hops;
-      skip code spans/fences per documented parser behavior.
+      skip code spans/fences per documented parser behavior. _(regex
+      with word-boundary guard so emails don't match; trailing
+      sentence punctuation trimmed; ranges via
+      `artifact.ResolveOffsetRange`; chain walk is cycle-safe and
+      capped; filesystem access is deliberate, like
+      command-exists-on-path)_
 - [ ] Fixtures for every rule (valid + invalid pairs).
 - [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors.
 - [ ] Dogfood pass; add "implemented by IMPL-0004" note to INV-0006 and

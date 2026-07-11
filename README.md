@@ -187,6 +187,7 @@ fails if the drift is not acknowledged.
 | `agents/plugin-ignored-fields`        | content   | warning  | agent                           |
 | `agents/tools-known`                  | schema    | warning  | agent                           |
 | `claude_md/duplicate-directives`      | content   | warning  | `CLAUDE.md`                     |
+| `claude_md/import-exists`             | content   | warning  | `CLAUDE.md`                     |
 | `claude_md/size`                      | content   | warning  | `CLAUDE.md`                     |
 | `commands/allowed-tools-known`        | schema    | error    | command, skill                  |
 | `hooks/event-name-known`              | schema    | error    | hook                            |

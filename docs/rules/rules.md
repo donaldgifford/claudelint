@@ -28,6 +28,7 @@ acknowledged.
 | `agents/plugin-ignored-fields`        | content  | warning | agent                 |
 | `agents/tools-known`                  | schema   | warning | agent                 |
 | `claude_md/duplicate-directives`      | content  | warning | `CLAUDE.md`           |
+| `claude_md/import-exists`             | content  | warning | `CLAUDE.md`           |
 | `claude_md/size`                      | content  | warning | `CLAUDE.md`           |
 | `commands/allowed-tools-known`        | schema   | error   | command, skill        |
 | `hooks/event-name-known`              | schema   | error   | hook                  |
@@ -252,6 +253,20 @@ access with no runtime signal.
 The rule flags identical lines appearing more than once.
 
 **Fix**: consolidate or delete the duplicate.
+
+#### `claude_md/import-exists`
+
+`@path` imports must resolve on disk. A missing import silently loads
+nothing into context — the reference reads as if it works. Relative
+paths resolve against the file containing the import (not the working
+directory); `@~/...` resolves against the home directory. Imports
+inside code spans (`` `@README` ``) and fenced code blocks are
+skipped, matching the documented parser behavior. The rule also flags
+imports that start a chain deeper than the documented four-hop
+recursion limit, past which content silently never loads.
+
+**Bad**: `See @docs/missing.md` where the file was renamed. **Fix**:
+update the path.
 
 #### `claude_md/size`
 
