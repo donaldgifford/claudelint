@@ -454,11 +454,15 @@ proposed tables. One PR, minor release, fingerprint bump.
       `model` evaluates as `inherit` under allowlist mode; diagnostics
       anchor at the model key, falling back to name key / body — never
       file-level (0,0))_
-- [ ] `hooks/type-known` (schema/error): `type` in the five documented
-      values; absent = `command`.
-- [ ] `hooks/type-fields` (schema/error): per-type required fields
+- [x] `hooks/type-known` (schema/error): `type` in the five documented
+      values; absent = `command`. _(new `artifact.KnownHookTypes` +
+      `IsKnownHookType`; anchors at `TypeRange`)_
+- [x] `hooks/type-fields` (schema/error): per-type required fields
       (`command` needs `command`; `http` needs `url`; `mcp_tool` needs
-      `server` + `tool`; `prompt`/`agent` need `prompt`).
+      `server` + `tool`; `prompt`/`agent` need `prompt`). _(one
+      diagnostic per missing field; unknown declared types left to
+      type-known; anchor walks the entry's per-key ranges since the
+      parser leaves `EventRange` unset)_
 - [ ] `mcp/transport-known` (schema/warning): `type` in
       `stdio`/`http`/`sse`/`ws`; `sse` additionally flagged as
       documented-deprecated (info).

@@ -17,7 +17,7 @@ func init() { rules.Register(&eventNameKnown{}) }
 type eventNameKnown struct{}
 
 func (*eventNameKnown) ID() string                     { return "hooks/event-name-known" }
-func (*eventNameKnown) Category() string               { return "schema" }
+func (*eventNameKnown) Category() string               { return categorySchema }
 func (*eventNameKnown) DefaultSeverity() diag.Severity { return diag.SeverityError }
 func (*eventNameKnown) DefaultOptions() map[string]any { return nil }
 func (*eventNameKnown) AppliesTo() []artifact.ArtifactKind {

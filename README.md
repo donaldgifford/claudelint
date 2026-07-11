@@ -188,6 +188,8 @@ fails if the drift is not acknowledged.
 | `claude_md/size`                      | content   | warning  | `CLAUDE.md`                     |
 | `commands/allowed-tools-known`        | schema    | error    | command, skill                  |
 | `hooks/event-name-known`              | schema    | error    | hook                            |
+| `hooks/type-known`                    | schema    | error    | hook                            |
+| `hooks/type-fields`                   | schema    | error    | hook                            |
 | `hooks/timeout-present`               | content   | warning  | hook                            |
 | `hooks/no-unsafe-shell`               | security  | warning  | hook                            |
 | `plugin/manifest-fields`              | schema    | error    | plugin                          |

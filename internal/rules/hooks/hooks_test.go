@@ -211,3 +211,85 @@ func TestTimeoutPresentMissingPerEntryHasNonZeroRange(t *testing.T) {
 		t.Errorf("diagnostic Range is zero (file-level), want pointer to the offending command")
 	}
 }
+
+// typedHook builds a one-entry hooks.json whose inner hook object is
+// the given raw JSON, so type-oriented rules can exercise arbitrary
+// field combinations.
+func typedHook(t *testing.T, inner string) *artifact.Hook {
+	t.Helper()
+	src := []byte(`{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[` + inner + `]}]}}`)
+	h, perr := artifact.ParseHook(".claude/hooks/x.json", src)
+	if perr != nil {
+		t.Fatalf("ParseHook = %v", perr)
+	}
+	return h
+}
+
+func TestTypeKnown(t *testing.T) {
+	cases := []struct {
+		name  string
+		inner string
+		wantN int
+	}{
+		{"absent type defaults to command", `{"command":"true"}`, 0},
+		{"command", `{"type":"command","command":"true"}`, 0},
+		{"http", `{"type":"http","url":"http://localhost/h"}`, 0},
+		{"mcp_tool", `{"type":"mcp_tool","server":"s","tool":"t"}`, 0},
+		{"prompt", `{"type":"prompt","prompt":"p"}`, 0},
+		{"agent", `{"type":"agent","prompt":"p"}`, 0},
+		{"unknown webhook", `{"type":"webhook","url":"http://localhost/h"}`, 1},
+		{"casing counts", `{"type":"Command","command":"true"}`, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := typedHook(t, tc.inner)
+			d := (&typeKnown{}).Check(nil, h)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, "want command, http, mcp_tool, prompt, or agent") {
+					t.Errorf("message should list valid types, got %q", d[0].Message)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the type key")
+				}
+			}
+		})
+	}
+}
+
+func TestTypeFields(t *testing.T) {
+	cases := []struct {
+		name        string
+		inner       string
+		wantMissing []string
+	}{
+		{"command complete", `{"type":"command","command":"true"}`, nil},
+		{"defaulted command missing command", `{"timeout":5}`, []string{"command"}},
+		{"http missing url", `{"type":"http"}`, []string{"url"}},
+		{"mcp_tool missing tool", `{"type":"mcp_tool","server":"s"}`, []string{"tool"}},
+		{"mcp_tool missing both", `{"type":"mcp_tool"}`, []string{"server", "tool"}},
+		{"prompt missing prompt", `{"type":"prompt"}`, []string{"prompt"}},
+		{"agent missing prompt", `{"type":"agent"}`, []string{"prompt"}},
+		{"agent complete", `{"type":"agent","prompt":"p"}`, nil},
+		{"unknown type left to type-known", `{"type":"webhook"}`, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := typedHook(t, tc.inner)
+			d := (&typeFields{}).Check(nil, h)
+			if len(d) != len(tc.wantMissing) {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), len(tc.wantMissing), d)
+			}
+			for i, want := range tc.wantMissing {
+				if !strings.Contains(d[i].Message, `"`+want+`"`) {
+					t.Errorf("diagnostic %d = %q, want field %q named", i, d[i].Message, want)
+				}
+				if d[i].Range.IsZero() {
+					t.Errorf("diagnostic %d should carry a non-zero range", i)
+				}
+			}
+		})
+	}
+}

@@ -49,7 +49,7 @@ func (r *noUnsafeShell) Check(_ rules.Context, a artifact.Artifact) []diag.Diagn
 	var out []diag.Diagnostic
 	for i := range h.Entries {
 		e := &h.Entries[i]
-		if e.EffectiveType() != "command" || e.ExecForm {
+		if e.EffectiveType() != typeCommand || e.ExecForm {
 			continue
 		}
 		if !unsafeShellPattern.MatchString(e.Command) {

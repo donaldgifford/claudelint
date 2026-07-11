@@ -202,3 +202,20 @@ func SuggestHookEvent(name string) (suggestion string, ok bool) {
 	}
 	return "", false
 }
+
+// KnownHookTypes mirrors the five documented hook type values
+// (2026-07). An absent `type` defaults to "command"
+// (HookEntry.EffectiveType), so rules only validate declared values.
+var KnownHookTypes = map[string]struct{}{
+	"command":  {},
+	"http":     {},
+	"mcp_tool": {},
+	"prompt":   {},
+	"agent":    {},
+}
+
+// IsKnownHookType reports whether name is a documented hook type.
+func IsKnownHookType(name string) bool {
+	_, ok := KnownHookTypes[name]
+	return ok
+}

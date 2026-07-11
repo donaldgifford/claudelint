@@ -29,6 +29,8 @@ acknowledged.
 | `claude_md/size`                      | content  | warning | `CLAUDE.md`           |
 | `commands/allowed-tools-known`        | schema   | error   | command, skill        |
 | `hooks/event-name-known`              | schema   | error   | hook                  |
+| `hooks/type-known`                    | schema   | error   | hook                  |
+| `hooks/type-fields`                   | schema   | error   | hook                  |
 | `hooks/timeout-present`               | content  | warning | hook                  |
 | `hooks/no-unsafe-shell`               | security | warning | hook                  |
 | `plugin/manifest-fields`              | schema   | error   | plugin                |
@@ -263,6 +265,25 @@ July 2026). Names are case-sensitive.
 | Context & config | `PreCompact`, `PostCompact`, `InstructionsLoaded`, `ConfigChange` |
 | Environment | `CwdChanged`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove` |
 | UI & elicitation | `Notification`, `MessageDisplay`, `Elicitation`, `ElicitationResult` |
+
+#### `hooks/type-known`
+
+A declared hook `type` must be one of the five documented values:
+`command`, `http`, `mcp_tool`, `prompt`, `agent`. Claude Code treats
+anything else as misconfiguration and the hook never fires. Omitting
+the key is fine — it defaults to `command`.
+
+**Bad**: `"type": "webhook"` **Fix**: `"type": "http"`.
+
+#### `hooks/type-fields`
+
+Each hook type has a required payload field, and an entry without it
+is silently inert: `command` hooks need `command`, `http` hooks need
+`url`, `mcp_tool` hooks need both `server` and `tool`, and `prompt` /
+`agent` hooks need `prompt`. One diagnostic per missing field; entries
+with an unknown declared `type` are left to `hooks/type-known`.
+
+**Bad**: `{"type": "http", "timeout": 10}` **Fix**: add `"url": "..."`.
 
 #### `hooks/timeout-present`
 
