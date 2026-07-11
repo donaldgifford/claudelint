@@ -371,9 +371,11 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       only, per the documented constraint. _(`^[a-z]+(-[a-z]+)*$` — also
       rejects leading/trailing/double hyphens; empty names left to
       `schema/frontmatter-required`)_
-- [ ] `agents/tools-known` (schema/warning): shared splitter + classifier
+- [x] `agents/tools-known` (schema/warning): shared splitter + classifier
       over `tools` and `disallowedTools`; diagnostic explains Claude Code
-      silently ignores unknown names.
+      silently ignores unknown names. _(splitting happens at parse time;
+      the rule reuses `IsKnownTool` + `IsToolPattern` like
+      `commands/allowed-tools-known`)_
 - [ ] `agents/plugin-ignored-fields` (content/warning): plugin-rooted
       agents declaring `mcpServers`/`hooks`/`permissionMode` (documented
       as ignored for plugin subagents).

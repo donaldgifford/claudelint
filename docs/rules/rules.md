@@ -21,6 +21,7 @@ acknowledged.
 | `skills/no-version-field`             | schema   | warning | skill                 |
 | `agents/model-valid`                  | schema   | warning | agent, skill, command |
 | `agents/name-format`                  | schema   | warning | agent                 |
+| `agents/tools-known`                  | schema   | warning | agent                 |
 | `claude_md/duplicate-directives`      | content  | warning | `CLAUDE.md`           |
 | `claude_md/size`                      | content  | warning | `CLAUDE.md`           |
 | `commands/allowed-tools-known`        | schema   | error   | command, skill        |
@@ -145,6 +146,16 @@ resolve by undocumented filesystem order — nonconforming names misbehave
 in hard-to-debug ways.
 
 **Bad**: `name: Code_Reviewer` **Fix**: `name: code-reviewer`.
+
+#### `agents/tools-known`
+
+Entries in an agent's `tools` and `disallowedTools` must be known tool
+names, MCP patterns (`mcp__server`, `mcp__server__tool`), or
+permission-rule forms (`Bash(git diff:*)`). Claude Code silently
+ignores unknown names, so a typo widens or narrows the agent's tool
+access with no runtime signal.
+
+**Bad**: `tools: Read, Wrte` **Fix**: `tools: Read, Write`.
 
 #### `claude_md/duplicate-directives`
 

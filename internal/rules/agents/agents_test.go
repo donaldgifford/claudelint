@@ -92,6 +92,37 @@ func TestNameFormat(t *testing.T) {
 	}
 }
 
+func TestToolsKnown(t *testing.T) {
+	cases := []struct {
+		name  string
+		extra string
+		wantN int
+	}{
+		{"no lists", "", 0},
+		{"valid names and patterns", "tools: Read, Grep, mcp__github, Bash(git diff:*)\n", 0},
+		{"typo in tools", "tools: Read, Wrte\n", 1},
+		{"typo in disallowedTools", "disallowedTools: Wrte\n", 1},
+		{"typos in both", "tools: Frob\ndisallowedTools: Nicate\n", 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			a := newAgent(t, tc.extra)
+			d := (&toolsKnown{}).Check(nil, a)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			for _, dd := range d {
+				if !strings.Contains(dd.Message, "silently ignores") {
+					t.Errorf("message should explain the silent-ignore behavior, got %q", dd.Message)
+				}
+				if dd.Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the offending key range")
+				}
+			}
+		})
+	}
+}
+
 func TestModelValidRunsOnSkillsAndCommands(t *testing.T) {
 	s, perr := artifact.ParseSkill("skills/x/SKILL.md",
 		[]byte("---\nname: x\ndescription: d\nmodel: sonet\n---\nbody\n"))
