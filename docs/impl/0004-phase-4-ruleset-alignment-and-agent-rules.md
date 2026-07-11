@@ -284,9 +284,12 @@ fingerprint change).
       transport-field additions; CLAUDE.md's locked-decision bullet
       updated from "servers{} — revisit if docs standardize" to the
       adopted mcpServers{} + legacy-tag state)_
-- [ ] Dogfood: run against a `donaldgifford/claude-skills` checkout and
+- [x] Dogfood: run against a `donaldgifford/claude-skills` checkout and
       the claudelint repo itself (`just self-check`); triage every
-      new/changed diagnostic.
+      new/changed diagnostic. _(both clean on 2026-07-10: self-check
+      0 diagnostics / 3 files; claude-skills@b2d72f1 0 diagnostics /
+      149 files — nothing to triage. `claudelint version` reports
+      ruleset v1.3.0 (6900b22e), catalog 34 rules)_
 
 #### Success Criteria
 
