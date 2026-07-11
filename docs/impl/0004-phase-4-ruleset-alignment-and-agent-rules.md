@@ -446,9 +446,14 @@ proposed tables. One PR, minor release, fingerprint bump.
 
 #### Tasks
 
-- [ ] `agents/model-policy` (error, opt-in per the OQ4/DESIGN-0005
+- [x] `agents/model-policy` (error, opt-in per the OQ4/DESIGN-0005
       mechanism): `require = "inherit"` (absent key compliant) or
-      `allowlist = [...]` option shapes.
+      `allowlist = [...]` option shapes. _(first rule on the Phase 4
+      OptIn mechanism; exactly-one-option enforced with loud config
+      errors incl. allowlist entries failing `IsValidModelRef`; absent
+      `model` evaluates as `inherit` under allowlist mode; diagnostics
+      anchor at the model key, falling back to name key / body — never
+      file-level (0,0))_
 - [ ] `hooks/type-known` (schema/error): `type` in the five documented
       values; absent = `command`.
 - [ ] `hooks/type-fields` (schema/error): per-type required fields

@@ -20,6 +20,7 @@ acknowledged.
 | `skills/body-size`                    | content  | warning | skill                 |
 | `skills/no-version-field`             | schema   | warning | skill                 |
 | `agents/field-enums`                  | schema   | warning | agent                 |
+| `agents/model-policy` (opt-in)        | schema   | error   | agent                 |
 | `agents/model-valid`                  | schema   | warning | agent, skill, command |
 | `agents/name-format`                  | schema   | warning | agent                 |
 | `agents/plugin-ignored-fields`        | content  | warning | agent                 |
@@ -141,6 +142,33 @@ sets: `permissionMode` (`default`, `acceptEdits`, `auto`, `dontAsk`,
 field has a default.
 
 **Bad**: `effort: turbo` **Fix**: `effort: high`.
+
+#### `agents/model-policy`
+
+Governance policy over agent `model` declarations, for teams that want
+to pin which models agents may request.
+
+**Opt-in.** Without a `rule "agents/model-policy"` block in
+`.claudelint.hcl` the rule does not run at all. Once a block exists,
+exactly one option must be set:
+
+    rule "agents/model-policy" {
+      options = {
+        require = "inherit"
+      }
+    }
+
+- `require = "inherit"` — every agent must inherit the session model:
+  compliant when `model` is absent or `inherit`; anything else fires.
+- `allowlist = ["opus", "claude-sonnet-5", "inherit"]` — a declared
+  `model` must be in the list; an absent key is evaluated as `inherit`
+  (the documented default).
+
+Both options set, neither set, `require` set to anything but
+`"inherit"`, or an allowlist entry that is not a valid model reference
+all produce a loud config-error diagnostic per agent — an explicit
+enable that cannot be evaluated is a misconfiguration, not a silent
+no-op.
 
 #### `agents/model-valid`
 

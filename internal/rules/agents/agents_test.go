@@ -194,6 +194,119 @@ func TestFieldEnums(t *testing.T) {
 	}
 }
 
+// optCtx stubs rules.Context for option-driven rule tests.
+type optCtx struct{ opts map[string]any }
+
+func (*optCtx) RuleID() string          { return "" }
+func (c *optCtx) Option(key string) any { return c.opts[key] }
+func (*optCtx) Logf(_ string, _ ...any) {}
+
+func TestModelPolicy(t *testing.T) {
+	cases := []struct {
+		name    string
+		extra   string // agent frontmatter beyond name/description
+		opts    map[string]any
+		wantN   int
+		wantSub string // substring every diagnostic must contain
+	}{
+		{
+			name:    "no options is a config error",
+			opts:    map[string]any{},
+			wantN:   1,
+			wantSub: "enabled without options",
+		},
+		{
+			name:    "both options is a config error",
+			opts:    map[string]any{"require": "inherit", "allowlist": []any{"opus"}},
+			wantN:   1,
+			wantSub: "mutually exclusive",
+		},
+		{
+			name:    "require only supports inherit",
+			opts:    map[string]any{"require": "sonnet"},
+			wantN:   1,
+			wantSub: `only supports "inherit"`,
+		},
+		{
+			name:    "allowlist must be strings",
+			opts:    map[string]any{"allowlist": []any{42}},
+			wantN:   1,
+			wantSub: "must be a list of strings",
+		},
+		{
+			name:    "invalid allowlist entry",
+			opts:    map[string]any{"allowlist": []any{"gpt-4"}},
+			wantN:   1,
+			wantSub: "not a valid model reference",
+		},
+		{
+			name:  "require inherit passes absent model",
+			opts:  map[string]any{"require": "inherit"},
+			wantN: 0,
+		},
+		{
+			name:  "require inherit passes explicit inherit",
+			extra: "model: inherit\n",
+			opts:  map[string]any{"require": "inherit"},
+			wantN: 0,
+		},
+		{
+			name:    "require inherit flags declared model",
+			extra:   "model: opus\n",
+			opts:    map[string]any{"require": "inherit"},
+			wantN:   1,
+			wantSub: "violates the require",
+		},
+		{
+			name:  "allowlist passes listed model",
+			extra: "model: opus\n",
+			opts:  map[string]any{"allowlist": []any{"opus", "inherit"}},
+			wantN: 0,
+		},
+		{
+			name:    "allowlist flags unlisted model",
+			extra:   "model: haiku\n",
+			opts:    map[string]any{"allowlist": []any{"opus"}},
+			wantN:   1,
+			wantSub: "not in the configured model allowlist",
+		},
+		{
+			name:  "absent model evaluates as inherit",
+			opts:  map[string]any{"allowlist": []any{"inherit"}},
+			wantN: 0,
+		},
+		{
+			name:    "absent model fires when inherit not allowed",
+			opts:    map[string]any{"allowlist": []any{"opus"}},
+			wantN:   1,
+			wantSub: `"inherit" is not in the configured model allowlist`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			a := newAgent(t, tc.extra)
+			d := (&modelPolicy{}).Check(&optCtx{opts: tc.opts}, a)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			for _, dd := range d {
+				if tc.wantSub != "" && !strings.Contains(dd.Message, tc.wantSub) {
+					t.Errorf("message = %q, want substring %q", dd.Message, tc.wantSub)
+				}
+				if dd.Range.IsZero() {
+					t.Errorf("diagnostic should carry a non-zero range")
+				}
+			}
+		})
+	}
+}
+
+func TestModelPolicyIsOptIn(t *testing.T) {
+	if !rules.IsOptIn(&modelPolicy{}) {
+		t.Error("agents/model-policy must be opt-in")
+	}
+}
+
 // TestFixtureSweep runs every rule in this package against the shared
 // doc-valid full-field fixture (must stay silent) and a kitchen-sink
 // invalid agent (every rule must fire with a usable range) — the
