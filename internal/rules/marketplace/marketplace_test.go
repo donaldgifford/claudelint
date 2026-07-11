@@ -387,3 +387,53 @@ func TestSourcePathSafety(t *testing.T) {
 		})
 	}
 }
+
+func TestRenamesValid(t *testing.T) {
+	manifest := func(renames string) string {
+		return `{"name":"m","owner":{"name":"a"},"renames":` + renames +
+			`,"plugins":[{"name":"current","source":"./p"}]}`
+	}
+	cases := []struct {
+		name    string
+		body    string
+		wantN   int
+		wantSub string
+	}{
+		{"no renames", `{"name":"m","owner":{"name":"a"},"plugins":[]}`, 0, ""},
+		{"rename to listed plugin", manifest(`{"old":"current"}`), 0, ""},
+		{"rename to null (removed)", manifest(`{"old":null}`), 0, ""},
+		{"two-hop chain to listed", manifest(`{"oldest":"old","old":"current"}`), 0, ""},
+		{
+			"dangling target",
+			manifest(`{"old":"ghost"}`),
+			1, `neither null nor a listed plugin`,
+		},
+		{
+			"chain reports only the broken link",
+			manifest(`{"oldest":"old","old":"ghost"}`),
+			1, `"ghost" (from "old")`,
+		},
+		{
+			"two-node cycle reported once",
+			manifest(`{"a":"b","b":"a"}`),
+			1, "never terminates (cycle)",
+		},
+		{
+			"self cycle",
+			manifest(`{"a":"a"}`),
+			1, "cycle",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			d := (&renamesValid{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 && !strings.Contains(d[0].Message, tc.wantSub) {
+				t.Errorf("message = %q, want substring %q", d[0].Message, tc.wantSub)
+			}
+		})
+	}
+}

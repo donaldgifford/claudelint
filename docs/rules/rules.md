@@ -44,6 +44,7 @@ acknowledged.
 | `marketplace/plugin-name-matches-dir` | style    | warning | marketplace           |
 | `marketplace/name-format`             | style    | warning | marketplace           |
 | `marketplace/source-path-safety`      | security | error   | marketplace           |
+| `marketplace/renames-valid`           | schema   | error   | marketplace           |
 | `marketplace/owner-required`          | schema   | warning | marketplace           |
 | `marketplace/author-legacy`           | style    | info    | marketplace           |
 | `marketplace/version-missing`         | style    | info    | marketplace           |
@@ -385,6 +386,20 @@ shapes are out of scope.
 
 **Bad**: `"source": "../shared/plugin"` **Fix**: move the plugin into
 the repo and reference it with `./`.
+
+#### `marketplace/renames-valid`
+
+Every `renames{}` migration chain must terminate — at `null` (plugin
+removed) or at a name listed in `plugins[]` — and no chain may cycle.
+A dangling or cyclic rename strands existing installs mid-migration:
+Claude Code follows the chain to find the current plugin and never
+arrives. One diagnostic per broken link; each cycle is reported once.
+The parser stores no per-entry ranges for `renames{}`, so diagnostics
+anchor at the manifest's `name` field.
+
+**Bad**: `"renames": {"old-name": "ghost"}` where `ghost` isn't
+listed. **Fix**: point the rename at the current entry name, or use
+`null` if the plugin was removed.
 
 #### `marketplace/reserved-name`
 

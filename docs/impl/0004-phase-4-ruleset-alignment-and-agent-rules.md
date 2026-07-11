@@ -496,8 +496,11 @@ proposed tables. One PR, minor release, fingerprint bump.
       `Marketplace.PluginRoot` (metadata.pluginRoot) — bare sources are
       documented-valid under a pluginRoot, so only the `..` check
       applies there; anchors at `SourceRange`)_
-- [ ] `marketplace/renames-valid` (schema/error): chains terminate at
-      `null` or a listed plugin; no cycles.
+- [x] `marketplace/renames-valid` (schema/error): chains terminate at
+      `null` or a listed plugin; no cycles. _(one diagnostic per
+      broken link — not per chain crossing it; cycles reported once,
+      rotated to the smallest member for determinism; anchors at
+      `NameRange` since the parser stores no renames{} entry ranges)_
 - [ ] `skills/description-length` (content/warning): `description` +
       `when_to_use` combined at most 1,536 chars.
 - [ ] `skills/fork-agent-pairing` (schema/warning): `agent:` without

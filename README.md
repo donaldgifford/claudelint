@@ -203,6 +203,7 @@ fails if the drift is not acknowledged.
 | `marketplace/plugin-name-matches-dir` | style     | warning  | marketplace                     |
 | `marketplace/name-format`             | style     | warning  | marketplace                     |
 | `marketplace/source-path-safety`      | security  | error    | marketplace                     |
+| `marketplace/renames-valid`           | schema    | error    | marketplace                     |
 | `marketplace/owner-required`          | schema    | warning  | marketplace                     |
 | `marketplace/author-legacy`           | style     | info     | marketplace                     |
 | `marketplace/version-missing`         | style     | info     | marketplace                     |
