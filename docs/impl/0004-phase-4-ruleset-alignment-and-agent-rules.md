@@ -413,9 +413,19 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       new-rule prose lives in rules.md per this phase's convention;
       detail entries come from the registry and were smoke-verified
       for all five agents rules + server-allowlist)_
-- [ ] Coverage: new `internal/rules/agents` package must clear the 55%
-      floor (plan tests before code).
-- [ ] Dogfood pass (claude-skills ships plugin agents — prime corpus).
+- [x] Coverage: new `internal/rules/agents` package must clear the 55%
+      floor (plan tests before code). _(65.9%; `just coverage-gate`
+      exits 0. Tests were written alongside each rule — table-driven
+      per rule + the fixture sweep)_
+- [x] Dogfood pass (claude-skills ships plugin agents — prime corpus).
+      _(claude-skills@6c326a3: 7 warnings / 149 files, all
+      `agents/name-format` on colon-prefixed names
+      (`name: docz:doc-recommender` etc.) — triaged as TRUE positives:
+      Claude Code auto-prefixes the plugin name, so those declarations
+      render doubled (`docz:docz:doc-recommender`) while bare-name
+      plugins (go-development, hugo, libtftest) render clean. Fix
+      belongs in claude-skills. No false positives; `just self-check`
+      clean at 0/3)_
 
 #### Success Criteria
 
