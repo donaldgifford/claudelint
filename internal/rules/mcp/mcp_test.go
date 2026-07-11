@@ -258,3 +258,68 @@ func TestServerAllowlistRangePointsAtServer(t *testing.T) {
 		t.Errorf("diagnostic Range is zero; should point at server name")
 	}
 }
+
+// parseOneServer parses a single-server mcpServers document built
+// from the given server-object JSON.
+func parseOneServer(t *testing.T, serverJSON string) *artifact.MCPServer {
+	t.Helper()
+	src := []byte(`{"mcpServers":{"s":` + serverJSON + `}}`)
+	servers, perr := artifact.ParseMCPFile(".mcp.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMCPFile: %v", perr)
+	}
+	if len(servers) != 1 {
+		t.Fatalf("expected 1 server, got %d", len(servers))
+	}
+	return servers[0]
+}
+
+func TestTransportKnown(t *testing.T) {
+	cases := []struct {
+		name   string
+		server string
+		wantN  int
+	}{
+		{"absent type defaults to stdio", `{"command":"uvx"}`, 0},
+		{"stdio", `{"type":"stdio","command":"uvx"}`, 0},
+		{"http", `{"type":"http","url":"https://x/mcp"}`, 0},
+		{"sse is known here", `{"type":"sse","url":"https://x/sse"}`, 0},
+		{"ws", `{"type":"ws","url":"wss://x/ws"}`, 0},
+		{"unknown grpc", `{"type":"grpc","url":"https://x"}`, 1},
+		{"casing counts", `{"type":"HTTP","url":"https://x"}`, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := parseOneServer(t, tc.server)
+			d := (&transportKnown{}).Check(nil, s)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, "want stdio, http, sse, or ws") {
+					t.Errorf("message should list transports, got %q", d[0].Message)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the type key")
+				}
+			}
+		})
+	}
+}
+
+func TestTransportDeprecated(t *testing.T) {
+	s := parseOneServer(t, `{"type":"sse","url":"https://x/sse"}`)
+	d := (&transportDeprecated{}).Check(nil, s)
+	if len(d) != 1 {
+		t.Fatalf("sse server: got %d diagnostics, want 1 (%v)", len(d), d)
+	}
+	if !strings.Contains(d[0].Message, "deprecated") || d[0].Range.IsZero() {
+		t.Errorf("diagnostic = %+v", d[0])
+	}
+
+	for _, ok := range []string{`{"type":"http","url":"https://x"}`, `{"command":"uvx"}`} {
+		if d := (&transportDeprecated{}).Check(nil, parseOneServer(t, ok)); len(d) != 0 {
+			t.Errorf("non-sse server flagged: %v", d)
+		}
+	}
+}

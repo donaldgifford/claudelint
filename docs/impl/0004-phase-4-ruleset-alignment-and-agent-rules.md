@@ -463,9 +463,13 @@ proposed tables. One PR, minor release, fingerprint bump.
       diagnostic per missing field; unknown declared types left to
       type-known; anchor walks the entry's per-key ranges since the
       parser leaves `EventRange` unset)_
-- [ ] `mcp/transport-known` (schema/warning): `type` in
+- [x] `mcp/transport-known` (schema/warning): `type` in
       `stdio`/`http`/`sse`/`ws`; `sse` additionally flagged as
-      documented-deprecated (info).
+      documented-deprecated (info). _(split into two rules — the
+      engine assigns one severity per rule, same precedent as
+      version-semver/version-missing: `transport-known`
+      (schema/warning, unknown values) + `transport-deprecated`
+      (schema/info, sse advisory))_
 - [ ] `mcp/no-secrets-in-headers` (security/error): reuse the
       `no-secrets-in-env` detector over `headers` values (or fold into
       that rule — pick during build, note in rules.md either way).

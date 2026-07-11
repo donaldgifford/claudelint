@@ -210,6 +210,8 @@ fails if the drift is not acknowledged.
 | `mcp/command-exists-on-path`          | schema    | warning  | mcp_server                      |
 | `mcp/no-unsafe-shell`                 | security  | error    | mcp_server                      |
 | `mcp/no-secrets-in-env`               | security  | error    | mcp_server                      |
+| `mcp/transport-known`                 | schema    | warning  | mcp_server                      |
+| `mcp/transport-deprecated`            | schema    | info     | mcp_server                      |
 | `mcp/disabled-commented`              | style     | info     | mcp_server                      |
 | `mcp/legacy-servers-key`              | schema    | info     | mcp_server                      |
 | `mcp/server-allowlist` (opt-in)       | security  | error    | mcp_server                      |

@@ -51,6 +51,8 @@ acknowledged.
 | `mcp/command-exists-on-path`          | schema   | warning | mcp_server            |
 | `mcp/no-unsafe-shell`                 | security | error   | mcp_server            |
 | `mcp/no-secrets-in-env`               | security | error   | mcp_server            |
+| `mcp/transport-known`                 | schema   | warning | mcp_server            |
+| `mcp/transport-deprecated`            | schema   | info    | mcp_server            |
 | `mcp/disabled-commented`              | style    | info    | mcp_server            |
 | `mcp/legacy-servers-key`              | schema   | info    | mcp_server            |
 | `mcp/server-allowlist` (opt-in)       | security | error   | mcp_server            |
@@ -415,6 +417,19 @@ server without a `url` is fine.
 
 **Bad**: `{ "type": "http" }` (no url) **Fix**:
 `{ "type": "http", "url": "https://mcp.example.com/mcp" }`.
+
+#### `mcp/transport-known` and `mcp/transport-deprecated`
+
+A declared server `type` must be one of the four documented
+transports: `stdio`, `http`, `sse`, `ws` — Claude Code cannot connect
+over anything else, so the server silently never loads
+(`transport-known`, warning). Omitting the key defaults to `stdio`.
+`sse` parses as known but is documented-deprecated in favor of
+`http`; that advisory is a separate info-severity rule
+(`transport-deprecated`) because the engine assigns one severity per
+rule.
+
+**Bad**: `"type": "grpc"` **Fix**: `"type": "http"`.
 
 #### `mcp/legacy-servers-key`
 
