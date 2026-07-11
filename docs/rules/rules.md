@@ -20,6 +20,7 @@ acknowledged.
 | `skills/body-size`                    | content  | warning | skill                 |
 | `skills/description-length`           | content  | warning | skill                 |
 | `skills/no-version-field`             | schema   | warning | skill                 |
+| `skills/fork-agent-pairing`           | schema   | warning | skill                 |
 | `agents/field-enums`                  | schema   | warning | agent                 |
 | `agents/model-policy` (opt-in)        | schema   | error   | agent                 |
 | `agents/model-valid`                  | schema   | warning | agent, skill, command |
@@ -115,6 +116,16 @@ characters, overridable:
     rule "skills/description-length" { options = { max_chars = 1024 } }
 
 **Fix**: tighten the description; move detail into the skill body.
+
+#### `skills/fork-agent-pairing`
+
+A skill's `agent:` field only means something with `context: fork` —
+it names the subagent type the fork runs as. Declared without the
+pairing it is dead config that reads as if the skill delegates to
+that agent.
+
+**Bad**: `agent: shipper` alone. **Fix**: add `context: fork` or drop
+the `agent:` line.
 
 #### `skills/trigger-clarity`
 

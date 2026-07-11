@@ -504,8 +504,9 @@ proposed tables. One PR, minor release, fingerprint bump.
 - [x] `skills/description-length` (content/warning): `description` +
       `when_to_use` combined at most 1,536 chars. _(`max_chars` option,
       default 1536; anchors at the description key range)_
-- [ ] `skills/fork-agent-pairing` (schema/warning): `agent:` without
-      `context: fork`.
+- [x] `skills/fork-agent-pairing` (schema/warning): `agent:` without
+      `context: fork`. _(anchors at the agent key range; fork without
+      agent stays silent — a fork defaults its agent type)_
 - [ ] `claude_md/import-exists` (content/warning): `@path` imports resolve
       relative to the file (respecting `~`); flag chains beyond 4 hops;
       skip code spans/fences per documented parser behavior.

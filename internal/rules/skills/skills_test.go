@@ -152,3 +152,38 @@ func TestDescriptionLength(t *testing.T) {
 		t.Errorf("max_chars=100 should flag a 200-char description, got %v", d)
 	}
 }
+
+func TestForkAgentPairing(t *testing.T) {
+	cases := []struct {
+		name  string
+		fm    string
+		wantN int
+	}{
+		{"no agent", "", 0},
+		{"agent with fork", "context: fork\nagent: shipper\n", 0},
+		{"agent without context", "agent: shipper\n", 1},
+		{"agent with non-fork context", "context: session\nagent: shipper\n", 1},
+		{"fork without agent is fine", "context: fork\n", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			src := []byte("---\nname: s\ndescription: d\n" + tc.fm + "---\nbody\n")
+			s, perr := artifact.ParseSkill("skills/s/SKILL.md", src)
+			if perr != nil {
+				t.Fatalf("ParseSkill = %v", perr)
+			}
+			d := (&forkAgentPairing{}).Check(nil, s)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, "context: fork") {
+					t.Errorf("message = %q", d[0].Message)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the agent key")
+				}
+			}
+		})
+	}
+}
