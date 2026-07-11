@@ -43,6 +43,7 @@ acknowledged.
 | `marketplace/plugin-name-unique`      | schema   | error   | marketplace           |
 | `marketplace/plugin-name-matches-dir` | style    | warning | marketplace           |
 | `marketplace/name-format`             | style    | warning | marketplace           |
+| `marketplace/source-path-safety`      | security | error   | marketplace           |
 | `marketplace/owner-required`          | schema   | warning | marketplace           |
 | `marketplace/author-legacy`           | style    | info    | marketplace           |
 | `marketplace/version-missing`         | style    | info    | marketplace           |
@@ -372,6 +373,18 @@ sync rejects violations. Empty names are left to `marketplace/name`
 and `marketplace/plugin-source-valid`.
 
 **Bad**: `"name": "Acme Tools"` **Fix**: `"name": "acme-tools"`.
+
+#### `marketplace/source-path-safety`
+
+Local plugin sources must start with `./` and must not contain `..`
+segments — Claude Code's validator rejects both, and a `..` path that
+slipped through would read outside the marketplace repo. When the
+manifest declares `metadata.pluginRoot`, bare sources (`"formatter"`)
+are documented-valid and only the `..` check applies. Remote source
+shapes are out of scope.
+
+**Bad**: `"source": "../shared/plugin"` **Fix**: move the plugin into
+the repo and reference it with `./`.
 
 #### `marketplace/reserved-name`
 

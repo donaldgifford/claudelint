@@ -274,6 +274,11 @@ type Marketplace struct {
 	// plugin names cannot legitimately be empty. Nil when absent.
 	Renames map[string]string
 
+	// PluginRoot is metadata.pluginRoot — a base directory prepended
+	// to relative plugin source paths, which makes bare (non-"./")
+	// sources documented-valid. Empty when absent.
+	PluginRoot string
+
 	// Plugins is the parsed plugins[] array, in manifest order.
 	Plugins []MarketplacePlugin
 }

@@ -334,3 +334,56 @@ func TestNameFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestSourcePathSafety(t *testing.T) {
+	plugins := func(entries string) string {
+		return `{"name":"m","owner":{"name":"a"},"plugins":[` + entries + `]}`
+	}
+	cases := []struct {
+		name    string
+		body    string
+		wantN   int
+		wantSub string
+	}{
+		{"dot-slash source passes", plugins(`{"name":"p","source":"./plugins/p"}`), 0, ""},
+		{"root source passes", plugins(`{"name":"p","source":"./"}`), 0, ""},
+		{
+			"bare path without pluginRoot",
+			plugins(`{"name":"p","source":"plugins/p"}`),
+			1, `must start with "./"`,
+		},
+		{
+			"bare name with pluginRoot passes",
+			`{"name":"m","owner":{"name":"a"},"metadata":{"pluginRoot":"./plugins"},"plugins":[{"name":"p","source":"formatter"}]}`,
+			0, "",
+		},
+		{
+			"dotdot flagged even with pluginRoot",
+			`{"name":"m","owner":{"name":"a"},"metadata":{"pluginRoot":"./plugins"},"plugins":[{"name":"p","source":"../outside"}]}`,
+			1, `".." segment`,
+		},
+		{
+			"dotdot mid-path",
+			plugins(`{"name":"p","source":"./plugins/../../etc"}`),
+			1, `".." segment`,
+		},
+		{"remote source out of scope", plugins(`{"name":"p","source":"github:o/r"}`), 0, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			d := (&sourcePathSafety{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, tc.wantSub) {
+					t.Errorf("message = %q, want substring %q", d[0].Message, tc.wantSub)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the source value")
+				}
+			}
+		})
+	}
+}

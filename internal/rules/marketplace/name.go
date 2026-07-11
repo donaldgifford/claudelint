@@ -14,8 +14,9 @@ import (
 // Shared category names. Using constants here both documents the
 // rule categorization and keeps goconst happy.
 const (
-	categorySchema = "schema"
-	categoryStyle  = "style"
+	categorySchema   = "schema"
+	categoryStyle    = "style"
+	categorySecurity = "security"
 )
 
 func init() { rules.Register(&name{}) }

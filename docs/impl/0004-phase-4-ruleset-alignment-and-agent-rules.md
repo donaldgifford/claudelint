@@ -491,8 +491,11 @@ proposed tables. One PR, minor release, fingerprint bump.
       _(`^[a-z0-9]+(-[a-z0-9]+)*$`; one diagnostic per offending name
       at its range; empty names left to marketplace/name +
       plugin-source-valid)_
-- [ ] `marketplace/source-path-safety` (security/error): relative sources
-      start with `./`; no `..` segments.
+- [x] `marketplace/source-path-safety` (security/error): relative sources
+      start with `./`; no `..` segments. _(parser gained
+      `Marketplace.PluginRoot` (metadata.pluginRoot) — bare sources are
+      documented-valid under a pluginRoot, so only the `..` check
+      applies there; anchors at `SourceRange`)_
 - [ ] `marketplace/renames-valid` (schema/error): chains terminate at
       `null` or a listed plugin; no cycles.
 - [ ] `skills/description-length` (content/warning): `description` +

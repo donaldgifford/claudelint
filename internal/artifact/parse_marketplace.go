@@ -53,6 +53,7 @@ func ParseMarketplace(filePath string, src []byte) (*Marketplace, *ParseError) {
 	m.OwnerName, m.OwnerRange = stringFieldPath(src, &base, []string{"owner", "name"})
 	m.OwnerEmail, _ = stringFieldPath(src, &base, []string{"owner", "email"})
 	m.Renames = parseRenames(src)
+	m.PluginRoot, _ = stringFieldPath(src, &base, []string{"metadata", "pluginRoot"})
 	m.Plugins = parseMarketplacePlugins(src, &base, marketplaceRoot(filePath))
 
 	return m, nil
