@@ -213,8 +213,11 @@ fingerprint change).
 - [x] `mcp/command-required`: fire only when `type` is `stdio` (or absent).
       _(gates on `EffectiveTransport() == "stdio"`; message now names the
       transport requirement)_
-- [ ] New `mcp/url-required` (schema/error): `http`/`sse`/`ws` transports
-      must declare a non-empty `url`.
+- [x] New `mcp/url-required` (schema/error): `http`/`sse`/`ws` transports
+      must declare a non-empty `url`. _(range prefers `TransportRange`;
+      unknown transports deliberately out of scope pending
+      `mcp/transport-known` in Phase 5; rules.md + README rows added,
+      shared prose section with `mcp/command-required`)_
 - [ ] `mcp/command-exists-on-path`: skip non-stdio transports.
 - [ ] `marketplace/plugin-source-valid`: object sources validate per-type
       required fields (`repo` / `url` / `url`+`path` / `package`); string

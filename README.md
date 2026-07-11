@@ -195,6 +195,7 @@ fails if the drift is not acknowledged.
 | `marketplace/author-required`         | style     | info     | marketplace                     |
 | `marketplace/external-source-skipped` | schema    | info     | marketplace                     |
 | `mcp/command-required`                | schema    | error    | mcp_server                      |
+| `mcp/url-required`                    | schema    | error    | mcp_server                      |
 | `mcp/server-name-required`            | schema    | error    | mcp_server                      |
 | `mcp/command-exists-on-path`          | schema    | warning  | mcp_server                      |
 | `mcp/no-unsafe-shell`                 | security  | error    | mcp_server                      |

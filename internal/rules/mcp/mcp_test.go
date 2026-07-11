@@ -32,6 +32,35 @@ func TestCommandRequired(t *testing.T) {
 	}
 }
 
+func TestURLRequired(t *testing.T) {
+	cases := []struct {
+		name      string
+		transport string
+		url       string
+		wantN     int
+	}{
+		{"http with url", "http", "https://mcp.example.com/mcp", 0},
+		{"http missing url", "http", "", 1},
+		{"sse missing url", "sse", "", 1},
+		{"ws missing url", "ws", "", 1},
+		{"stdio needs no url", "", "", 0},
+		{"explicit stdio needs no url", "stdio", "", 0},
+		{"unknown transport out of scope", "carrier-pigeon", "", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &artifact.MCPServer{Name: "srv", Transport: tc.transport, URL: tc.url}
+			got := (&urlRequired{}).Check(nil, s)
+			if len(got) != tc.wantN {
+				t.Errorf("got %d diagnostics, want %d", len(got), tc.wantN)
+			}
+			if tc.wantN == 1 && !strings.Contains(got[0].Message, tc.transport) {
+				t.Errorf("message should name the transport, got %q", got[0].Message)
+			}
+		})
+	}
+}
+
 func TestCommandExistsOnPath(t *testing.T) {
 	cases := []struct {
 		name    string

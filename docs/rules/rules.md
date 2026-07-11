@@ -36,6 +36,7 @@ acknowledged.
 | `marketplace/author-required`         | style    | info    | marketplace           |
 | `marketplace/external-source-skipped` | schema   | info    | marketplace           |
 | `mcp/command-required`                | schema   | error   | mcp_server            |
+| `mcp/url-required`                    | schema   | error   | mcp_server            |
 | `mcp/server-name-required`            | schema   | error   | mcp_server            |
 | `mcp/command-exists-on-path`          | schema   | warning | mcp_server            |
 | `mcp/no-unsafe-shell`                 | security | error   | mcp_server            |
@@ -220,6 +221,18 @@ high-entropy strings. False positives are suppressible per-path:
 
 **Bad**: a literal `AKIA...` string in a CLAUDE.md fixture. **Fix**: delete it,
 scrub via `git filter-branch`, rotate the key.
+
+#### `mcp/command-required` and `mcp/url-required`
+
+MCP servers declare how Claude Code reaches them via `type`: `stdio` (the
+default when omitted) launches a local process and requires a non-empty
+`command`; the remote transports `http`, `sse`, and `ws` connect to an
+endpoint and require a non-empty `url`. Each rule checks only its own
+transports, so an `http` server without a `command` is fine and a `stdio`
+server without a `url` is fine.
+
+**Bad**: `{ "type": "http" }` (no url) **Fix**:
+`{ "type": "http", "url": "https://mcp.example.com/mcp" }`.
 
 #### `mcp/server-allowlist`
 
