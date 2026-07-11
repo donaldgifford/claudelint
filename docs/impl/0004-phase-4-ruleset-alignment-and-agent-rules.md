@@ -272,8 +272,12 @@ fingerprint change).
       message names the git-SHA fallback; rules.md gains the
       stricter-by-design blockquote and drops its wrong claim that
       `description` was checked)_
-- [ ] Ruleset version bump + fingerprint ack; `docs/rules/rules.md` +
-      README rule anchors updated for every touched rule.
+- [x] Ruleset version bump + fingerprint ack; `docs/rules/rules.md` +
+      README rule anchors updated for every touched rule. _(v1.3.0 landed
+      with the first fingerprint-flipping change; expected_fingerprint.txt
+      re-acked per drift. Catalog is 34 rules; verified every registered
+      ID appears in both the rules.md and README tables; README prose
+      sweep mirrored all reworded entries and both headers now say v1.3)_
 - [ ] Update DESIGN-0002 §2.2 (`servers` vs `mcpServers`) to record the
       resolution; cross-link INV-0006.
 - [ ] Dogfood: run against a `donaldgifford/claude-skills` checkout and
