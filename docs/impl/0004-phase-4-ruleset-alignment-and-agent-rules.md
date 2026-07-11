@@ -210,7 +210,9 @@ fingerprint change).
       `AppliesTo` change flipped the fingerprint, so the ruleset minor
       bump landed here: `v1.3.0`, fingerprint tracked in
       `expected_fingerprint.txt` per subsequent drift)_
-- [ ] `mcp/command-required`: fire only when `type` is `stdio` (or absent).
+- [x] `mcp/command-required`: fire only when `type` is `stdio` (or absent).
+      _(gates on `EffectiveTransport() == "stdio"`; message now names the
+      transport requirement)_
 - [ ] New `mcp/url-required` (schema/error): `http`/`sse`/`ws` transports
       must declare a non-empty `url`.
 - [ ] `mcp/command-exists-on-path`: skip non-stdio transports.

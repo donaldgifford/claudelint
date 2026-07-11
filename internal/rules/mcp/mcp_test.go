@@ -9,16 +9,21 @@ import (
 
 func TestCommandRequired(t *testing.T) {
 	cases := []struct {
-		name    string
-		command string
-		wantN   int
+		name      string
+		command   string
+		transport string
+		wantN     int
 	}{
-		{"present", "uvx", 0},
-		{"missing", "", 1},
+		{"present", "uvx", "", 0},
+		{"missing", "", "", 1},
+		{"missing with explicit stdio", "", "stdio", 1},
+		{"http server has url instead", "", "http", 0},
+		{"sse server has url instead", "", "sse", 0},
+		{"ws server has url instead", "", "ws", 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &artifact.MCPServer{Name: "srv", Command: tc.command}
+			s := &artifact.MCPServer{Name: "srv", Command: tc.command, Transport: tc.transport}
 			got := (&commandRequired{}).Check(nil, s)
 			if len(got) != tc.wantN {
 				t.Errorf("got %d diagnostics, want %d", len(got), tc.wantN)
