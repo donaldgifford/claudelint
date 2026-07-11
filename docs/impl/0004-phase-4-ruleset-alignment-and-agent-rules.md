@@ -515,7 +515,15 @@ proposed tables. One PR, minor release, fingerprint bump.
       `artifact.ResolveOffsetRange`; chain walk is cycle-safe and
       capped; filesystem access is deliberate, like
       command-exists-on-path)_
-- [ ] Fixtures for every rule (valid + invalid pairs).
+- [x] Fixtures for every rule (valid + invalid pairs). _(valid+invalid
+      pairs live inline in each package's table-driven tests with
+      range assertions, per the Phase 4 convention. New doc-valid
+      testdata: `ok/marketplaces/renames/` (renames{} + pluginRoot,
+      asserted by a parser test) and `ok/claudemd/imports.md`
+      (resolving import + span/fence literals, swept by
+      `TestImportExistsFixture`). The `traditional` marketplace
+      fixture was renamed off "anthropic-plugins" — that name is now
+      reserved, so it was no longer doc-valid)_
 - [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors.
 - [ ] Dogfood pass; add "implemented by IMPL-0004" note to INV-0006 and
       flip this doc to Completed.

@@ -163,3 +163,21 @@ func TestImportExists(t *testing.T) {
 		}
 	})
 }
+
+// TestImportExistsFixture runs the rule over the checked-in doc-valid
+// fixture: the sibling import resolves, span/fence mentions stay
+// literal.
+func TestImportExistsFixture(t *testing.T) {
+	p := filepath.Join("..", "..", "artifact", "testdata", "ok", "claudemd", "imports.md")
+	src, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, perr := artifact.ParseClaudeMD(p, src)
+	if perr != nil {
+		t.Fatalf("ParseClaudeMD = %v", perr)
+	}
+	if d := (&importExists{}).Check(nil, c); len(d) != 0 {
+		t.Errorf("doc-valid imports fixture flagged: %v", d)
+	}
+}

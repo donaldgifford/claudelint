@@ -36,12 +36,15 @@ func TestParseMarketplaceFixtures(t *testing.T) {
 			},
 		},
 		{
-			name:     "traditional",
-			file:     "testdata/ok/marketplaces/traditional/marketplace.json",
-			relPath:  "repo/.claude-plugin/marketplace.json",
-			wantName: "anthropic-plugins",
+			name:    "traditional",
+			file:    "testdata/ok/marketplaces/traditional/marketplace.json",
+			relPath: "repo/.claude-plugin/marketplace.json",
+			// "anthropic-plugins" until Phase 5 — that name is now on
+			// the documented reserved list, so the doc-valid fixture
+			// uses a neutral one.
+			wantName: "acme-plugins",
 			wantVer:  "2.3.1",
-			wantAuth: "Anthropic",
+			wantAuth: "Acme",
 			plugins: []wantPlugin{
 				{name: "donald-loop", source: "./plugins/donald-loop", resolved: "repo/plugins/donald-loop"},
 				{name: "docz", source: "./plugins/docz", resolved: "repo/plugins/docz"},
@@ -341,5 +344,25 @@ func TestMarketplaceRoot(t *testing.T) {
 		if got := marketplaceRoot(tt.path); got != tt.want {
 			t.Errorf("marketplaceRoot(%q) = %q, want %q", tt.path, got, tt.want)
 		}
+	}
+}
+
+func TestParseMarketplaceRenamesAndPluginRoot(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/renames/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+	if m.PluginRoot != "./plugins" {
+		t.Errorf("PluginRoot = %q, want ./plugins", m.PluginRoot)
+	}
+	if got := m.Renames["old-formatter"]; got != "formatter" {
+		t.Errorf(`Renames["old-formatter"] = %q, want "formatter"`, got)
+	}
+	if got, ok := m.Renames["legacy-linter"]; !ok || got != "" {
+		t.Errorf(`Renames["legacy-linter"] = (%q, %v), want ("", true) for null`, got, ok)
 	}
 }

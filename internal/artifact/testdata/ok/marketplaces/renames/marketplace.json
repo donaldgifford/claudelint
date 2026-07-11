@@ -1,0 +1,21 @@
+{
+  "name": "renamed-tools",
+  "owner": {
+    "name": "Acme",
+    "email": "tools@acme.test"
+  },
+  "version": "3.0.0",
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
+  "renames": {
+    "old-formatter": "formatter",
+    "legacy-linter": null
+  },
+  "plugins": [
+    {
+      "name": "formatter",
+      "source": "formatter"
+    }
+  ]
+}
