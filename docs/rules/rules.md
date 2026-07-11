@@ -197,10 +197,15 @@ in CI and records the latency you actually expect.
 
 #### `hooks/no-unsafe-shell`
 
-Flags `eval`, unquoted `$VAR`, and other shell smells inside hook commands.
+Flags network-download-into-shell pipes (`curl ... | sh` and variants)
+inside hook commands. Only shell-form `command` hooks are checked:
+non-`command` types have no shell, and entries with `args` run exec-form
+(argv spawned directly), so pipe characters there are literal arguments,
+not shell syntax.
 
-**Bad**: `command: "eval $(curl $URL)"` **Fix**: quote `"$URL"`, drop the
-`eval`, or rewrite as a script file.
+**Bad**: `command: "curl https://get.example.sh | bash"` **Fix**: vendor
+the script into the repo and run it directly, or verify a pinned
+checksum before executing.
 
 #### `plugin/manifest-fields`
 

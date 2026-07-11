@@ -16,6 +16,11 @@ func init() { rules.Register(&noUnsafeShell{}) }
 // running arbitrary code from a network source — a warning is
 // enough to surface it; users who know what they are doing can
 // suppress the rule.
+//
+// Only shell-form command hooks are in scope: non-command types have
+// no shell, and an entry with args[] runs exec-form (argv spawned
+// directly, no shell interpretation), so pipe smells cannot fire
+// there.
 type noUnsafeShell struct{}
 
 // unsafeShellPattern matches `curl|wget|fetch ... | sh|bash|zsh`
@@ -44,6 +49,9 @@ func (r *noUnsafeShell) Check(_ rules.Context, a artifact.Artifact) []diag.Diagn
 	var out []diag.Diagnostic
 	for i := range h.Entries {
 		e := &h.Entries[i]
+		if e.EffectiveType() != "command" || e.ExecForm {
+			continue
+		}
 		if !unsafeShellPattern.MatchString(e.Command) {
 			continue
 		}

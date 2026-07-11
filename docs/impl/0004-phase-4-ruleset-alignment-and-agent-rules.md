@@ -256,8 +256,10 @@ fingerprint change).
       warning; message cites the per-type documented default — 600 s
       command/http/mcp_tool, 30 s prompt, 60 s agent — and frames the
       nudge as fail-faster-in-CI, not hang prevention)_
-- [ ] `hooks/no-unsafe-shell`: skip exec-form entries (`args` present) and
-      non-`command` hook types.
+- [x] `hooks/no-unsafe-shell`: skip exec-form entries (`args` present) and
+      non-`command` hook types. _(gates on `EffectiveType() == "command"
+      && !ExecForm`; rules.md entry corrected — it described eval/unquoted-
+      var smells the rule never actually checked)_
 - [ ] `schema/frontmatter-required`: reword skill diagnostics to
       best-practice phrasing without changing behavior (per OQ2 decision).
 - [ ] `skills/no-version-field` + `plugin/manifest-fields`: help-text
