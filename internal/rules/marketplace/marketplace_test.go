@@ -253,3 +253,33 @@ func TestExternalSourceSkippedObjectSources(t *testing.T) {
 		}
 	}
 }
+
+func TestReservedName(t *testing.T) {
+	ok := newMarketplace(t,
+		`{"name":"acme-tools","owner":{"name":"acme"},"plugins":[]}`)
+	if d := (&reservedName{}).Check(nil, ok); len(d) != 0 {
+		t.Errorf("ordinary name flagged: %v", d)
+	}
+
+	for _, bad := range []string{"anthropic-plugins", "healthcare", "claude-code-marketplace"} {
+		m := newMarketplace(t,
+			`{"name":"`+bad+`","owner":{"name":"acme"},"plugins":[]}`)
+		d := (&reservedName{}).Check(nil, m)
+		if len(d) != 1 {
+			t.Fatalf("%s: got %d diagnostics, want 1 (%v)", bad, len(d), d)
+		}
+		if !strings.Contains(d[0].Message, "reserved for official Anthropic use") {
+			t.Errorf("message = %q", d[0].Message)
+		}
+		if d[0].Range.IsZero() {
+			t.Errorf("diagnostic should anchor at the name key")
+		}
+	}
+
+	// Near-misses are server-side territory, not ours.
+	near := newMarketplace(t,
+		`{"name":"official-claude-plugins","owner":{"name":"acme"},"plugins":[]}`)
+	if d := (&reservedName{}).Check(nil, near); len(d) != 0 {
+		t.Errorf("impersonation heuristics should not fire locally: %v", d)
+	}
+}

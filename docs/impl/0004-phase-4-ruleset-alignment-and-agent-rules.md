@@ -480,9 +480,12 @@ proposed tables. One PR, minor release, fingerprint bump.
       with a seconds-vs-milliseconds hint. _(message suggests the
       ×1000 value; anchors at `NameRange` since the parser stores no
       timeout range; absent (0) passes)_
-- [ ] `marketplace/reserved-name` (schema/error): the 16 documented
+- [x] `marketplace/reserved-name` (schema/error): the 16 documented
       reserved names, exact match; impersonation heuristics deliberately
-      NOT attempted (enforced server-side by claude.ai).
+      NOT attempted (enforced server-side by claude.ai). _(list
+      verified against the plugin-marketplaces reference as of
+      v2.1.205 — includes `first-party-plugins` + `healthcare`;
+      anchors at `NameRange`)_
 - [ ] `marketplace/name-format` (style/warning): kebab-case for
       marketplace name + plugin entry names.
 - [ ] `marketplace/source-path-safety` (security/error): relative sources

@@ -195,6 +195,7 @@ fails if the drift is not acknowledged.
 | `plugin/manifest-fields`              | schema    | error    | plugin                          |
 | `plugin/semver`                       | schema    | warning  | plugin                          |
 | `marketplace/name`                    | schema    | error    | marketplace                     |
+| `marketplace/reserved-name`           | schema    | error    | marketplace                     |
 | `marketplace/version-semver`          | schema    | error    | marketplace                     |
 | `marketplace/plugins-nonempty`        | schema    | warning  | marketplace                     |
 | `marketplace/plugin-source-valid`     | schema    | error    | marketplace                     |

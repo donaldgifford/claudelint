@@ -36,6 +36,7 @@ acknowledged.
 | `plugin/manifest-fields`              | schema   | error   | plugin                |
 | `plugin/semver`                       | schema   | warning | plugin                |
 | `marketplace/name`                    | schema   | error   | marketplace           |
+| `marketplace/reserved-name`           | schema   | error   | marketplace           |
 | `marketplace/version-semver`          | schema   | error   | marketplace           |
 | `marketplace/plugins-nonempty`        | schema   | warning | marketplace           |
 | `marketplace/plugin-source-valid`     | schema   | error   | marketplace           |
@@ -360,6 +361,19 @@ high-entropy strings. False positives are suppressible per-path:
 
 **Bad**: a literal `AKIA...` string in a CLAUDE.md fixture. **Fix**: delete it,
 scrub via `git filter-branch`, rotate the key.
+
+#### `marketplace/reserved-name`
+
+Sixteen marketplace names are reserved for official Anthropic use
+(e.g. `anthropic-plugins`, `claude-code-marketplace`, `agent-skills`,
+`healthcare`). Claude Code re-checks the list on every load, so a
+manifest shipping one stops loading for every user. Exact match only —
+impersonation lookalikes (`official-claude-plugins`) are blocked
+server-side by claude.ai, and this rule deliberately does not attempt
+those heuristics.
+
+**Fix**: pick a name that identifies you or your org
+(`acme-tools`).
 
 #### `marketplace/plugin-source-valid`
 
