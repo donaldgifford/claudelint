@@ -278,8 +278,12 @@ fingerprint change).
       re-acked per drift. Catalog is 34 rules; verified every registered
       ID appears in both the rules.md and README tables; README prose
       sweep mirrored all reworded entries and both headers now say v1.3)_
-- [ ] Update DESIGN-0002 §2.2 (`servers` vs `mcpServers`) to record the
-      resolution; cross-link INV-0006.
+- [x] Update DESIGN-0002 §2.2 (`servers` vs `mcpServers`) to record the
+      resolution; cross-link INV-0006. _(resolution blockquote in the
+      MCP artifact section, linking INV-0006 and noting the v1.3.0
+      transport-field additions; CLAUDE.md's locked-decision bullet
+      updated from "servers{} — revisit if docs standardize" to the
+      adopted mcpServers{} + legacy-tag state)_
 - [ ] Dogfood: run against a `donaldgifford/claude-skills` checkout and
       the claudelint repo itself (`just self-check`); triage every
       new/changed diagnostic.

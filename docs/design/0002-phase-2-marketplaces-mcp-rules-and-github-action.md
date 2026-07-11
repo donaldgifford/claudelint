@@ -190,6 +190,21 @@ MCP servers are declared two ways in the Claude Code ecosystem:
 Both are JSON, both use the same schema; the only difference is the
 parent document. We handle both with one parser and one rule set.
 
+> **Resolution (2026-07, ruleset v1.3.0).** Claude Code's docs
+> standardized project-scoped `.mcp.json` on a top-level `mcpServers{}`
+> key, not the `servers{}` this section originally specified — the
+> divergence made doc-valid files lint as empty
+> ([INV-0006](../investigation/0006-rule-coverage-audit-against-current-claude-code-docs.md)).
+> Per IMPL-0004 OQ1, `ParseMCPFile` now reads `mcpServers{}` as the
+> primary key and still accepts `servers{}` (tagged
+> `LegacyServersKey`, surfaced by the `mcp/legacy-servers-key` info
+> rule; `mcpServers` wins when both are present). Legacy-key support
+> drops at the next major ruleset revision. Plugin-embedded servers
+> keep `mcp.servers{}` — that shape is unchanged. The `MCPServer`
+> struct below is the Phase 2 shape; v1.3.0 added the documented
+> transport fields (`type`, `url`, `headers`, `headersHelper`,
+> `timeout`, `alwaysLoad`, `oauth` presence).
+
 #### New artifact kind
 
 Add `KindMCPServer` to `internal/artifact/types.go`. The artifact
