@@ -61,6 +61,29 @@ type Rule interface {
 	Check(ctx Context, a artifact.Artifact) []diag.Diagnostic
 }
 
+// OptIn marks a rule as disabled-by-default. The engine runs an
+// opt-in rule only when the user's config contains a `rule "<id>"`
+// block for it (any block, even empty — `enabled = false` inside the
+// block still disables it). Without a block the rule is skipped
+// entirely and emits nothing.
+//
+// Use this for governance rules whose defaults cannot be sensible for
+// every repo (e.g. mcp/server-allowlist): running them unconfigured
+// would either spam diagnostics or silently no-op. See DESIGN-0005 §5.
+type OptIn interface {
+	// OptIn reports whether the rule requires an explicit config
+	// block to run. Implementations return a constant.
+	OptIn() bool
+}
+
+// IsOptIn reports whether r is an opt-in rule. Rules that do not
+// implement OptIn are always-on (subject to the usual enabled/path
+// config filters).
+func IsOptIn(r Rule) bool {
+	o, ok := r.(OptIn)
+	return ok && o.OptIn()
+}
+
 // Context is everything a rule is allowed to see beyond the artifact:
 // resolved options for this rule, the rule's own ID, and a leveled
 // logger. Kept deliberately narrow so rules stay testable in isolation

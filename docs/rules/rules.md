@@ -50,7 +50,7 @@ acknowledged.
 | `mcp/no-secrets-in-env`               | security | error   | mcp_server            |
 | `mcp/disabled-commented`              | style    | info    | mcp_server            |
 | `mcp/legacy-servers-key`              | schema   | info    | mcp_server            |
-| `mcp/server-allowlist`                | security | error   | mcp_server            |
+| `mcp/server-allowlist` (opt-in)       | security | error   | mcp_server            |
 | `security/secrets`                    | security | error   | every kind            |
 | `style/no-emoji`                      | style    | info    | every kind            |
 
@@ -380,7 +380,9 @@ to drop at the next major ruleset revision — rename the key now.
 Restricts MCP servers to a vetted list. Useful for marketplace owners who want
 every plugin's MCP server reviewed before it ships.
 
-The rule is opt-in via configuration. Set the `allowlist` option to the vetted
+**Opt-in.** Without a `rule "mcp/server-allowlist"` block in
+`.claudelint.hcl` the rule does not run at all. Any block — even an
+empty one — activates it; set the `allowlist` option to the vetted
 server names:
 
     rule "mcp/server-allowlist" {
@@ -389,7 +391,7 @@ server names:
       }
     }
 
-Behaviour matrix:
+Behaviour matrix, once a rule block exists:
 
 | `allowlist` value | Effect                                                             |
 | ----------------- | ------------------------------------------------------------------ |
@@ -397,9 +399,9 @@ Behaviour matrix:
 | `[]`              | Fires on every server (explicit "block all")                       |
 | `["x", "y"]`      | Fires on every server whose name is not in the list                |
 
-To silence the rule entirely, set `enabled = false` instead of removing the
-`allowlist` option — leaving the rule on without an allowlist surfaces a
-configuration error so misconfigurations don't silently no-op.
+An explicit enable without an allowlist is treated as a
+misconfiguration, not a silent no-op. To turn the rule back off, remove
+the block or set `enabled = false` inside it.
 
 #### `style/no-emoji`
 

@@ -324,3 +324,22 @@ func TestPathIgnoredDoubleStar(t *testing.T) {
 		})
 	}
 }
+
+func TestHasRuleBlock(t *testing.T) {
+	rc := Resolve(&File{
+		Claudelint: &Claudelint{Version: "1"},
+		Rules: []RuleBlock{
+			{ID: "mcp/server-allowlist"},
+			{ID: "skills/body-size"},
+		},
+	})
+	if !rc.HasRuleBlock("mcp/server-allowlist") {
+		t.Error(`HasRuleBlock("mcp/server-allowlist") = false, want true (empty block counts)`)
+	}
+	if rc.HasRuleBlock("agents/model-policy") {
+		t.Error(`HasRuleBlock("agents/model-policy") = true for an unmentioned rule`)
+	}
+	if Resolve(nil).HasRuleBlock("skills/body-size") {
+		t.Error("nil-file config should report no rule blocks")
+	}
+}

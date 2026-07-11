@@ -234,6 +234,12 @@ func (r *Runner) applicableRules() []rules.Rule {
 			// is never called.
 			continue
 		}
+		if rules.IsOptIn(rule) && !r.cfg.HasRuleBlock(rule.ID()) {
+			// Opt-in rules run only when the config names them; no
+			// block means skipped entirely — no diagnostics of any
+			// kind (DESIGN-0005 §5).
+			continue
+		}
 		if !r.cfg.RuleEnabled(rule.ID()) {
 			continue
 		}

@@ -231,6 +231,73 @@ func TestRunRespectsRuleEnabledFalse(t *testing.T) {
 	}
 }
 
+// optInStubRule is a stubRule that opts in via rules.OptIn.
+type optInStubRule struct{ stubRule }
+
+func (*optInStubRule) OptIn() bool { return true }
+
+func TestRunOptInRule(t *testing.T) {
+	newOptIn := func(calls *int64) *optInStubRule {
+		return &optInStubRule{stubRule{
+			id:       "a/gated",
+			sev:      diag.SeverityError,
+			applies:  []artifact.ArtifactKind{artifact.KindSkill},
+			callsCtr: calls,
+			checkFn: func(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
+				return []diag.Diagnostic{{Path: a.Path(), Message: "gated"}}
+			},
+		}}
+	}
+	arts := []artifact.Artifact{&fakeArtifact{path: "x.md", kind: artifact.KindSkill}}
+
+	t.Run("no rule block skips entirely", func(t *testing.T) {
+		rules.Reset()
+		calls := int64(0)
+		rules.Register(newOptIn(&calls))
+		cfg := config.Resolve(&config.File{Claudelint: &config.Claudelint{Version: "1"}})
+		res := New(cfg).Run(arts, nil)
+		if len(res.Diagnostics) != 0 {
+			t.Errorf("opt-in rule without a block emitted %d diagnostics", len(res.Diagnostics))
+		}
+		if calls != 0 {
+			t.Errorf("Check called %d times, want 0", calls)
+		}
+	})
+
+	t.Run("empty rule block activates", func(t *testing.T) {
+		rules.Reset()
+		calls := int64(0)
+		rules.Register(newOptIn(&calls))
+		cfg := config.Resolve(&config.File{
+			Claudelint: &config.Claudelint{Version: "1"},
+			Rules:      []config.RuleBlock{{ID: "a/gated"}},
+		})
+		res := New(cfg).Run(arts, nil)
+		if len(res.Diagnostics) != 1 {
+			t.Errorf("opt-in rule with an empty block: %d diagnostics, want 1", len(res.Diagnostics))
+		}
+		if calls != 1 {
+			t.Errorf("Check called %d times, want 1", calls)
+		}
+	})
+
+	t.Run("block with enabled=false stays off", func(t *testing.T) {
+		rules.Reset()
+		calls := int64(0)
+		rules.Register(newOptIn(&calls))
+		off := false
+		cfg := config.Resolve(&config.File{
+			Claudelint: &config.Claudelint{Version: "1"},
+			Rules:      []config.RuleBlock{{ID: "a/gated", Enabled: &off}},
+		})
+		res := New(cfg).Run(arts, nil)
+		if len(res.Diagnostics) != 0 || calls != 0 {
+			t.Errorf("enabled=false block: diags=%d calls=%d, want 0/0",
+				len(res.Diagnostics), calls)
+		}
+	})
+}
+
 func TestRunOptionOverlay(t *testing.T) {
 	rules.Reset()
 	var observed atomic.Value

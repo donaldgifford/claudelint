@@ -388,6 +388,14 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       `Agent*` enum sets from knowndata.go; isolation is a one-entry
       set (`worktree`); messages hardcode the documented value order
       since map iteration is unstable)_
+- [x] Opt-in mechanism (DESIGN-0005 §5, scheduled here by its rollout
+      plan): `rules.OptIn` interface + `rules.IsOptIn`; engine skips
+      opt-in rules without a `rule "<id>"` block
+      (`Config.HasRuleBlock`); fingerprint gains `optin=` component;
+      `claudelint rules` shows `(opt-in)` and `rules --json` gains
+      `opt_in`; `mcp/server-allowlist` migrated (no block → skipped;
+      block without `allowlist` → loud config error preserved);
+      rules-json-schema.md + rule prose updated.
 - [ ] Fixtures: valid agent exercising all documented fields; invalid
       variants per rule; a plugin-rooted agent fixture.
 - [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors;
