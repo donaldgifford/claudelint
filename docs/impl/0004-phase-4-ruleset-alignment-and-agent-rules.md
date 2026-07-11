@@ -396,8 +396,15 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       `opt_in`; `mcp/server-allowlist` migrated (no block → skipped;
       block without `allowlist` → loud config error preserved);
       rules-json-schema.md + rule prose updated.
-- [ ] Fixtures: valid agent exercising all documented fields; invalid
+- [x] Fixtures: valid agent exercising all documented fields; invalid
       variants per rule; a plugin-rooted agent fixture.
+      _(`ok/agents/full.md` pins all 16 fields via `TestFixturesOK`;
+      `ok/pluginroot/` mirrors a real plugin layout for
+      `MarkPluginDistributed`; per-rule invalid variants live inline in
+      the table-driven rule tests per house convention, and
+      `TestFixtureSweep` runs all five rules over the valid fixture
+      (silent) + a kitchen-sink invalid agent (each fires, non-zero
+      ranges))_
 - [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors;
       `claudelint rules <id>` detail entries.
 - [ ] Coverage: new `internal/rules/agents` package must clear the 55%

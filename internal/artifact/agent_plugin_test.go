@@ -28,6 +28,20 @@ func writePluginLayout(t *testing.T, root, agentRel string) string {
 	return agentPath
 }
 
+func TestMarkPluginDistributedFixture(t *testing.T) {
+	// The checked-in fixture mirrors a real plugin layout:
+	// testdata/ok/pluginroot/{.claude-plugin/plugin.json, agents/helper.md}.
+	root, err := filepath.Abs(filepath.Join("testdata", "ok", "pluginroot"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var a Agent
+	MarkPluginDistributed(&a, filepath.Join(root, "agents", "helper.md"), root)
+	if !a.PluginDistributed {
+		t.Error("fixture agent under testdata/ok/pluginroot not marked plugin-distributed")
+	}
+}
+
 func TestMarkPluginDistributed(t *testing.T) {
 	t.Run("agent under plugin root is marked", func(t *testing.T) {
 		root := t.TempDir()

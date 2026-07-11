@@ -1,10 +1,13 @@
 package agents
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
+	"github.com/donaldgifford/claudelint/internal/rules"
 )
 
 // newAgent parses a minimal agent file with the given extra
@@ -188,6 +191,51 @@ func TestFieldEnums(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestFixtureSweep runs every rule in this package against the shared
+// doc-valid full-field fixture (must stay silent) and a kitchen-sink
+// invalid agent (every rule must fire with a usable range) — the
+// Phase 4 success criterion in one place.
+func TestFixtureSweep(t *testing.T) {
+	allRules := []rules.Rule{
+		&modelValid{}, &nameFormat{}, &toolsKnown{}, &fieldEnums{}, &pluginIgnoredFields{},
+	}
+
+	src, err := os.ReadFile(filepath.Join(
+		"..", "..", "artifact", "testdata", "ok", "agents", "full.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	valid, perr := artifact.ParseAgent(".claude/agents/full.md", src)
+	if perr != nil {
+		t.Fatalf("ParseAgent(full.md) = %v", perr)
+	}
+	for _, r := range allRules {
+		if d := r.Check(nil, valid); len(d) != 0 {
+			t.Errorf("%s on the valid fixture: %v", r.ID(), d)
+		}
+	}
+
+	bad, perr := artifact.ParseAgent(".claude/agents/bad.md", []byte(
+		"---\nname: Bad_Agent\ndescription: d\nmodel: sonet\ntools: WriteFil\n"+
+			"permissionMode: yolo\nmcpServers:\n  - github\n---\nbody\n"))
+	if perr != nil {
+		t.Fatalf("ParseAgent(bad) = %v", perr)
+	}
+	bad.PluginDistributed = true
+	for _, r := range allRules {
+		d := r.Check(nil, bad)
+		if len(d) == 0 {
+			t.Errorf("%s did not fire on the kitchen-sink invalid agent", r.ID())
+			continue
+		}
+		for _, dd := range d {
+			if dd.Range.IsZero() {
+				t.Errorf("%s emitted a zero range: %+v", r.ID(), dd)
+			}
+		}
 	}
 }
 
