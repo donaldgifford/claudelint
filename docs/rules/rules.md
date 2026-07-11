@@ -240,6 +240,17 @@ A `sha` pin, when present on a git-backed source, must be a full
 40-character hex commit. Whether a local path exists on disk is out of
 scope for this rule.
 
+#### `marketplace/external-source-skipped`
+
+Info notice on every plugin whose source content lives outside the
+marketplace repo: remote string shorthands (`github:owner/repo`, git
+URLs) and the `github` / `url` / `git-subdir` / `npm` object kinds.
+claudelint validates the source's structure (see
+`marketplace/plugin-source-valid`) but never fetches remote content, so
+those plugins' files are not linted. Local paths are checked in place
+and produce no notice; absent or malformed sources are
+`plugin-source-valid` errors, not skips.
+
 #### `mcp/command-required` and `mcp/url-required`
 
 MCP servers declare how Claude Code reaches them via `type`: `stdio` (the

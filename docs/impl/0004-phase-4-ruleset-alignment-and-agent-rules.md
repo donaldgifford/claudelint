@@ -226,9 +226,12 @@ fingerprint change).
       40-char hex string. _(one diagnostic per missing requirement,
       anchored to `SourceRange`; required-fields table added to
       rules.md)_
-- [ ] `marketplace/external-source-skipped`: rework — object sources are
+- [x] `marketplace/external-source-skipped`: rework — object sources are
       now structured; the info diagnostic applies only to sources whose
-      content genuinely can't be checked locally.
+      content genuinely can't be checked locally. _(fires on the four
+      remote object kinds + remote string shorthands with a
+      kind-aware locator in the message; absent/invalid sources left to
+      plugin-source-valid to avoid double-reporting)_
 - [ ] `marketplace/version-semver`: split — missing root `version` → info;
       present-but-not-semver → error.
 - [ ] `marketplace/author-required`: align with documented required

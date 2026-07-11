@@ -1,6 +1,7 @@
 package marketplace
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
@@ -187,5 +188,27 @@ func TestExternalSourceSkipped(t *testing.T) {
 	d := (&externalSourceSkipped{}).Check(nil, m)
 	if len(d) != 2 {
 		t.Errorf("want 2 info diagnostics, got %d (%v)", len(d), d)
+	}
+}
+
+func TestExternalSourceSkippedObjectSources(t *testing.T) {
+	m := newMarketplace(t, `{"name":"m","version":"1.0.0","plugins":[
+		{"name":"local","source":"./plugins/local"},
+		{"name":"gh","source":{"source":"github","repo":"o/r"}},
+		{"name":"web","source":{"source":"url","url":"https://git.example.com/x.git"}},
+		{"name":"sub","source":{"source":"git-subdir","url":"https://git.example.com/x.git","path":"p"}},
+		{"name":"pkg","source":{"source":"npm","package":"@scope/name"}},
+		{"name":"bogus","source":{"source":"carrier-pigeon"}}
+	]}`)
+	d := (&externalSourceSkipped{}).Check(nil, m)
+	// Four remote object kinds flag; local and invalid do not (invalid
+	// is plugin-source-valid's finding, not a skip).
+	if len(d) != 4 {
+		t.Fatalf("want 4 info diagnostics, got %d (%v)", len(d), d)
+	}
+	for _, dd := range d {
+		if !strings.Contains(dd.Message, "remote") {
+			t.Errorf("message should say remote, got %q", dd.Message)
+		}
 	}
 }
