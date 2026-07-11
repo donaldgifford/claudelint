@@ -164,7 +164,7 @@ A typo in a `rule "<id>"` block does *not* silently disable the real
 rule. `claudelint` emits a `meta/unknown-rule` warning pointing at the
 offending config so the typo is visible.
 
-## Rules (ruleset v1.3)
+## Rules (ruleset v1.4)
 
 Every rule is built into the binary. The fingerprint under
 `claudelint version` changes whenever rules are added, removed, or

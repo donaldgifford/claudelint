@@ -405,8 +405,14 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       `TestFixtureSweep` runs all five rules over the valid fixture
       (silent) + a kitchen-sink invalid agent (each fires, non-zero
       ranges))_
-- [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors;
-      `claudelint rules <id>` detail entries.
+- [x] Ruleset version bump + fingerprint ack; rules.md + README anchors;
+      `claudelint rules <id>` detail entries. _(v1.3.0 → v1.4.0 per
+      OQ6; fingerprint `b9936aca` was acked incrementally with each
+      rule/mechanism commit — version bumps don't move it. All 39
+      registered IDs verified present in both doc tables via script;
+      new-rule prose lives in rules.md per this phase's convention;
+      detail entries come from the registry and were smoke-verified
+      for all five agents rules + server-allowlist)_
 - [ ] Coverage: new `internal/rules/agents` package must clear the 55%
       floor (plan tests before code).
 - [ ] Dogfood pass (claude-skills ships plugin agents — prime corpus).

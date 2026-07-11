@@ -5,7 +5,7 @@ tableOfContents:
   maxHeadingLevel: 4
 ---
 
-## Ruleset v1.3
+## Ruleset v1.4
 
 Every rule is built into the binary. The fingerprint under `claudelint version`
 changes whenever rules are added, removed, or have their ID / category /
