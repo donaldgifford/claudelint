@@ -265,9 +265,13 @@ fingerprint change).
       _(skill messages name the runtime fallback — directory-name for
       `name`, invocation-matching for `description`; command/agent keep
       the plain form; stricter-than-spec blockquote added to rules.md)_
-- [ ] `skills/no-version-field` + `plugin/manifest-fields`: help-text
+- [x] `skills/no-version-field` + `plugin/manifest-fields`: help-text
       updates citing the current docs (stricter-than-spec note for plugin
-      `version`, per OQ3 decision).
+      `version`, per OQ3 decision). _(no-version-field cites the
+      accepted-but-ignored doc confirmation; manifest-fields' version
+      message names the git-SHA fallback; rules.md gains the
+      stricter-by-design blockquote and drops its wrong claim that
+      `description` was checked)_
 - [ ] Ruleset version bump + fingerprint ack; `docs/rules/rules.md` +
       README rule anchors updated for every touched rule.
 - [ ] Update DESIGN-0002 §2.2 (`servers` vs `mcpServers`) to record the

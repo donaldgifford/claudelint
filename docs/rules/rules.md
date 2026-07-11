@@ -105,10 +105,11 @@ per-rule:
 
 #### `skills/no-version-field`
 
-Warns when a `SKILL.md` frontmatter declares a `version` key. Skill versioning
-is load-bearing only at the plugin level (`plugin.json`'s `version` field); a
-`version:` in `SKILL.md` is silently ignored by Claude Code and creates two
-competing sources of truth that drift over time.
+Warns when a `SKILL.md` frontmatter declares a `version` key. The skills
+reference documents `version` as accepted-but-ignored metadata; versioning is
+load-bearing only at the plugin level (`plugin.json`'s `version` field), so a
+`version:` in `SKILL.md` is a second source of truth that drifts over time
+without ever taking effect.
 
 **Bad**:
 
@@ -216,13 +217,19 @@ checksum before executing.
 
 #### `plugin/manifest-fields`
 
-Plugin manifest must declare `name`, `version`, and `description`.
+Plugin manifests must declare `name` and `version`.
+
+> **Stricter than spec, by design.** The docs require only `name`; a
+> missing `version` falls back to the installing commit's git SHA.
+> claudelint requires a pinned `version` anyway — explicit versions make
+> update semantics reviewable for marketplace consumers. Downgrade the
+> rule in `.claudelint.hcl` if you prefer the SHA fallback.
 
 **Bad**:
 
     {"name": "my-plugin"}
 
-**Fix**: add `"version": "1.0.0"` and `"description": "..."`.
+**Fix**: add `"version": "1.0.0"`.
 
 #### `plugin/semver`
 

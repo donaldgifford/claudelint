@@ -9,10 +9,11 @@ import (
 func init() { rules.Register(&noVersionField{}) }
 
 // noVersionField warns when a SKILL.md frontmatter declares a
-// `version` key. Skill versioning is load-bearing only at the plugin
-// level (plugin.json's `version` field); a `version:` in SKILL.md
-// frontmatter is non-standard, silently ignored by Claude Code, and
-// creates two competing sources of truth that drift over time.
+// `version` key. The skills reference explicitly documents `version`
+// as accepted-but-ignored metadata; versioning is load-bearing only
+// at the plugin level (plugin.json's `version` field), so a
+// `version:` in SKILL.md creates a second source of truth that
+// drifts over time without ever taking effect.
 //
 // Default severity is warning so the rule does not block CI by
 // default. Teams that want to enforce the convention can upgrade to
@@ -42,6 +43,6 @@ func (r *noVersionField) Check(_ rules.Context, a artifact.Artifact) []diag.Diag
 		RuleID:  r.ID(),
 		Path:    s.Path(),
 		Range:   rng,
-		Message: "SKILL.md frontmatter has 'version' field; version belongs in plugin.json",
+		Message: `SKILL.md declares "version" — Claude Code accepts but ignores it; version the plugin (plugin.json) instead`,
 	}}
 }

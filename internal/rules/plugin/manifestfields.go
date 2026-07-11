@@ -3,8 +3,6 @@
 package plugin
 
 import (
-	"fmt"
-
 	"github.com/donaldgifford/claudelint/internal/artifact"
 	"github.com/donaldgifford/claudelint/internal/diag"
 	"github.com/donaldgifford/claudelint/internal/rules"
@@ -12,9 +10,12 @@ import (
 
 func init() { rules.Register(&manifestFields{}) }
 
-// manifestFields errors when a plugin manifest is missing required
-// fields (name, version). Plugins without these keys cannot install;
-// catching this statically saves users a failed deploy.
+// manifestFields errors when a plugin manifest is missing `name` or
+// `version`. The docs require only `name` (a missing `version` falls
+// back to the installing commit's git SHA); requiring `version` too
+// is claudelint's stricter-by-design stance — pinned versions make
+// update semantics explicit for marketplace review (OQ3; see
+// rules.md).
 type manifestFields struct{}
 
 func (*manifestFields) ID() string                     { return "plugin/manifest-fields" }
@@ -42,9 +43,10 @@ func (r *manifestFields) Check(_ rules.Context, a artifact.Artifact) []diag.Diag
 	}
 	if p.Version == "" {
 		out = append(out, diag.Diagnostic{
-			RuleID:  r.ID(),
-			Path:    p.Path(),
-			Message: fmt.Sprintf(`plugin manifest is missing required field %q`, "version"),
+			RuleID: r.ID(),
+			Path:   p.Path(),
+			Message: `plugin manifest has no "version" — claudelint requires a pinned version ` +
+				`(Claude Code would fall back to the git SHA)`,
 		})
 	}
 	return out
