@@ -42,6 +42,7 @@ acknowledged.
 | `marketplace/plugin-source-valid`     | schema   | error   | marketplace           |
 | `marketplace/plugin-name-unique`      | schema   | error   | marketplace           |
 | `marketplace/plugin-name-matches-dir` | style    | warning | marketplace           |
+| `marketplace/name-format`             | style    | warning | marketplace           |
 | `marketplace/owner-required`          | schema   | warning | marketplace           |
 | `marketplace/author-legacy`           | style    | info    | marketplace           |
 | `marketplace/version-missing`         | style    | info    | marketplace           |
@@ -361,6 +362,16 @@ high-entropy strings. False positives are suppressible per-path:
 
 **Bad**: a literal `AKIA...` string in a CLAUDE.md fixture. **Fix**: delete it,
 scrub via `git filter-branch`, rotate the key.
+
+#### `marketplace/name-format`
+
+The marketplace `name` and every `plugins[].name` should be kebab-case
+— lowercase alphanumeric segments joined by single hyphens. Names are
+public-facing (`/plugin install <plugin>@<marketplace>`) and claude.ai
+sync rejects violations. Empty names are left to `marketplace/name`
+and `marketplace/plugin-source-valid`.
+
+**Bad**: `"name": "Acme Tools"` **Fix**: `"name": "acme-tools"`.
 
 #### `marketplace/reserved-name`
 

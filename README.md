@@ -201,6 +201,7 @@ fails if the drift is not acknowledged.
 | `marketplace/plugin-source-valid`     | schema    | error    | marketplace                     |
 | `marketplace/plugin-name-unique`      | schema    | error    | marketplace                     |
 | `marketplace/plugin-name-matches-dir` | style     | warning  | marketplace                     |
+| `marketplace/name-format`             | style     | warning  | marketplace                     |
 | `marketplace/owner-required`          | schema    | warning  | marketplace                     |
 | `marketplace/author-legacy`           | style     | info     | marketplace                     |
 | `marketplace/version-missing`         | style     | info     | marketplace                     |

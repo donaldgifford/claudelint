@@ -486,8 +486,11 @@ proposed tables. One PR, minor release, fingerprint bump.
       verified against the plugin-marketplaces reference as of
       v2.1.205 — includes `first-party-plugins` + `healthcare`;
       anchors at `NameRange`)_
-- [ ] `marketplace/name-format` (style/warning): kebab-case for
+- [x] `marketplace/name-format` (style/warning): kebab-case for
       marketplace name + plugin entry names.
+      _(`^[a-z0-9]+(-[a-z0-9]+)*$`; one diagnostic per offending name
+      at its range; empty names left to marketplace/name +
+      plugin-source-valid)_
 - [ ] `marketplace/source-path-safety` (security/error): relative sources
       start with `./`; no `..` segments.
 - [ ] `marketplace/renames-valid` (schema/error): chains terminate at

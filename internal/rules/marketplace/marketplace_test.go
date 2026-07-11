@@ -283,3 +283,54 @@ func TestReservedName(t *testing.T) {
 		t.Errorf("impersonation heuristics should not fire locally: %v", d)
 	}
 }
+
+func TestNameFormat(t *testing.T) {
+	cases := []struct {
+		name  string
+		body  string
+		wantN int
+	}{
+		{
+			"kebab names pass",
+			`{"name":"acme-tools","owner":{"name":"a"},"plugins":[{"name":"helm2","source":"./p"}]}`,
+			0,
+		},
+		{
+			"uppercase marketplace name",
+			`{"name":"AcmeTools","owner":{"name":"a"},"plugins":[]}`,
+			1,
+		},
+		{
+			"underscore plugin name",
+			`{"name":"acme-tools","owner":{"name":"a"},"plugins":[{"name":"my_plugin","source":"./p"}]}`,
+			1,
+		},
+		{
+			"both bad",
+			`{"name":"Acme Tools","owner":{"name":"a"},"plugins":[{"name":"Bad.Name","source":"./p"}]}`,
+			2,
+		},
+		{
+			"empty names left to other rules",
+			`{"owner":{"name":"a"},"plugins":[{"source":"./p"}]}`,
+			0,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			d := (&nameFormat{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			for _, dd := range d {
+				if !strings.Contains(dd.Message, "kebab-case") {
+					t.Errorf("message = %q", dd.Message)
+				}
+				if dd.Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the offending name")
+				}
+			}
+		})
+	}
+}
