@@ -1,6 +1,7 @@
 package marketplace
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
@@ -41,7 +42,7 @@ func TestVersionSemver(t *testing.T) {
 	}{
 		{"valid 1.0.0", "1.0.0", 0},
 		{"valid v2.3.4", "v2.3.4", 0},
-		{"missing", "", 1},
+		{"missing is version-missing's job", "", 0},
 		{"not semver", "dev", 1},
 		{"partial", "1.2", 1},
 	}
@@ -53,6 +54,17 @@ func TestVersionSemver(t *testing.T) {
 				t.Errorf("want %d diagnostics, got %d (%v)", tc.wantN, len(d), d)
 			}
 		})
+	}
+}
+
+func TestVersionMissing(t *testing.T) {
+	missing := &artifact.Marketplace{}
+	if d := (&versionMissing{}).Check(nil, missing); len(d) != 1 {
+		t.Errorf("missing version: want 1 info, got %d", len(d))
+	}
+	declared := &artifact.Marketplace{Version: "dev"}
+	if d := (&versionMissing{}).Check(nil, declared); len(d) != 0 {
+		t.Errorf("declared version (even malformed): want 0, got %v", d)
 	}
 }
 
@@ -78,6 +90,38 @@ func TestPluginSourceValid(t *testing.T) {
 	d := (&pluginSourceValid{}).Check(nil, m)
 	if len(d) != 2 {
 		t.Errorf("want 2 diagnostics, got %d (%v)", len(d), d)
+	}
+}
+
+func TestPluginSourceValidObjectSources(t *testing.T) {
+	const goodSHA = "0123456789abcdef0123456789abcdef01234567"
+	cases := []struct {
+		name   string
+		source string
+		wantN  int
+	}{
+		{"github ok", `{"source":"github","repo":"owner/repo"}`, 0},
+		{"github missing repo", `{"source":"github"}`, 1},
+		{"url ok", `{"source":"url","url":"https://git.example.com/x.git"}`, 0},
+		{"url missing url", `{"source":"url"}`, 1},
+		{"git-subdir ok", `{"source":"git-subdir","url":"https://git.example.com/x.git","path":"plugins/a"}`, 0},
+		{"git-subdir missing both", `{"source":"git-subdir"}`, 2},
+		{"npm ok", `{"source":"npm","package":"@scope/name"}`, 0},
+		{"npm missing package", `{"source":"npm"}`, 1},
+		{"unknown discriminator", `{"source":"carrier-pigeon"}`, 1},
+		{"github with full sha", `{"source":"github","repo":"o/r","sha":"` + goodSHA + `"}`, 0},
+		{"github with short sha", `{"source":"github","repo":"o/r","sha":"abc123"}`, 1},
+		{"url with non-hex sha", `{"source":"url","url":"https://x","sha":"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"}`, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t,
+				`{"name":"m","version":"1.0.0","plugins":[{"name":"p","source":`+tc.source+`}]}`)
+			d := (&pluginSourceValid{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Errorf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+		})
 	}
 }
 
@@ -132,14 +176,44 @@ func TestPluginNameMatchesDir(t *testing.T) {
 	}
 }
 
-func TestAuthorRequired(t *testing.T) {
-	missing := &artifact.Marketplace{}
-	if d := (&authorRequired{}).Check(nil, missing); len(d) != 1 {
-		t.Errorf("missing author: want 1, got %d", len(d))
+func TestOwnerRequiredAndAuthorLegacy(t *testing.T) {
+	cases := []struct {
+		name       string
+		body       string
+		wantOwner  int // diagnostics from marketplace/owner-required
+		wantLegacy int // diagnostics from marketplace/author-legacy
+	}{
+		{
+			"neither owner nor author",
+			`{"name":"m","plugins":[]}`,
+			1, 0,
+		},
+		{
+			"owner object",
+			`{"name":"m","owner":{"name":"Donald","email":"d@example.com"},"plugins":[]}`,
+			0, 0,
+		},
+		{
+			"legacy author only",
+			`{"name":"m","author":"Donald","plugins":[]}`,
+			0, 1,
+		},
+		{
+			"both owner and author",
+			`{"name":"m","author":"Donald","owner":{"name":"Donald"},"plugins":[]}`,
+			0, 0,
+		},
 	}
-	present := &artifact.Marketplace{Author: "someone"}
-	if d := (&authorRequired{}).Check(nil, present); len(d) != 0 {
-		t.Errorf("present author: want 0, got %v", d)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			if d := (&ownerRequired{}).Check(nil, m); len(d) != tc.wantOwner {
+				t.Errorf("owner-required: want %d, got %d (%v)", tc.wantOwner, len(d), d)
+			}
+			if d := (&authorLegacy{}).Check(nil, m); len(d) != tc.wantLegacy {
+				t.Errorf("author-legacy: want %d, got %d (%v)", tc.wantLegacy, len(d), d)
+			}
+		})
 	}
 }
 
@@ -155,5 +229,211 @@ func TestExternalSourceSkipped(t *testing.T) {
 	d := (&externalSourceSkipped{}).Check(nil, m)
 	if len(d) != 2 {
 		t.Errorf("want 2 info diagnostics, got %d (%v)", len(d), d)
+	}
+}
+
+func TestExternalSourceSkippedObjectSources(t *testing.T) {
+	m := newMarketplace(t, `{"name":"m","version":"1.0.0","plugins":[
+		{"name":"local","source":"./plugins/local"},
+		{"name":"gh","source":{"source":"github","repo":"o/r"}},
+		{"name":"web","source":{"source":"url","url":"https://git.example.com/x.git"}},
+		{"name":"sub","source":{"source":"git-subdir","url":"https://git.example.com/x.git","path":"p"}},
+		{"name":"pkg","source":{"source":"npm","package":"@scope/name"}},
+		{"name":"bogus","source":{"source":"carrier-pigeon"}}
+	]}`)
+	d := (&externalSourceSkipped{}).Check(nil, m)
+	// Four remote object kinds flag; local and invalid do not (invalid
+	// is plugin-source-valid's finding, not a skip).
+	if len(d) != 4 {
+		t.Fatalf("want 4 info diagnostics, got %d (%v)", len(d), d)
+	}
+	for _, dd := range d {
+		if !strings.Contains(dd.Message, "remote") {
+			t.Errorf("message should say remote, got %q", dd.Message)
+		}
+	}
+}
+
+func TestReservedName(t *testing.T) {
+	ok := newMarketplace(t,
+		`{"name":"acme-tools","owner":{"name":"acme"},"plugins":[]}`)
+	if d := (&reservedName{}).Check(nil, ok); len(d) != 0 {
+		t.Errorf("ordinary name flagged: %v", d)
+	}
+
+	for _, bad := range []string{"anthropic-plugins", "healthcare", "claude-code-marketplace"} {
+		m := newMarketplace(t,
+			`{"name":"`+bad+`","owner":{"name":"acme"},"plugins":[]}`)
+		d := (&reservedName{}).Check(nil, m)
+		if len(d) != 1 {
+			t.Fatalf("%s: got %d diagnostics, want 1 (%v)", bad, len(d), d)
+		}
+		if !strings.Contains(d[0].Message, "reserved for official Anthropic use") {
+			t.Errorf("message = %q", d[0].Message)
+		}
+		if d[0].Range.IsZero() {
+			t.Errorf("diagnostic should anchor at the name key")
+		}
+	}
+
+	// Near-misses are server-side territory, not ours.
+	near := newMarketplace(t,
+		`{"name":"official-claude-plugins","owner":{"name":"acme"},"plugins":[]}`)
+	if d := (&reservedName{}).Check(nil, near); len(d) != 0 {
+		t.Errorf("impersonation heuristics should not fire locally: %v", d)
+	}
+}
+
+func TestNameFormat(t *testing.T) {
+	cases := []struct {
+		name  string
+		body  string
+		wantN int
+	}{
+		{
+			"kebab names pass",
+			`{"name":"acme-tools","owner":{"name":"a"},"plugins":[{"name":"helm2","source":"./p"}]}`,
+			0,
+		},
+		{
+			"uppercase marketplace name",
+			`{"name":"AcmeTools","owner":{"name":"a"},"plugins":[]}`,
+			1,
+		},
+		{
+			"underscore plugin name",
+			`{"name":"acme-tools","owner":{"name":"a"},"plugins":[{"name":"my_plugin","source":"./p"}]}`,
+			1,
+		},
+		{
+			"both bad",
+			`{"name":"Acme Tools","owner":{"name":"a"},"plugins":[{"name":"Bad.Name","source":"./p"}]}`,
+			2,
+		},
+		{
+			"empty names left to other rules",
+			`{"owner":{"name":"a"},"plugins":[{"source":"./p"}]}`,
+			0,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			d := (&nameFormat{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			for _, dd := range d {
+				if !strings.Contains(dd.Message, "kebab-case") {
+					t.Errorf("message = %q", dd.Message)
+				}
+				if dd.Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the offending name")
+				}
+			}
+		})
+	}
+}
+
+func TestSourcePathSafety(t *testing.T) {
+	plugins := func(entries string) string {
+		return `{"name":"m","owner":{"name":"a"},"plugins":[` + entries + `]}`
+	}
+	cases := []struct {
+		name    string
+		body    string
+		wantN   int
+		wantSub string
+	}{
+		{"dot-slash source passes", plugins(`{"name":"p","source":"./plugins/p"}`), 0, ""},
+		{"root source passes", plugins(`{"name":"p","source":"./"}`), 0, ""},
+		{
+			"bare path without pluginRoot",
+			plugins(`{"name":"p","source":"plugins/p"}`),
+			1, `must start with "./"`,
+		},
+		{
+			"bare name with pluginRoot passes",
+			`{"name":"m","owner":{"name":"a"},"metadata":{"pluginRoot":"./plugins"},"plugins":[{"name":"p","source":"formatter"}]}`,
+			0, "",
+		},
+		{
+			"dotdot flagged even with pluginRoot",
+			`{"name":"m","owner":{"name":"a"},"metadata":{"pluginRoot":"./plugins"},"plugins":[{"name":"p","source":"../outside"}]}`,
+			1, `".." segment`,
+		},
+		{
+			"dotdot mid-path",
+			plugins(`{"name":"p","source":"./plugins/../../etc"}`),
+			1, `".." segment`,
+		},
+		{"remote source out of scope", plugins(`{"name":"p","source":"github:o/r"}`), 0, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			d := (&sourcePathSafety{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, tc.wantSub) {
+					t.Errorf("message = %q, want substring %q", d[0].Message, tc.wantSub)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the source value")
+				}
+			}
+		})
+	}
+}
+
+func TestRenamesValid(t *testing.T) {
+	manifest := func(renames string) string {
+		return `{"name":"m","owner":{"name":"a"},"renames":` + renames +
+			`,"plugins":[{"name":"current","source":"./p"}]}`
+	}
+	cases := []struct {
+		name    string
+		body    string
+		wantN   int
+		wantSub string
+	}{
+		{"no renames", `{"name":"m","owner":{"name":"a"},"plugins":[]}`, 0, ""},
+		{"rename to listed plugin", manifest(`{"old":"current"}`), 0, ""},
+		{"rename to null (removed)", manifest(`{"old":null}`), 0, ""},
+		{"two-hop chain to listed", manifest(`{"oldest":"old","old":"current"}`), 0, ""},
+		{
+			"dangling target",
+			manifest(`{"old":"ghost"}`),
+			1, `neither null nor a listed plugin`,
+		},
+		{
+			"chain reports only the broken link",
+			manifest(`{"oldest":"old","old":"ghost"}`),
+			1, `"ghost" (from "old")`,
+		},
+		{
+			"two-node cycle reported once",
+			manifest(`{"a":"b","b":"a"}`),
+			1, "never terminates (cycle)",
+		},
+		{
+			"self cycle",
+			manifest(`{"a":"a"}`),
+			1, "cycle",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			d := (&renamesValid{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 && !strings.Contains(d[0].Message, tc.wantSub) {
+				t.Errorf("message = %q, want substring %q", d[0].Message, tc.wantSub)
+			}
+		})
 	}
 }

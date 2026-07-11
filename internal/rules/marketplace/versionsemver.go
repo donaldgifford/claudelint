@@ -17,9 +17,10 @@ var semverPattern = regexp.MustCompile(
 	`^v?\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?(\+[A-Za-z0-9.-]+)?$`,
 )
 
-// versionSemver errors when the marketplace `version` field is
-// missing or not a valid semver — marketplaces without a parseable
-// version cannot be ordered by consumers.
+// versionSemver errors when a declared marketplace `version` is not
+// valid semver — a malformed version cannot be ordered by consumers.
+// A missing version is legal per the docs and is only nudged at info
+// level by the separate marketplace/version-missing rule.
 type versionSemver struct{}
 
 func (*versionSemver) ID() string                     { return "marketplace/version-semver" }
@@ -37,14 +38,7 @@ func (r *versionSemver) Check(_ rules.Context, a artifact.Artifact) []diag.Diagn
 	if !ok {
 		return nil
 	}
-	if m.Version == "" {
-		return []diag.Diagnostic{{
-			RuleID:  r.ID(),
-			Path:    m.Path(),
-			Message: `marketplace manifest is missing required field "version"`,
-		}}
-	}
-	if semverPattern.MatchString(m.Version) {
+	if m.Version == "" || semverPattern.MatchString(m.Version) {
 		return nil
 	}
 	return []diag.Diagnostic{{

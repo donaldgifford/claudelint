@@ -46,6 +46,103 @@ func TestParseHookDedicatedFile(t *testing.T) {
 	}
 }
 
+func TestParseHookAllTypes(t *testing.T) {
+	src := readFixture(t, "ok/hooks/all_types.json")
+	h, perr := ParseHook(".claude/hooks/all_types.json", src)
+	if perr != nil {
+		t.Fatalf("ParseHook = %v, want nil", perr)
+	}
+	if got := len(h.Entries); got != 9 {
+		t.Fatalf("entries = %d, want 9", got)
+	}
+
+	pre := h.Entries[:5]
+	tests := []struct {
+		wantType string
+		check    func(t *testing.T, e HookEntry)
+	}{
+		{"command", func(t *testing.T, e HookEntry) {
+			t.Helper()
+			if e.Command != "./scripts/check.sh" {
+				t.Errorf("Command = %q", e.Command)
+			}
+			if e.ExecForm {
+				t.Error("ExecForm = true, want false (no args)")
+			}
+			if e.Timeout != 5 {
+				t.Errorf("Timeout = %d, want 5", e.Timeout)
+			}
+		}},
+		{"command", func(t *testing.T, e HookEntry) {
+			t.Helper()
+			if !e.ExecForm {
+				t.Error("ExecForm = false, want true (args present)")
+			}
+			if !e.Async {
+				t.Error("Async = false, want true")
+			}
+			if e.Shell != "bash" {
+				t.Errorf("Shell = %q, want bash", e.Shell)
+			}
+		}},
+		{"http", func(t *testing.T, e HookEntry) {
+			t.Helper()
+			if e.URL != "http://localhost:8080/hook" {
+				t.Errorf("URL = %q", e.URL)
+			}
+			if e.URLRange.IsZero() {
+				t.Error("URLRange is zero, want populated")
+			}
+		}},
+		{"mcp_tool", func(t *testing.T, e HookEntry) {
+			t.Helper()
+			if e.Server != "guardrails" || e.Tool != "check_command" {
+				t.Errorf("Server/Tool = %q/%q", e.Server, e.Tool)
+			}
+		}},
+		{"prompt", func(t *testing.T, e HookEntry) {
+			t.Helper()
+			if !strings.HasPrefix(e.Prompt, "Evaluate whether") {
+				t.Errorf("Prompt = %q", e.Prompt)
+			}
+		}},
+	}
+	for i, tt := range tests {
+		e := pre[i]
+		if e.Type != tt.wantType {
+			t.Errorf("entry[%d] Type = %q, want %q", i, e.Type, tt.wantType)
+		}
+		if e.TypeRange.IsZero() {
+			t.Errorf("entry[%d] TypeRange is zero, want populated", i)
+		}
+		tt.check(t, e)
+	}
+
+	agent := h.Entries[5]
+	if agent.Type != "agent" || agent.Event != "SubagentStop" {
+		t.Errorf("agent entry Type/Event = %q/%q", agent.Type, agent.Event)
+	}
+
+	// Entry 6 omits type entirely: declared empty, effective command.
+	bare := h.Entries[6]
+	if bare.Type != "" {
+		t.Errorf("bare Type = %q, want empty (omitted)", bare.Type)
+	}
+	if got := bare.EffectiveType(); got != "command" {
+		t.Errorf("bare EffectiveType() = %q, want command", got)
+	}
+
+	// The trailing groups use events added in the 30-event expansion.
+	setup := h.Entries[7]
+	if setup.Event != "Setup" || setup.Command != "mise install" {
+		t.Errorf("setup entry Event/Command = %q/%q", setup.Event, setup.Command)
+	}
+	perm := h.Entries[8]
+	if perm.Event != "PermissionRequest" || perm.Type != "prompt" || perm.Matcher != "Bash" {
+		t.Errorf("permission entry = %+v", perm)
+	}
+}
+
 // TestParseHookPluginNestedShape covers the regression behind
 // issue #14: a plugin hooks/hooks.json with timeout declared per
 // inner entry was previously read by the flat-shape parser, which

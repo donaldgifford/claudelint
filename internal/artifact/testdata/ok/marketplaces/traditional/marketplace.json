@@ -1,7 +1,7 @@
 {
-  "name": "anthropic-plugins",
+  "name": "acme-plugins",
   "version": "2.3.1",
-  "author": "Anthropic",
+  "author": "Acme",
   "plugins": [
     {
       "name": "donald-loop",

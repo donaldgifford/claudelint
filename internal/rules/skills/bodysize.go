@@ -25,7 +25,7 @@ const defaultMaxWords = 1000
 type bodySize struct{}
 
 func (*bodySize) ID() string                     { return "skills/body-size" }
-func (*bodySize) Category() string               { return "content" }
+func (*bodySize) Category() string               { return categoryContent }
 func (*bodySize) DefaultSeverity() diag.Severity { return diag.SeverityWarning }
 func (*bodySize) DefaultOptions() map[string]any {
 	return map[string]any{"max_words": defaultMaxWords}

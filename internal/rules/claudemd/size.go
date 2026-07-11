@@ -21,7 +21,7 @@ const defaultMaxLines = 500
 type size struct{}
 
 func (*size) ID() string                     { return "claude_md/size" }
-func (*size) Category() string               { return "content" }
+func (*size) Category() string               { return categoryContent }
 func (*size) DefaultSeverity() diag.Severity { return diag.SeverityWarning }
 func (*size) DefaultOptions() map[string]any { return map[string]any{"max_lines": defaultMaxLines} }
 func (*size) AppliesTo() []artifact.ArtifactKind {

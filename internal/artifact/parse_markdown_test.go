@@ -101,6 +101,214 @@ func TestParseCommandAndAgent(t *testing.T) {
 	}
 }
 
+// TestParseSkillMergedModelFields covers the frontmatter fields the
+// merged skill/command model added: when_to_use, context/agent fork
+// pairing, invocability toggles, and disallowed-tools.
+func TestParseSkillMergedModelFields(t *testing.T) {
+	src := []byte(
+		"---\n" +
+			"name: deployer\n" +
+			"description: deploy things\n" +
+			"when_to_use: when the user asks to ship\n" +
+			"context: fork\n" +
+			"agent: shipper\n" +
+			"disable-model-invocation: true\n" +
+			"user-invocable: false\n" +
+			"disallowed-tools: Write, Edit\n" +
+			"---\nbody\n")
+	s, perr := ParseSkill("skills/deployer/SKILL.md", src)
+	if perr != nil {
+		t.Fatalf("ParseSkill = %v", perr)
+	}
+	if s.WhenToUse != "when the user asks to ship" {
+		t.Errorf("WhenToUse = %q", s.WhenToUse)
+	}
+	if s.Context != "fork" || s.Agent != "shipper" {
+		t.Errorf("Context/Agent = %q/%q, want fork/shipper", s.Context, s.Agent)
+	}
+	if !s.DisableModelInvocation {
+		t.Errorf("DisableModelInvocation = false, want true")
+	}
+	if s.UserInvocable == nil || *s.UserInvocable {
+		t.Errorf("UserInvocable = %v, want declared false", s.UserInvocable)
+	}
+	if len(s.DisallowedTools) != 2 || s.DisallowedTools[0] != "Write" || s.DisallowedTools[1] != "Edit" {
+		t.Errorf("DisallowedTools = %v, want [Write Edit]", s.DisallowedTools)
+	}
+}
+
+// TestParseSkillDefaultsWhenFieldsAbsent pins the absent-key behavior:
+// user-invocable stays nil (runtime default true) rather than false.
+func TestParseSkillDefaultsWhenFieldsAbsent(t *testing.T) {
+	src := []byte("---\nname: minimal\ndescription: d\n---\nbody\n")
+	s, perr := ParseSkill("skills/minimal/SKILL.md", src)
+	if perr != nil {
+		t.Fatalf("ParseSkill = %v", perr)
+	}
+	if s.UserInvocable != nil {
+		t.Errorf("UserInvocable = %v, want nil for absent key", *s.UserInvocable)
+	}
+	if s.DisableModelInvocation {
+		t.Errorf("DisableModelInvocation = true, want false for absent key")
+	}
+	if s.WhenToUse != "" || s.Context != "" || s.Agent != "" || s.DisallowedTools != nil {
+		t.Errorf("absent fields should be zero: %+v", s)
+	}
+}
+
+// TestParseCommandMergedModelFields mirrors the skill test for the
+// command parser, including the command-level model override.
+func TestParseCommandMergedModelFields(t *testing.T) {
+	src := []byte(
+		"---\n" +
+			"description: run the deploy\n" +
+			"model: haiku\n" +
+			"when_to_use: shipping time\n" +
+			"context: fork\n" +
+			"agent: shipper\n" +
+			"user-invocable: true\n" +
+			"disallowed-tools:\n  - Write\n" +
+			"---\nbody\n")
+	c, perr := ParseCommand(".claude/commands/deploy.md", src)
+	if perr != nil {
+		t.Fatalf("ParseCommand = %v", perr)
+	}
+	if c.Model != "haiku" {
+		t.Errorf("Model = %q, want haiku", c.Model)
+	}
+	if c.WhenToUse != "shipping time" || c.Context != "fork" || c.Agent != "shipper" {
+		t.Errorf("WhenToUse/Context/Agent = %q/%q/%q", c.WhenToUse, c.Context, c.Agent)
+	}
+	if c.UserInvocable == nil || !*c.UserInvocable {
+		t.Errorf("UserInvocable = %v, want declared true", c.UserInvocable)
+	}
+	if c.DisableModelInvocation {
+		t.Errorf("DisableModelInvocation = true, want false for absent key")
+	}
+	if len(c.DisallowedTools) != 1 || c.DisallowedTools[0] != "Write" {
+		t.Errorf("DisallowedTools = %v, want [Write]", c.DisallowedTools)
+	}
+}
+
+// TestParseAgentFullFieldSet covers the documented 16-field subagent
+// frontmatter spec (DESIGN-0005 §1).
+func TestParseAgentFullFieldSet(t *testing.T) {
+	src := []byte(`---
+name: reviewer
+description: reviews changes
+tools: Read, Grep, Bash(git diff:*)
+disallowedTools: Write, Edit
+model: opus
+permissionMode: acceptEdits
+maxTurns: 12
+skills:
+  - go
+  - docz
+mcpServers:
+  - github
+hooks:
+  PreToolUse:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: ./guard.sh
+memory: project
+background: true
+effort: high
+isolation: worktree
+color: cyan
+initialPrompt: Review the latest diff.
+---
+body
+`)
+	a, perr := ParseAgent(".claude/agents/reviewer.md", src)
+	if perr != nil {
+		t.Fatalf("ParseAgent = %v", perr)
+	}
+	if len(a.Tools) != 3 || a.Tools[2] != "Bash(git diff:*)" {
+		t.Errorf("Tools = %v", a.Tools)
+	}
+	if len(a.DisallowedTools) != 2 || a.DisallowedTools[0] != "Write" {
+		t.Errorf("DisallowedTools = %v", a.DisallowedTools)
+	}
+	if a.Model != "opus" || a.PermissionMode != "acceptEdits" {
+		t.Errorf("Model/PermissionMode = %q/%q", a.Model, a.PermissionMode)
+	}
+	if a.MaxTurns != 12 {
+		t.Errorf("MaxTurns = %d, want 12", a.MaxTurns)
+	}
+	if len(a.Skills) != 2 || a.Skills[0] != "go" {
+		t.Errorf("Skills = %v", a.Skills)
+	}
+	if !a.HasMCPServers || !a.HasHooks {
+		t.Errorf("HasMCPServers/HasHooks = %v/%v, want true/true", a.HasMCPServers, a.HasHooks)
+	}
+	if a.Memory != "project" || !a.Background {
+		t.Errorf("Memory/Background = %q/%v", a.Memory, a.Background)
+	}
+	if a.Effort != "high" || a.Isolation != "worktree" || a.Color != "cyan" {
+		t.Errorf("Effort/Isolation/Color = %q/%q/%q", a.Effort, a.Isolation, a.Color)
+	}
+	if a.InitialPrompt != "Review the latest diff." {
+		t.Errorf("InitialPrompt = %q", a.InitialPrompt)
+	}
+	if a.PluginDistributed {
+		t.Errorf("PluginDistributed should be false straight from the parser")
+	}
+	if a.Frontmatter.KeyRange("maxTurns").IsZero() {
+		t.Errorf("maxTurns key range should be recorded")
+	}
+}
+
+// TestParseAgentAbsentFieldsZero pins absent-key zero values for the
+// extended field set.
+func TestParseAgentAbsentFieldsZero(t *testing.T) {
+	src := []byte("---\nname: minimal\ndescription: d\n---\nbody\n")
+	a, perr := ParseAgent(".claude/agents/minimal.md", src)
+	if perr != nil {
+		t.Fatalf("ParseAgent = %v", perr)
+	}
+	if a.Model != "" || a.PermissionMode != "" || a.MaxTurns != 0 {
+		t.Errorf("scalars should be zero: %+v", a)
+	}
+	if a.HasMCPServers || a.HasHooks || a.Background {
+		t.Errorf("presence bools should be false: %+v", a)
+	}
+	if a.DisallowedTools != nil || a.Skills != nil {
+		t.Errorf("lists should be nil: %+v", a)
+	}
+}
+
+// TestParseToolListStringForms covers the doc-canonical string forms:
+// comma-separated agent tools and space/comma-separated allowed-tools,
+// including permission-rule entries that must survive as one token.
+func TestParseToolListStringForms(t *testing.T) {
+	cmdSrc := []byte(
+		"---\ndescription: x\nallowed-tools: Bash(git add:*) Bash(git status:*), Read\n---\n")
+	c, perr := ParseCommand(".claude/commands/commit.md", cmdSrc)
+	if perr != nil {
+		t.Fatalf("ParseCommand = %v", perr)
+	}
+	want := []string{"Bash(git add:*)", "Bash(git status:*)", "Read"}
+	if len(c.AllowedTools) != len(want) {
+		t.Fatalf("AllowedTools = %v, want %v", c.AllowedTools, want)
+	}
+	for i := range want {
+		if c.AllowedTools[i] != want[i] {
+			t.Errorf("AllowedTools[%d] = %q, want %q", i, c.AllowedTools[i], want[i])
+		}
+	}
+
+	agSrc := []byte("---\nname: helper\ndescription: y\ntools: Read, Grep, mcp__github\n---\n")
+	a, perr := ParseAgent(".claude/agents/helper.md", agSrc)
+	if perr != nil {
+		t.Fatalf("ParseAgent = %v", perr)
+	}
+	if len(a.Tools) != 3 || a.Tools[0] != "Read" || a.Tools[1] != "Grep" || a.Tools[2] != "mcp__github" {
+		t.Errorf("Tools = %v, want [Read Grep mcp__github]", a.Tools)
+	}
+}
+
 func TestParseMarkdownUnterminatedFrontmatter(t *testing.T) {
 	src := []byte("---\nname: writer\nbody continues forever")
 	_, perr := parseMarkdown("x", src)
@@ -207,6 +415,84 @@ func TestAsStringAndListEdgeCases(t *testing.T) {
 	}
 	if got := doc.asStringList("weird"); got != nil {
 		t.Errorf("asStringList non-list non-string = %v, want nil", got)
+	}
+}
+
+func TestSplitToolList(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want []string
+	}{
+		{"empty", "", nil},
+		{"separators only", " , ,  ", nil},
+		{"single tool", "Read", []string{"Read"}},
+		{"comma separated", "Read,Write,Edit", []string{"Read", "Write", "Edit"}},
+		{"comma space separated", "Read, Write, Edit", []string{"Read", "Write", "Edit"}},
+		{"space separated", "Read Write Edit", []string{"Read", "Write", "Edit"}},
+		{"mixed separators", "Read,  Write\tEdit", []string{"Read", "Write", "Edit"}},
+		{
+			"permission rule with space inside parens",
+			"Bash(git add:*), Read",
+			[]string{"Bash(git add:*)", "Read"},
+		},
+		{
+			"comma inside parens",
+			"Agent(worker, researcher) Read",
+			[]string{"Agent(worker, researcher)", "Read"},
+		},
+		{
+			"mcp patterns",
+			"mcp__github mcp__linear__create_issue",
+			[]string{"mcp__github", "mcp__linear__create_issue"},
+		},
+		{
+			"nested parens",
+			"Bash(echo $(date):*), Grep",
+			[]string{"Bash(echo $(date):*)", "Grep"},
+		},
+		{
+			"unbalanced open paren swallows rest",
+			"Bash(git add Read",
+			[]string{"Bash(git add Read"},
+		},
+		{
+			"stray close paren stays attached",
+			"Read) Write",
+			[]string{"Read)", "Write"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SplitToolList(tt.in)
+			if len(got) != len(tt.want) {
+				t.Fatalf("SplitToolList(%q) = %v, want %v", tt.in, got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("SplitToolList(%q)[%d] = %q, want %q", tt.in, i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestAsToolList(t *testing.T) {
+	doc := &markdownDoc{fm: map[string]any{
+		"str_form":  "Bash(git add:*), Read Edit",
+		"list_form": []any{"Bash(git add:*)", "Read"},
+	}}
+	if got := doc.asToolList("missing"); got != nil {
+		t.Errorf("asToolList missing = %v, want nil", got)
+	}
+	got := doc.asToolList("str_form")
+	if len(got) != 3 || got[0] != "Bash(git add:*)" || got[1] != "Read" || got[2] != "Edit" {
+		t.Errorf("asToolList string form = %v", got)
+	}
+	// YAML list elements pass through verbatim — never re-split.
+	got = doc.asToolList("list_form")
+	if len(got) != 2 || got[0] != "Bash(git add:*)" || got[1] != "Read" {
+		t.Errorf("asToolList list form = %v", got)
 	}
 }
 

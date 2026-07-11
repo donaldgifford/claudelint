@@ -8,9 +8,13 @@ import (
 )
 
 // ParseMCPFile parses a standalone .mcp.json file into one MCPServer
-// per entry in the top-level servers{} object. The returned slice is
-// in JSON document order and may be empty (a file with "servers": {}
-// is well-formed).
+// per entry in the top-level mcpServers{} object — the key the Claude
+// Code docs standardized on. The deprecated servers{} key (the
+// DESIGN-0002-era shape) is still accepted; servers parsed from it
+// carry LegacyServersKey so a rule can surface the deprecation. When
+// both keys are present, mcpServers wins and servers{} is ignored.
+// The returned slice is in JSON document order and may be empty (a
+// file with "mcpServers": {} is well-formed).
 //
 // Each emitted MCPServer carries the same Base so rules that want to
 // surface diagnostics on a per-server range can resolve absolute
@@ -34,16 +38,21 @@ func ParseMCPFile(filePath string, src []byte) ([]*MCPServer, *ParseError) {
 		}
 	}
 
-	serversRaw, dt, serversEndAbs, err := jsonparser.Get(src, "servers")
-	if err != nil {
+	keyName := "mcpServers"
+	serversRaw, dt, serversEndAbs, err := jsonparser.Get(src, keyName)
+	if errors.Is(err, jsonparser.KeyPathNotFoundError) {
+		keyName = "servers"
+		serversRaw, dt, serversEndAbs, err = jsonparser.Get(src, keyName)
 		if errors.Is(err, jsonparser.KeyPathNotFoundError) {
 			return nil, nil
 		}
+	}
+	if err != nil {
 		base := NewBase(filePath, src)
 		return nil, &ParseError{
 			Path:    filePath,
 			Range:   base.ResolveRange(0, len(src)),
-			Message: fmt.Sprintf(".mcp.json: reading servers: %s", err.Error()),
+			Message: fmt.Sprintf(".mcp.json: reading %s: %s", keyName, err.Error()),
 			Cause:   err,
 		}
 	}
@@ -52,12 +61,17 @@ func ParseMCPFile(filePath string, src []byte) ([]*MCPServer, *ParseError) {
 		return nil, &ParseError{
 			Path:    filePath,
 			Range:   base.ResolveRange(0, len(src)),
-			Message: fmt.Sprintf(".mcp.json: servers must be an object, got %s", dt.String()),
+			Message: fmt.Sprintf(".mcp.json: %s must be an object, got %s", keyName, dt.String()),
 		}
 	}
 	serversStartAbs := serversEndAbs - len(serversRaw)
 
 	out := collectServers(filePath, src, serversRaw, serversStartAbs, false)
+	if keyName == "servers" {
+		for _, s := range out {
+			s.LegacyServersKey = true
+		}
+	}
 	return out, nil
 }
 
@@ -114,6 +128,13 @@ func collectServers(filePath string, src, serversRaw []byte, serversAbs int, emb
 		server.Args = stringArrayField(value, "args")
 		server.Env = stringMapField(value, "env")
 		server.Disabled = boolField(value, "disabled")
+		server.Transport, server.TransportRange = stringFieldAt(value, valueStartAbs, &base, "type")
+		server.URL, server.URLRange = stringFieldAt(value, valueStartAbs, &base, "url")
+		server.Headers = stringMapField(value, "headers")
+		server.HeadersHelper, _ = stringFieldAt(value, valueStartAbs, &base, "headersHelper")
+		server.TimeoutMS = int64Field(value, "timeout")
+		server.AlwaysLoad = boolField(value, "alwaysLoad")
+		server.HasOAuth = objectPresent(value, "oauth")
 		out = append(out, server)
 		return nil
 	})
@@ -157,4 +178,26 @@ func boolField(src []byte, key string) bool {
 		return false
 	}
 	return len(raw) == 4 // "true"
+}
+
+// int64Field returns the integer value of a top-level numeric key, or
+// 0 for a missing / non-integer key.
+func int64Field(src []byte, key string) int64 {
+	v, err := jsonparser.GetInt(src, key)
+	if err != nil {
+		return 0
+	}
+	return v
+}
+
+// objectPresent reports whether key exists and is a JSON object.
+func objectPresent(src []byte, key string) bool {
+	_, dt, _, err := jsonparser.Get(src, key)
+	return err == nil && dt == jsonparser.Object
+}
+
+// arrayPresent reports whether key exists and is a JSON array.
+func arrayPresent(src []byte, key string) bool {
+	_, dt, _, err := jsonparser.Get(src, key)
+	return err == nil && dt == jsonparser.Array
 }

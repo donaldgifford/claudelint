@@ -13,6 +13,15 @@ created: 2026-07-09
 **Author:** Donald Gifford
 **Date:** 2026-07-09
 
+> **Implemented by
+> [IMPL-0004](../impl/0004-phase-4-ruleset-alignment-and-agent-rules.md)**
+> (ruleset v1.5.0, 53 rules): every divergence fix and proposed rule in
+> this audit landed across its five phases, with two engine-driven
+> severity splits (version-semver/version-missing,
+> transport-known/transport-deprecated) and the opt-in mechanism
+> specified in
+> [DESIGN-0005](../design/0005-agent-rules-and-opt-in-rule-mechanism.md).
+
 <!--toc:start-->
 - [Question](#question)
 - [Hypothesis](#hypothesis)

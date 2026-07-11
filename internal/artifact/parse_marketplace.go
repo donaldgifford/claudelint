@@ -50,9 +50,41 @@ func ParseMarketplace(filePath string, src []byte) (*Marketplace, *ParseError) {
 	// see their range point at the obvious token.
 	m.Version, m.VersionRange = stringFieldPath(src, &base, []string{"version"}, []string{"metadata", "version"})
 	m.Author, m.AuthorRange = stringFieldPath(src, &base, []string{"author"}, []string{"owner", "name"})
+	m.OwnerName, m.OwnerRange = stringFieldPath(src, &base, []string{"owner", "name"})
+	m.OwnerEmail, _ = stringFieldPath(src, &base, []string{"owner", "email"})
+	m.Renames = parseRenames(src)
+	m.PluginRoot, _ = stringFieldPath(src, &base, []string{"metadata", "pluginRoot"})
 	m.Plugins = parseMarketplacePlugins(src, &base, marketplaceRoot(filePath))
 
 	return m, nil
+}
+
+// parseRenames reads the root renames{} migration map. String targets
+// map old → new name; JSON null targets (removed plugins) map to "".
+// Non-string/non-null targets are skipped. Absent or malformed
+// renames yields nil.
+func parseRenames(src []byte) map[string]string {
+	raw, dt, _, err := jsonparser.Get(src, "renames")
+	if err != nil || dt != jsonparser.Object {
+		return nil
+	}
+	out := make(map[string]string)
+	if err := jsonparser.ObjectEach(raw, func(k, v []byte, vdt jsonparser.ValueType, _ int) error {
+		switch vdt {
+		case jsonparser.String:
+			out[string(k)] = string(v)
+		case jsonparser.Null:
+			out[string(k)] = ""
+		default:
+		}
+		return nil
+	}); err != nil {
+		return nil
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // stringFieldPath tries each path in turn and returns the first string
@@ -94,7 +126,20 @@ func parseMarketplacePlugins(src []byte, base *Base, root string) []MarketplaceP
 		mp := MarketplacePlugin{}
 		mp.Name, mp.NameRange = stringFieldAt(item, itemAbs, base, "name")
 		mp.Source, mp.SourceRange = stringFieldAt(item, itemAbs, base, "source")
-		mp.Resolved = resolveMarketplaceSource(root, mp.Source)
+		switch {
+		case mp.Source != "":
+			mp.SourceInfo = classifyStringSource(mp.Source)
+			mp.Resolved = resolveMarketplaceSource(root, mp.Source)
+		default:
+			// Not a string — the docs also allow an object form
+			// ({"source": "github", "repo": ...} etc.).
+			raw, dt, endOff, gerr := jsonparser.Get(item, "source")
+			if gerr == nil && dt == jsonparser.Object {
+				mp.SourceInfo = parseSourceObject(raw)
+				endAbs := itemAbs + endOff
+				mp.SourceRange = base.ResolveRange(endAbs-len(raw), endAbs)
+			}
+		}
 		out = append(out, mp)
 	})
 	if aerr != nil && !errors.Is(aerr, jsonparser.KeyPathNotFoundError) {
@@ -150,13 +195,79 @@ func resolveMarketplaceSource(root, source string) string {
 	if source == "" {
 		return ""
 	}
-	if strings.HasPrefix(source, "github:") ||
-		strings.Contains(source, "://") ||
-		strings.HasPrefix(source, "git@") {
+	if isExternalStringSource(source) {
 		return ""
 	}
 	// Local source: join with the marketplace root and clean.
 	// source may be "./" or "./plugins/foo" or "plugins/foo".
 	joined := path.Join(root, source)
 	return path.Clean(joined)
+}
+
+// isExternalStringSource reports whether a string-form source names a
+// remote location rather than a path inside the marketplace repo.
+func isExternalStringSource(source string) bool {
+	return strings.HasPrefix(source, "github:") ||
+		strings.Contains(source, "://") ||
+		strings.HasPrefix(source, "git@")
+}
+
+// classifyStringSource types a string-form source: the documented
+// relative-path form, or the legacy remote shorthands.
+func classifyStringSource(source string) MarketplaceSource {
+	if isExternalStringSource(source) {
+		return MarketplaceSource{Kind: SourceExternalString}
+	}
+	return MarketplaceSource{Kind: SourceLocal}
+}
+
+// parseSourceObject types an object-form source by its "source"
+// discriminator and extracts that kind's documented fields. Unknown
+// or missing discriminators yield SourceInvalid so the source-valid
+// rule can flag the entry without re-parsing bytes.
+func parseSourceObject(raw []byte) MarketplaceSource {
+	kind, err := jsonparser.GetString(raw, "source")
+	if err != nil {
+		return MarketplaceSource{Kind: SourceInvalid}
+	}
+	get := func(key string) string {
+		v, gerr := jsonparser.GetString(raw, key)
+		if gerr != nil {
+			return ""
+		}
+		return v
+	}
+	switch MarketplaceSourceKind(kind) {
+	case SourceGitHub:
+		return MarketplaceSource{
+			Kind: SourceGitHub,
+			Repo: get("repo"),
+			Ref:  get("ref"),
+			SHA:  get("sha"),
+		}
+	case SourceURL:
+		return MarketplaceSource{
+			Kind: SourceURL,
+			URL:  get("url"),
+			Ref:  get("ref"),
+			SHA:  get("sha"),
+		}
+	case SourceGitSubdir:
+		return MarketplaceSource{
+			Kind: SourceGitSubdir,
+			URL:  get("url"),
+			Path: get("path"),
+			Ref:  get("ref"),
+			SHA:  get("sha"),
+		}
+	case SourceNPM:
+		return MarketplaceSource{
+			Kind:     SourceNPM,
+			Package:  get("package"),
+			Version:  get("version"),
+			Registry: get("registry"),
+		}
+	default:
+		return MarketplaceSource{Kind: SourceInvalid}
+	}
 }

@@ -164,7 +164,7 @@ A typo in a `rule "<id>"` block does *not* silently disable the real
 rule. `claudelint` emits a `meta/unknown-rule` warning pointing at the
 offending config so the typo is visible.
 
-## Rules (ruleset v1.1)
+## Rules (ruleset v1.5)
 
 Every rule is built into the binary. The fingerprint under
 `claudelint version` changes whenever rules are added, removed, or
@@ -177,30 +177,53 @@ fails if the drift is not acknowledged.
 | `schema/frontmatter-required`         | schema    | error    | skill, command, agent           |
 | `skills/trigger-clarity`              | content   | warning  | skill                           |
 | `skills/body-size`                    | content   | warning  | skill                           |
+| `skills/description-length`           | content   | warning  | skill                           |
 | `skills/no-version-field`             | schema    | warning  | skill                           |
+| `skills/fork-agent-pairing`           | schema    | warning  | skill                           |
+| `agents/field-enums`                  | schema    | warning  | agent                           |
+| `agents/model-policy` (opt-in)        | schema    | error    | agent                           |
+| `agents/model-valid`                  | schema    | warning  | agent, skill, command           |
+| `agents/name-format`                  | schema    | warning  | agent                           |
+| `agents/plugin-ignored-fields`        | content   | warning  | agent                           |
+| `agents/tools-known`                  | schema    | warning  | agent                           |
 | `claude_md/duplicate-directives`      | content   | warning  | `CLAUDE.md`                     |
+| `claude_md/import-exists`             | content   | warning  | `CLAUDE.md`                     |
 | `claude_md/size`                      | content   | warning  | `CLAUDE.md`                     |
-| `commands/allowed-tools-known`        | schema    | error    | command                         |
+| `commands/allowed-tools-known`        | schema    | error    | command, skill                  |
 | `hooks/event-name-known`              | schema    | error    | hook                            |
+| `hooks/type-known`                    | schema    | error    | hook                            |
+| `hooks/type-fields`                   | schema    | error    | hook                            |
 | `hooks/timeout-present`               | content   | warning  | hook                            |
 | `hooks/no-unsafe-shell`               | security  | warning  | hook                            |
 | `plugin/manifest-fields`              | schema    | error    | plugin                          |
 | `plugin/semver`                       | schema    | warning  | plugin                          |
 | `marketplace/name`                    | schema    | error    | marketplace                     |
+| `marketplace/reserved-name`           | schema    | error    | marketplace                     |
 | `marketplace/version-semver`          | schema    | error    | marketplace                     |
 | `marketplace/plugins-nonempty`        | schema    | warning  | marketplace                     |
 | `marketplace/plugin-source-valid`     | schema    | error    | marketplace                     |
 | `marketplace/plugin-name-unique`      | schema    | error    | marketplace                     |
 | `marketplace/plugin-name-matches-dir` | style     | warning  | marketplace                     |
-| `marketplace/author-required`         | style     | info     | marketplace                     |
+| `marketplace/name-format`             | style     | warning  | marketplace                     |
+| `marketplace/source-path-safety`      | security  | error    | marketplace                     |
+| `marketplace/renames-valid`           | schema    | error    | marketplace                     |
+| `marketplace/owner-required`          | schema    | warning  | marketplace                     |
+| `marketplace/author-legacy`           | style     | info     | marketplace                     |
+| `marketplace/version-missing`         | style     | info     | marketplace                     |
 | `marketplace/external-source-skipped` | schema    | info     | marketplace                     |
 | `mcp/command-required`                | schema    | error    | mcp_server                      |
+| `mcp/url-required`                    | schema    | error    | mcp_server                      |
 | `mcp/server-name-required`            | schema    | error    | mcp_server                      |
 | `mcp/command-exists-on-path`          | schema    | warning  | mcp_server                      |
 | `mcp/no-unsafe-shell`                 | security  | error    | mcp_server                      |
 | `mcp/no-secrets-in-env`               | security  | error    | mcp_server                      |
+| `mcp/no-secrets-in-headers`           | security  | error    | mcp_server                      |
+| `mcp/timeout-minimum`                 | schema    | warning  | mcp_server                      |
+| `mcp/transport-known`                 | schema    | warning  | mcp_server                      |
+| `mcp/transport-deprecated`            | schema    | info     | mcp_server                      |
 | `mcp/disabled-commented`              | style     | info     | mcp_server                      |
-| `mcp/server-allowlist`                | security  | error    | mcp_server                      |
+| `mcp/legacy-servers-key`              | schema    | info     | mcp_server                      |
+| `mcp/server-allowlist` (opt-in)       | security  | error    | mcp_server                      |
 | `security/secrets`                    | security  | error    | every kind                      |
 | `style/no-emoji`                      | style     | info     | every kind                      |
 
@@ -229,6 +252,11 @@ cannot be disabled, only downgraded with `severity`.
 Each artifact kind declares required frontmatter keys; the rule fires
 when any required key is missing or empty.
 
+> **Stricter than spec, by design.** Claude Code tolerates a skill
+> without `name` (falls back to the directory name) and loads one
+> without `description` — but a skill the model can't discover silently
+> never runs, so both stay required at error severity here.
+
 **Bad** (skill without `name`):
 
     ---
@@ -254,11 +282,11 @@ Override per-rule:
 
 #### `skills/no-version-field`
 
-Warns when a `SKILL.md` frontmatter declares a `version` key. Skill
+Warns when a `SKILL.md` frontmatter declares a `version` key. The
+skills reference documents `version` as accepted-but-ignored metadata;
 versioning is load-bearing only at the plugin level (`plugin.json`'s
-`version` field); a `version:` in `SKILL.md` is silently ignored by
-Claude Code and creates two competing sources of truth that drift
-over time.
+`version` field), so a `version:` in `SKILL.md` is a second source of
+truth that drifts over time without ever taking effect.
 
 **Bad**:
 
@@ -289,8 +317,12 @@ Default cap is 30 000 bytes; override with:
 
 #### `commands/allowed-tools-known`
 
-Slash-command manifests declare `allowed-tools`; the rule checks every
-entry is a valid Claude tool name from the shipping set.
+Commands and skills share one frontmatter model, so the rule checks
+`allowed-tools` and `disallowed-tools` on both kinds. Every entry must
+be a known Claude tool name, an MCP pattern (`mcp__github`,
+`mcp__server__tool`), or a permission-rule form whose base is a known
+tool (`Bash(git add:*)`, `Agent(reviewer)`). Both the YAML-list and
+comma/space-separated string forms are understood.
 
 **Bad**: `allowed-tools: [WriteFil]` (typo)
 **Fix**: `allowed-tools: [Write]`.
@@ -304,10 +336,17 @@ one of the known Claude Code hook events (`PreToolUse`, `PostToolUse`,
 **Bad**: `"PretoolUse": [...]` (wrong case / typo)
 **Fix**: `"PreToolUse": [...]`.
 
+The canonical list mirrors the 30 events in the
+[hooks reference](https://code.claude.com/docs/en/hooks); when a name
+matches a known event apart from casing, the diagnostic suggests the
+exact spelling.
+
 #### `hooks/timeout-present`
 
-Every hook entry should declare a `timeout` (seconds) so a runaway
-hook cannot hang the session.
+Every hook entry should declare a `timeout` (seconds). Claude Code
+applies documented per-type defaults when it's omitted — 600 s for
+`command`/`http`/`mcp_tool`, 30 s for `prompt`, 60 s for `agent` — so
+this is a fail-faster nudge, not a hang guard.
 
 **Bad**:
 
@@ -333,21 +372,29 @@ hook cannot hang the session.
 
 #### `hooks/no-unsafe-shell`
 
-Flags `eval`, unquoted `$VAR`, and other shell smells inside hook
-commands.
+Flags network-download-into-shell pipes (`curl ... | sh` and variants)
+in hook commands. Only shell-form `command` hooks are checked: entries
+with `args` run exec-form (no shell), and non-`command` types have no
+shell at all.
 
-**Bad**: `command: "eval $(curl $URL)"`
-**Fix**: quote `"$URL"`, drop the `eval`, or rewrite as a script file.
+**Bad**: `command: "curl https://get.example.sh | bash"`
+**Fix**: vendor the script into the repo, or verify a pinned checksum
+before executing.
 
 #### `plugin/manifest-fields`
 
-Plugin manifest must declare `name`, `version`, and `description`.
+Plugin manifests must declare `name` and `version`.
+
+> **Stricter than spec, by design.** The docs require only `name`; a
+> missing `version` falls back to the installing commit's git SHA.
+> claudelint requires a pinned `version` — explicit versions make
+> update semantics reviewable for marketplace consumers.
 
 **Bad**:
 
     {"name": "my-plugin"}
 
-**Fix**: add `"version": "1.0.0"` and `"description": "..."`.
+**Fix**: add `"version": "1.0.0"`.
 
 #### `plugin/semver`
 
@@ -371,8 +418,10 @@ high-entropy strings. False positives are suppressible per-path:
 Restricts MCP servers to a vetted list. Useful for marketplace owners
 who want every plugin's MCP server reviewed before it ships.
 
-The rule is opt-in via configuration. Set the `allowlist` option to
-the vetted server names:
+**Opt-in.** Without a `rule "mcp/server-allowlist"` block in
+`.claudelint.hcl` the rule does not run at all. Any block — even an
+empty one — activates it; set the `allowlist` option to the vetted
+server names:
 
     rule "mcp/server-allowlist" {
       options = {
@@ -380,7 +429,7 @@ the vetted server names:
       }
     }
 
-Behaviour matrix:
+Behaviour matrix, once a rule block exists:
 
 | `allowlist` value | Effect                                                              |
 |-------------------|---------------------------------------------------------------------|
@@ -388,10 +437,9 @@ Behaviour matrix:
 | `[]`              | Fires on every server (explicit "block all")                        |
 | `["x", "y"]`      | Fires on every server whose name is not in the list                 |
 
-To silence the rule entirely, set `enabled = false` instead of
-removing the `allowlist` option — leaving the rule on without an
-allowlist surfaces a configuration error so misconfigurations don't
-silently no-op.
+An explicit enable without an allowlist is treated as a
+misconfiguration, not a silent no-op. To turn the rule back off,
+remove the block or set `enabled = false` inside it.
 
 #### `style/no-emoji`
 

@@ -19,8 +19,10 @@ const (
 
 func init() { rules.Register(&commandRequired{}) }
 
-// commandRequired errors when an MCP server has no `command` or an
-// empty one — the server cannot be launched without it.
+// commandRequired errors when a stdio MCP server has no `command` or
+// an empty one — a stdio server cannot be launched without it. Other
+// transports (http, sse, ws) connect via `url` and are skipped here;
+// see mcp/url-required.
 type commandRequired struct{}
 
 func (*commandRequired) ID() string                     { return "mcp/command-required" }
@@ -38,14 +40,14 @@ func (r *commandRequired) Check(_ rules.Context, a artifact.Artifact) []diag.Dia
 	if !ok {
 		return nil
 	}
-	if s.Command != "" {
+	if s.EffectiveTransport() != "stdio" || s.Command != "" {
 		return nil
 	}
 	return []diag.Diagnostic{{
 		RuleID:  r.ID(),
 		Path:    s.Path(),
 		Range:   s.NameRange,
-		Message: "MCP server " + quoteName(s.Name) + " has no command",
+		Message: "MCP server " + quoteName(s.Name) + " has no command (required for stdio transport)",
 	}}
 }
 

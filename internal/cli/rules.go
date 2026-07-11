@@ -59,8 +59,12 @@ func listRules(out io.Writer) error {
 		return err
 	}
 	for _, r := range all {
+		id := r.ID()
+		if rules.IsOptIn(r) {
+			id += " (opt-in)"
+		}
 		if _, err := fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n",
-			r.ID(), r.Category(), r.DefaultSeverity(), kindsOf(r)); err != nil {
+			id, r.Category(), r.DefaultSeverity(), kindsOf(r)); err != nil {
 			return err
 		}
 	}
@@ -78,6 +82,10 @@ func describeRule(out io.Writer, id string) error {
 		fmt.Sprintf("  severity: %s", r.DefaultSeverity()),
 		fmt.Sprintf("  applies:  %s", kindsOf(r)),
 		fmt.Sprintf("  help:     %s", r.HelpURI()),
+	}
+	if rules.IsOptIn(r) {
+		lines = append(lines,
+			`  opt-in:   yes — runs only when .claudelint.hcl has a rule "`+r.ID()+`" block`)
 	}
 	opts := r.DefaultOptions()
 	if len(opts) == 0 {
@@ -108,6 +116,7 @@ type ruleDoc struct {
 	AppliesTo       []string       `json:"applies_to"`
 	HelpURI         string         `json:"help_uri"`
 	DefaultOptions  map[string]any `json:"default_options"`
+	OptIn           bool           `json:"opt_in"`
 }
 
 // rulesDoc is the envelope for `rules --json`. Same stability rules as
@@ -163,6 +172,7 @@ func toRuleDoc(r rules.Rule) ruleDoc {
 		AppliesTo:       applies,
 		HelpURI:         r.HelpURI(),
 		DefaultOptions:  opts,
+		OptIn:           rules.IsOptIn(r),
 	}
 }
 

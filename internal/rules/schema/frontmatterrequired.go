@@ -48,12 +48,29 @@ func (r *frontmatterRequired) Check(_ rules.Context, a artifact.Artifact) []diag
 		return out
 	}
 	if name == "" {
-		out = append(out, missingKeyDiag(r.ID(), a.Path(), fm, "name"))
+		out = append(out, missingKeyDiag(r.ID(), a.Path(), fm, "name", keyMessage(a, "name")))
 	}
 	if description == "" {
-		out = append(out, missingKeyDiag(r.ID(), a.Path(), fm, "description"))
+		out = append(out, missingKeyDiag(r.ID(), a.Path(), fm, "description", keyMessage(a, "description")))
 	}
 	return out
+}
+
+// keyMessage phrases the missing-key diagnostic. Skills get the
+// best-practice form citing Claude Code's documented fallback — the
+// docs don't hard-require these keys, so their requiredness here is
+// claudelint's stricter-than-spec stance (see rules.md). Other kinds
+// keep the plain form.
+func keyMessage(a artifact.Artifact, key string) string {
+	if _, ok := a.(*artifact.Skill); ok {
+		switch key {
+		case "name":
+			return `skills should declare "name" — without it Claude Code falls back to the skill directory name`
+		case "description":
+			return `skills should declare "description" — Claude Code relies on it to decide when to invoke the skill`
+		}
+	}
+	return fmt.Sprintf("frontmatter key %q is missing or empty", key)
 }
 
 // extractFrontmatterFields pulls Frontmatter, name, and description
@@ -74,7 +91,7 @@ func extractFrontmatterFields(a artifact.Artifact) (artifact.Frontmatter, string
 	return artifact.Frontmatter{}, "", ""
 }
 
-func missingKeyDiag(ruleID, path string, fm artifact.Frontmatter, key string) diag.Diagnostic {
+func missingKeyDiag(ruleID, path string, fm artifact.Frontmatter, key, message string) diag.Diagnostic {
 	r := fm.KeyRange(key)
 	if r.IsZero() {
 		// Key is entirely absent — point at the opening frontmatter
@@ -85,6 +102,6 @@ func missingKeyDiag(ruleID, path string, fm artifact.Frontmatter, key string) di
 		RuleID:  ruleID,
 		Path:    path,
 		Range:   r,
-		Message: fmt.Sprintf("frontmatter key %q is missing or empty", key),
+		Message: message,
 	}
 }

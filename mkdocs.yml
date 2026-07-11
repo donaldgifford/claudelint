@@ -12,6 +12,7 @@ nav:
         - 'DESIGN-0002: Phase 2 — marketplaces, MCP rules, and GitHub Action': design/0002-phase-2-marketplaces-mcp-rules-and-github-action.md
         - 'DESIGN-0003: Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public': design/0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md
         - 'DESIGN-0004: Starlight landing page polish and brand pass': design/0004-starlight-landing-page-polish-and-brand-pass.md
+        - 'DESIGN-0005: Agent rules and opt-in rule mechanism': design/0005-agent-rules-and-opt-in-rule-mechanism.md
     - Implementation Plans:
         - Overview: impl/README.md
         - 'IMPL-0001: Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks': impl/0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md

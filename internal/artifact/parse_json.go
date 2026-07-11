@@ -163,7 +163,15 @@ func collectMatcherGroup(group []byte, base *Base, event string, h *Hook) {
 			Event:   event,
 			Matcher: matcher,
 		}
+		entry.Type, entry.TypeRange = stringField(item, base, "type")
 		entry.Command, entry.CommandRange = stringField(item, base, "command")
+		entry.URL, entry.URLRange = stringField(item, base, "url")
+		entry.Server, _ = stringField(item, base, "server")
+		entry.Tool, _ = stringField(item, base, "tool")
+		entry.Prompt, _ = stringField(item, base, "prompt")
+		entry.Shell, _ = stringField(item, base, "shell")
+		entry.ExecForm = arrayPresent(item, "args")
+		entry.Async = boolField(item, "async")
 		entry.Timeout, entry.TimeoutRange = intField(item, base, "timeout")
 		h.Entries = append(h.Entries, entry)
 	}, "hooks")

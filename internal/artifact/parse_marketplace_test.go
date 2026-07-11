@@ -36,12 +36,15 @@ func TestParseMarketplaceFixtures(t *testing.T) {
 			},
 		},
 		{
-			name:     "traditional",
-			file:     "testdata/ok/marketplaces/traditional/marketplace.json",
-			relPath:  "repo/.claude-plugin/marketplace.json",
-			wantName: "anthropic-plugins",
+			name:    "traditional",
+			file:    "testdata/ok/marketplaces/traditional/marketplace.json",
+			relPath: "repo/.claude-plugin/marketplace.json",
+			// "anthropic-plugins" until Phase 5 — that name is now on
+			// the documented reserved list, so the doc-valid fixture
+			// uses a neutral one.
+			wantName: "acme-plugins",
 			wantVer:  "2.3.1",
-			wantAuth: "Anthropic",
+			wantAuth: "Acme",
 			plugins: []wantPlugin{
 				{name: "donald-loop", source: "./plugins/donald-loop", resolved: "repo/plugins/donald-loop"},
 				{name: "docz", source: "./plugins/docz", resolved: "repo/plugins/docz"},
@@ -178,6 +181,128 @@ func TestParseMarketplaceTolerant(t *testing.T) {
 	})
 }
 
+func TestParseMarketplaceObjectSources(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/object_sources/.claude-plugin/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+	if got := len(m.Plugins); got != 6 {
+		t.Fatalf("len(Plugins) = %d, want 6", got)
+	}
+	byName := make(map[string]MarketplacePlugin, len(m.Plugins))
+	for _, p := range m.Plugins {
+		byName[p.Name] = p
+	}
+
+	tests := []struct {
+		name string
+		want MarketplaceSource
+	}{
+		{"local-one", MarketplaceSource{Kind: SourceLocal}},
+		{"gh-plugin", MarketplaceSource{
+			Kind: SourceGitHub,
+			Repo: "acme/gh-plugin",
+			Ref:  "main",
+			SHA:  "0123456789abcdef0123456789abcdef01234567",
+		}},
+		{"url-plugin", MarketplaceSource{
+			Kind: SourceURL,
+			URL:  "https://gitlab.com/acme/url-plugin.git",
+			Ref:  "v2",
+		}},
+		{"subdir-plugin", MarketplaceSource{
+			Kind: SourceGitSubdir,
+			URL:  "https://github.com/acme/monorepo.git",
+			Path: "tools/claude-plugin",
+		}},
+		{"npm-plugin", MarketplaceSource{
+			Kind:     SourceNPM,
+			Package:  "@acme/claude-plugin",
+			Version:  "^2.0.0",
+			Registry: "https://npm.example.com",
+		}},
+		{"bogus-plugin", MarketplaceSource{Kind: SourceInvalid}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, ok := byName[tt.name]
+			if !ok {
+				t.Fatalf("plugin %q not parsed", tt.name)
+			}
+			if p.SourceInfo != tt.want {
+				t.Errorf("SourceInfo = %+v, want %+v", p.SourceInfo, tt.want)
+			}
+			if tt.want.Kind != SourceLocal && p.Resolved != "" {
+				t.Errorf("Resolved = %q, want empty for remote source", p.Resolved)
+			}
+			if tt.want.Kind != SourceLocal && p.SourceRange.IsZero() {
+				t.Error("SourceRange is zero for object source, want the object's span")
+			}
+		})
+	}
+
+	if loc := byName["local-one"]; loc.Resolved == "" {
+		t.Error("local-one Resolved is empty, want repo-relative path")
+	}
+}
+
+func TestParseMarketplaceOwnerAndRenames(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/object_sources/.claude-plugin/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+
+	if m.OwnerName != "Donald Gifford" {
+		t.Errorf("OwnerName = %q, want Donald Gifford", m.OwnerName)
+	}
+	if m.OwnerRange.IsZero() {
+		t.Error("OwnerRange is zero, want the owner.name span")
+	}
+	if m.OwnerEmail != "donald@example.com" {
+		t.Errorf("OwnerEmail = %q", m.OwnerEmail)
+	}
+	// The legacy merged Author view falls back to owner.name when no
+	// top-level author string exists.
+	if m.Author != "Donald Gifford" {
+		t.Errorf("Author = %q, want owner.name fallback", m.Author)
+	}
+
+	wantRenames := map[string]string{
+		"old-local":      "local-one",
+		"retired-plugin": "", // JSON null = removed
+	}
+	if len(m.Renames) != len(wantRenames) {
+		t.Fatalf("Renames = %v, want %v", m.Renames, wantRenames)
+	}
+	for k, want := range wantRenames {
+		if got, ok := m.Renames[k]; !ok || got != want {
+			t.Errorf("Renames[%q] = %q (present=%v), want %q", k, got, ok, want)
+		}
+	}
+}
+
+func TestParseMarketplaceNoOwnerNoRenames(t *testing.T) {
+	src := []byte(`{"name": "bare", "plugins": []}`)
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+	if m.OwnerName != "" || m.OwnerEmail != "" {
+		t.Errorf("Owner = %q/%q, want empty", m.OwnerName, m.OwnerEmail)
+	}
+	if m.Renames != nil {
+		t.Errorf("Renames = %v, want nil", m.Renames)
+	}
+}
+
 // TestParseMarketplaceSourceRange verifies the SourceRange for a known
 // fixture points at a byte span whose contents, when sliced out of
 // Raw/Source, match the expected source string.
@@ -219,5 +344,25 @@ func TestMarketplaceRoot(t *testing.T) {
 		if got := marketplaceRoot(tt.path); got != tt.want {
 			t.Errorf("marketplaceRoot(%q) = %q, want %q", tt.path, got, tt.want)
 		}
+	}
+}
+
+func TestParseMarketplaceRenamesAndPluginRoot(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/renames/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+	if m.PluginRoot != "./plugins" {
+		t.Errorf("PluginRoot = %q, want ./plugins", m.PluginRoot)
+	}
+	if got := m.Renames["old-formatter"]; got != "formatter" {
+		t.Errorf(`Renames["old-formatter"] = %q, want "formatter"`, got)
+	}
+	if got, ok := m.Renames["legacy-linter"]; !ok || got != "" {
+		t.Errorf(`Renames["legacy-linter"] = (%q, %v), want ("", true) for null`, got, ok)
 	}
 }

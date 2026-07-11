@@ -1,7 +1,7 @@
 ---
 id: IMPL-0004
 title: "Phase 4 - Ruleset alignment and agent rules"
-status: Draft
+status: Completed
 author: Donald Gifford
 created: 2026-07-09
 ---
@@ -9,7 +9,7 @@ created: 2026-07-09
 
 # IMPL 0004: Phase 4 - Ruleset alignment and agent rules
 
-**Status:** Draft
+**Status:** Completed
 **Author:** Donald Gifford
 **Date:** 2026-07-09
 
@@ -110,46 +110,74 @@ field ranges preferred).
 
 #### Tasks
 
-- [ ] `ParseMCPFile`: accept `mcpServers` as the primary top-level key;
+- [x] `ParseMCPFile`: accept `mcpServers` as the primary top-level key;
       keep `servers` accepted but tag the artifact so a deprecation
-      diagnostic can fire (per OQ1 decision).
-- [ ] `MCPServer` type: parse `type` (default `stdio`), `url`, `headers`
+      diagnostic can fire (per OQ1 decision). _(`MCPServer.LegacyServersKey`
+      set for servers{}-keyed files; mcpServers wins when both present)_
+- [x] `MCPServer` type: parse `type` (default `stdio`), `url`, `headers`
       (string map), `headersHelper`, `timeout` (number, ms), `alwaysLoad`;
       add ranges for `type` and `url`. `oauth{}` parsed as present/absent
-      only (no field validation this phase).
-- [ ] `ParseMarketplace`: parse `source` as string **or** object; model the
+      only (no field validation this phase). _(`Transport` holds the raw
+      declared value; `EffectiveTransport()` applies the stdio default so
+      rules can distinguish declared-vs-defaulted)_
+- [x] `ParseMarketplace`: parse `source` as string **or** object; model the
       four documented object shapes (`github{repo,ref,sha}`,
       `url{url,ref,sha}`, `git-subdir{url,path,ref,sha}`,
       `npm{package,version,registry}`) into a typed `MarketplaceSource`
       with a `Kind` discriminator; keep `Resolved` semantics for local
-      string paths.
-- [ ] `ParseMarketplace`: parse root `owner{name,email}` as a distinct
+      string paths. _(`MarketplacePlugin.SourceInfo`; string forms classify
+      as `local`/`external-string`, unknown object discriminators as
+      `invalid`; `SourceRange` covers the object span for object forms)_
+- [x] `ParseMarketplace`: parse root `owner{name,email}` as a distinct
       field (today folded into `Author`); parse `renames{}` map (for
-      Phase 5).
-- [ ] `ParseHook`: parse `type` (default `command` when absent), `url`,
+      Phase 5). _(`OwnerName`/`OwnerEmail`/`OwnerRange` + `Renames`
+      map — JSON null targets parse as "" meaning "removed"; legacy
+      merged `Author` view preserved for existing rules)_
+- [x] `ParseHook`: parse `type` (default `command` when absent), `url`,
       `server`, `tool`, `prompt`, `args` (presence = exec-form), `async`,
       and `shell` per hook entry; keep `command`/`timeout`/`matcher`
-      extraction as-is.
-- [ ] Tool-list splitting: new shared helper that accepts YAML list, or
+      extraction as-is. _(`HookEntry.Type` holds the raw declared value;
+      `EffectiveType()` applies the command default; `ExecForm` flags
+      args[] presence so no-unsafe-shell can skip direct-spawn entries)_
+- [x] Tool-list splitting: new shared helper that accepts YAML list, or
       comma/whitespace-separated string, and returns entries — used by
       command/skill `allowed-tools`, `disallowed-tools`, and agent
       `tools`/`disallowedTools`. Entries preserve permission-rule syntax
       (`Bash(git add:*)`) and `mcp__*` patterns as single tokens.
-- [ ] `KnownTools`: add `Agent`, `Skill`; keep `Task` (documented alias);
+      _(`SplitToolList` splits on commas/whitespace only outside
+      parentheses; YAML list elements pass through verbatim. Skill and
+      command `allowed-tools` + agent `tools` now use it; the
+      `disallowed-tools`/`disallowedTools` call sites land with the
+      new-field parsing task below)_
+- [x] `KnownTools`: add `Agent`, `Skill`; keep `Task` (documented alias);
       add a helper that classifies `mcp__<server>`, `mcp__<server>__*`,
       `Agent(...)`, and `Tool(args)` permission-rule forms as
-      structurally-valid rather than unknown.
-- [ ] `KnownHookEvents`: expand to the full documented event set
+      structurally-valid rather than unknown. _(`IsToolPattern` — accepts
+      MCP patterns and permission-rule forms whose base is a known tool
+      or MCP pattern with a non-empty specifier; bare names stay
+      `IsKnownTool`'s job)_
+- [x] `KnownHookEvents`: expand to the full documented event set
       (~29 events; exact list + exact casing from the hooks reference,
-      recorded in a table in the rules doc).
-- [ ] `ParseSkill`/`ParseCommand`: parse `when_to_use`, `model` (command),
+      recorded in a table in the rules doc). _(30 events as of 2026-07 —
+      the reference grew by one since the INV-0006 audit; lifecycle-grouped
+      table added to `docs/rules/rules.md` under `hooks/event-name-known`,
+      count pinned by test)_
+- [x] `ParseSkill`/`ParseCommand`: parse `when_to_use`, `model` (command),
       `context`, `agent`, `disable-model-invocation`, `user-invocable`,
       `disallowed-tools` — fields needed by Phases 2 and 5.
-- [ ] Fixture sweep: add doc-valid testdata files exercising every new
+      _(Skill and Command now share the merged frontmatter model;
+      `UserInvocable` is a `*bool` so rules can tell declared-false from
+      absent-defaults-true; `disallowed-tools` goes through the shared
+      splitter)_
+- [x] Fixture sweep: add doc-valid testdata files exercising every new
       shape (an `mcpServers` file with `http` + `stdio` servers, a
       marketplace with all four object source types, a hooks file using
       new events and all five hook types, skills/commands with
-      string-form `allowed-tools`).
+      string-form `allowed-tools`). _(mcp/marketplace fixtures landed
+      with their parser tasks; `all_types.json` gained `Setup` +
+      `PermissionRequest` groups; new `ok/skills/deployer.md` and
+      `ok/commands/commit.md` cover string-form tool lists + merged
+      model fields, wired into `TestFixturesOK`)_
 
 #### Success Criteria
 
@@ -169,46 +197,99 @@ fingerprint change).
 
 #### Tasks
 
-- [ ] `hooks/event-name-known`: validate against the expanded event list;
+- [x] `hooks/event-name-known`: validate against the expanded event list;
       diagnostic suggests the nearest known event on likely typos
-      (case-insensitive match).
-- [ ] `commands/allowed-tools-known`: consume the shared splitter; accept
+      (case-insensitive match). _(expanded list picked up automatically
+      via `IsKnownHookEvent`; new `artifact.SuggestHookEvent` powers the
+      did-you-mean message; rules.md notes the suggestion behavior)_
+- [x] `commands/allowed-tools-known`: consume the shared splitter; accept
       permission-rule and `mcp__*` forms; extend `AppliesTo` to run on
       skill `allowed-tools`/`disallowed-tools` too (per OQ7 decision).
-- [ ] `mcp/command-required`: fire only when `type` is `stdio` (or absent).
-- [ ] New `mcp/url-required` (schema/error): `http`/`sse`/`ws` transports
-      must declare a non-empty `url`.
-- [ ] `mcp/command-exists-on-path`: skip non-stdio transports.
-- [ ] `marketplace/plugin-source-valid`: object sources validate per-type
+      _(splitter consumed at parse time; rule accepts `IsToolPattern`
+      forms and checks both tool-list keys on command + skill. The
+      `AppliesTo` change flipped the fingerprint, so the ruleset minor
+      bump landed here: `v1.3.0`, fingerprint tracked in
+      `expected_fingerprint.txt` per subsequent drift)_
+- [x] `mcp/command-required`: fire only when `type` is `stdio` (or absent).
+      _(gates on `EffectiveTransport() == "stdio"`; message now names the
+      transport requirement)_
+- [x] New `mcp/url-required` (schema/error): `http`/`sse`/`ws` transports
+      must declare a non-empty `url`. _(range prefers `TransportRange`;
+      unknown transports deliberately out of scope pending
+      `mcp/transport-known` in Phase 5; rules.md + README rows added,
+      shared prose section with `mcp/command-required`)_
+- [x] `mcp/command-exists-on-path`: skip non-stdio transports.
+      _(no fingerprint impact — behavior-only change inside Check)_
+- [x] `marketplace/plugin-source-valid`: object sources validate per-type
       required fields (`repo` / `url` / `url`+`path` / `package`); string
       sources keep the non-empty check; `sha` when present must be a
-      40-char hex string.
-- [ ] `marketplace/external-source-skipped`: rework — object sources are
+      40-char hex string. _(one diagnostic per missing requirement,
+      anchored to `SourceRange`; required-fields table added to
+      rules.md)_
+- [x] `marketplace/external-source-skipped`: rework — object sources are
       now structured; the info diagnostic applies only to sources whose
-      content genuinely can't be checked locally.
-- [ ] `marketplace/version-semver`: split — missing root `version` → info;
-      present-but-not-semver → error.
-- [ ] `marketplace/author-required`: align with documented required
-      `owner{name}` (per OQ5 decision).
-- [ ] Deprecation diagnostic for the legacy `servers` key in `.mcp.json`
+      content genuinely can't be checked locally. _(fires on the four
+      remote object kinds + remote string shorthands with a
+      kind-aware locator in the message; absent/invalid sources left to
+      plugin-source-valid to avoid double-reporting)_
+- [x] `marketplace/version-semver`: split — missing root `version` → info;
+      present-but-not-semver → error. _(implemented as two rules — the
+      engine assigns one severity per rule (`finalizeDiagnostic`
+      overrides per-diagnostic values), so the info half is the new
+      `marketplace/version-missing` (style/info) and `version-semver`
+      keeps error for declared-but-malformed versions)_
+- [x] `marketplace/author-required`: align with documented required
+      `owner{name}` (per OQ5 decision). _(became two rules for the same
+      one-severity-per-rule reason as the version split:
+      `marketplace/owner-required` (schema/warning, satisfied by owner
+      or legacy author) + `marketplace/author-legacy` (style/info
+      rename hint when only the legacy string is present))_
+- [x] Deprecation diagnostic for the legacy `servers` key in `.mcp.json`
       (synthesized like `schema/parse` or a dedicated rule — pick during
-      build) (per OQ1 decision).
-- [ ] `hooks/timeout-present`: reword message + rules.md entry around the
-      documented 600 s default (severity per OQ8 decision).
-- [ ] `hooks/no-unsafe-shell`: skip exec-form entries (`args` present) and
-      non-`command` hook types.
-- [ ] `schema/frontmatter-required`: reword skill diagnostics to
+      build) (per OQ1 decision). _(dedicated rule
+      `mcp/legacy-servers-key` (schema/info) — simpler than engine
+      synthesis since `LegacyServersKey` is already parsed; identical
+      per-server diagnostics collapse to one per file via the engine's
+      exact-duplicate dedupe)_
+- [x] `hooks/timeout-present`: reword message + rules.md entry around the
+      documented 600 s default (severity per OQ8 decision). _(stays
+      warning; message cites the per-type documented default — 600 s
+      command/http/mcp_tool, 30 s prompt, 60 s agent — and frames the
+      nudge as fail-faster-in-CI, not hang prevention)_
+- [x] `hooks/no-unsafe-shell`: skip exec-form entries (`args` present) and
+      non-`command` hook types. _(gates on `EffectiveType() == "command"
+      && !ExecForm`; rules.md entry corrected — it described eval/unquoted-
+      var smells the rule never actually checked)_
+- [x] `schema/frontmatter-required`: reword skill diagnostics to
       best-practice phrasing without changing behavior (per OQ2 decision).
-- [ ] `skills/no-version-field` + `plugin/manifest-fields`: help-text
+      _(skill messages name the runtime fallback — directory-name for
+      `name`, invocation-matching for `description`; command/agent keep
+      the plain form; stricter-than-spec blockquote added to rules.md)_
+- [x] `skills/no-version-field` + `plugin/manifest-fields`: help-text
       updates citing the current docs (stricter-than-spec note for plugin
-      `version`, per OQ3 decision).
-- [ ] Ruleset version bump + fingerprint ack; `docs/rules/rules.md` +
-      README rule anchors updated for every touched rule.
-- [ ] Update DESIGN-0002 §2.2 (`servers` vs `mcpServers`) to record the
-      resolution; cross-link INV-0006.
-- [ ] Dogfood: run against a `donaldgifford/claude-skills` checkout and
+      `version`, per OQ3 decision). _(no-version-field cites the
+      accepted-but-ignored doc confirmation; manifest-fields' version
+      message names the git-SHA fallback; rules.md gains the
+      stricter-by-design blockquote and drops its wrong claim that
+      `description` was checked)_
+- [x] Ruleset version bump + fingerprint ack; `docs/rules/rules.md` +
+      README rule anchors updated for every touched rule. _(v1.3.0 landed
+      with the first fingerprint-flipping change; expected_fingerprint.txt
+      re-acked per drift. Catalog is 34 rules; verified every registered
+      ID appears in both the rules.md and README tables; README prose
+      sweep mirrored all reworded entries and both headers now say v1.3)_
+- [x] Update DESIGN-0002 §2.2 (`servers` vs `mcpServers`) to record the
+      resolution; cross-link INV-0006. _(resolution blockquote in the
+      MCP artifact section, linking INV-0006 and noting the v1.3.0
+      transport-field additions; CLAUDE.md's locked-decision bullet
+      updated from "servers{} — revisit if docs standardize" to the
+      adopted mcpServers{} + legacy-tag state)_
+- [x] Dogfood: run against a `donaldgifford/claude-skills` checkout and
       the claudelint repo itself (`just self-check`); triage every
-      new/changed diagnostic.
+      new/changed diagnostic. _(both clean on 2026-07-10: self-check
+      0 diagnostics / 3 files; claude-skills@b2d72f1 0 diagnostics /
+      149 files — nothing to triage. `claudelint version` reports
+      ruleset v1.3.0 (6900b22e), catalog 34 rules)_
 
 #### Success Criteria
 
@@ -231,22 +312,32 @@ contains the research; the DESIGN settles the contested mechanics.
 
 #### Tasks
 
-- [ ] `docz create design` → DESIGN-0005 "Agent rules and opt-in rule
+- [x] `docz create design` → DESIGN-0005 "Agent rules and opt-in rule
       mechanism".
-- [ ] Specify the extended `Agent` artifact model (which of the 16
+- [x] Specify the extended `Agent` artifact model (which of the 16
       documented fields are parsed, their types/ranges; which are noted
-      but unparsed).
-- [ ] Specify each Phase 4 rule: id, category, severity, options,
+      but unparsed). _(all 16 modeled: 12 new typed fields,
+      `mcpServers`/`hooks` as presence bools, ranges via the existing
+      `Frontmatter.KeyRange`; field/enum set re-verified against the
+      sub-agents reference 2026-07-10)_
+- [x] Specify each Phase 4 rule: id, category, severity, options,
       diagnostics, range targets, and the shared model-value validator
       reused by skill/command `model` (values: `sonnet`/`opus`/`haiku`/
-      `fable`/`inherit`/full-ID shape).
-- [ ] Resolve the opt-in mechanism (OQ4) and write the chosen pattern up
+      `fable`/`inherit`/full-ID shape). _(DESIGN-0005 §4 table + §3
+      `IsValidModelRef`)_
+- [x] Resolve the opt-in mechanism (OQ4) and write the chosen pattern up
       as the house convention, superseding the CLAUDE.md
-      `mcp/server-allowlist` note.
-- [ ] Define how plugin-distributed agents are detected (path heuristic:
+      `mcp/server-allowlist` note. _(DESIGN-0005 §5 — `rules.OptIn`
+      interface + `HasRuleBlock` gate; CLAUDE.md bullet replaced)_
+- [x] Define how plugin-distributed agents are detected (path heuristic:
       agent file under a root containing `.claude-plugin/plugin.json`)
-      for `agents/plugin-ignored-fields`.
-- [ ] `docz update`; PR with `dont-release` label.
+      for `agents/plugin-ignored-fields`. _(DESIGN-0005 §2 — discovery
+      sets `Agent.PluginDistributed`, `IndexSkillCompanions` precedent)_
+- [x] `docz update`; PR with `dont-release` label. _(indexes + mkdocs nav
+      regenerated. No separate PR: per the work-loop instruction all
+      IMPL-0004 phases proceed sequentially on
+      `feat/impl-0004-ruleset-alignment`, so DESIGN-0005 rides this
+      branch's PR instead of a standalone dont-release one)_
 
 #### Success Criteria
 
@@ -262,31 +353,79 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
 
 #### Tasks
 
-- [ ] Extend `ParseAgent` per DESIGN-0005: `model`, `disallowedTools`,
+- [x] Extend `ParseAgent` per DESIGN-0005: `model`, `disallowedTools`,
       `permissionMode`, `maxTurns`, `skills`, `mcpServers` (presence),
       `hooks` (presence), `memory`, `background`, `effort`, `isolation`,
-      `color` — with key ranges.
-- [ ] New package `internal/rules/agents/` with blank-import registration
+      `color` — with key ranges. _(plus `initialPrompt` for the full
+      16-field set; new `has`/`asInt64` markdownDoc helpers; ranges via
+      the existing `Frontmatter.KeyRange`; `PluginDistributed` field
+      added for discovery to set)_
+- [x] New package `internal/rules/agents/` with blank-import registration
       in `internal/rules/all/`.
-- [ ] `agents/model-valid` (schema/warning): shared validator; also
+- [x] `agents/model-valid` (schema/warning): shared validator; also
       registered for skill + command `model` fields.
-- [ ] `agents/name-format` (schema/warning): lowercase letters and hyphens
-      only, per the documented constraint.
-- [ ] `agents/tools-known` (schema/warning): shared splitter + classifier
+      _(`artifact.IsValidModelRef` + `KnownModelAliases`; agent enum
+      sets added alongside for field-enums; message names the full
+      valid-value list per the Phase 4 success criterion)_
+- [x] `agents/name-format` (schema/warning): lowercase letters and hyphens
+      only, per the documented constraint. _(`^[a-z]+(-[a-z]+)*$` — also
+      rejects leading/trailing/double hyphens; empty names left to
+      `schema/frontmatter-required`)_
+- [x] `agents/tools-known` (schema/warning): shared splitter + classifier
       over `tools` and `disallowedTools`; diagnostic explains Claude Code
-      silently ignores unknown names.
-- [ ] `agents/plugin-ignored-fields` (content/warning): plugin-rooted
+      silently ignores unknown names. _(splitting happens at parse time;
+      the rule reuses `IsKnownTool` + `IsToolPattern` like
+      `commands/allowed-tools-known`)_
+- [x] `agents/plugin-ignored-fields` (content/warning): plugin-rooted
       agents declaring `mcpServers`/`hooks`/`permissionMode` (documented
-      as ignored for plugin subagents).
-- [ ] `agents/field-enums` (schema/warning): `permissionMode`, `effort`,
-      `color`, `isolation`, `memory` enum membership.
-- [ ] Fixtures: valid agent exercising all documented fields; invalid
+      as ignored for plugin subagents). _(detection via
+      `artifact.MarkPluginDistributed` — bounded ancestor walk for
+      `.claude-plugin/plugin.json`, called from the CLI's parse wiring
+      with the scan root so the walk can't escape the repo; one
+      diagnostic per declared key at its `KeyRange`)_
+- [x] `agents/field-enums` (schema/warning): `permissionMode`, `effort`,
+      `color`, `isolation`, `memory` enum membership. _(uses the
+      `Agent*` enum sets from knowndata.go; isolation is a one-entry
+      set (`worktree`); messages hardcode the documented value order
+      since map iteration is unstable)_
+- [x] Opt-in mechanism (DESIGN-0005 §5, scheduled here by its rollout
+      plan): `rules.OptIn` interface + `rules.IsOptIn`; engine skips
+      opt-in rules without a `rule "<id>"` block
+      (`Config.HasRuleBlock`); fingerprint gains `optin=` component;
+      `claudelint rules` shows `(opt-in)` and `rules --json` gains
+      `opt_in`; `mcp/server-allowlist` migrated (no block → skipped;
+      block without `allowlist` → loud config error preserved);
+      rules-json-schema.md + rule prose updated.
+- [x] Fixtures: valid agent exercising all documented fields; invalid
       variants per rule; a plugin-rooted agent fixture.
-- [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors;
-      `claudelint rules <id>` detail entries.
-- [ ] Coverage: new `internal/rules/agents` package must clear the 55%
-      floor (plan tests before code).
-- [ ] Dogfood pass (claude-skills ships plugin agents — prime corpus).
+      _(`ok/agents/full.md` pins all 16 fields via `TestFixturesOK`;
+      `ok/pluginroot/` mirrors a real plugin layout for
+      `MarkPluginDistributed`; per-rule invalid variants live inline in
+      the table-driven rule tests per house convention, and
+      `TestFixtureSweep` runs all five rules over the valid fixture
+      (silent) + a kitchen-sink invalid agent (each fires, non-zero
+      ranges))_
+- [x] Ruleset version bump + fingerprint ack; rules.md + README anchors;
+      `claudelint rules <id>` detail entries. _(v1.3.0 → v1.4.0 per
+      OQ6; fingerprint `b9936aca` was acked incrementally with each
+      rule/mechanism commit — version bumps don't move it. All 39
+      registered IDs verified present in both doc tables via script;
+      new-rule prose lives in rules.md per this phase's convention;
+      detail entries come from the registry and were smoke-verified
+      for all five agents rules + server-allowlist)_
+- [x] Coverage: new `internal/rules/agents` package must clear the 55%
+      floor (plan tests before code). _(65.9%; `just coverage-gate`
+      exits 0. Tests were written alongside each rule — table-driven
+      per rule + the fixture sweep)_
+- [x] Dogfood pass (claude-skills ships plugin agents — prime corpus).
+      _(claude-skills@6c326a3: 7 warnings / 149 files, all
+      `agents/name-format` on colon-prefixed names
+      (`name: docz:doc-recommender` etc.) — triaged as TRUE positives:
+      Claude Code auto-prefixes the plugin name, so those declarations
+      render doubled (`docz:docz:doc-recommender`) while bare-name
+      plugins (go-development, hugo, libtftest) render clean. Fix
+      belongs in claude-skills. No false positives; `just self-check`
+      clean at 0/3)_
 
 #### Success Criteria
 
@@ -307,42 +446,97 @@ proposed tables. One PR, minor release, fingerprint bump.
 
 #### Tasks
 
-- [ ] `agents/model-policy` (error, opt-in per the OQ4/DESIGN-0005
+- [x] `agents/model-policy` (error, opt-in per the OQ4/DESIGN-0005
       mechanism): `require = "inherit"` (absent key compliant) or
-      `allowlist = [...]` option shapes.
-- [ ] `hooks/type-known` (schema/error): `type` in the five documented
-      values; absent = `command`.
-- [ ] `hooks/type-fields` (schema/error): per-type required fields
+      `allowlist = [...]` option shapes. _(first rule on the Phase 4
+      OptIn mechanism; exactly-one-option enforced with loud config
+      errors incl. allowlist entries failing `IsValidModelRef`; absent
+      `model` evaluates as `inherit` under allowlist mode; diagnostics
+      anchor at the model key, falling back to name key / body — never
+      file-level (0,0))_
+- [x] `hooks/type-known` (schema/error): `type` in the five documented
+      values; absent = `command`. _(new `artifact.KnownHookTypes` +
+      `IsKnownHookType`; anchors at `TypeRange`)_
+- [x] `hooks/type-fields` (schema/error): per-type required fields
       (`command` needs `command`; `http` needs `url`; `mcp_tool` needs
-      `server` + `tool`; `prompt`/`agent` need `prompt`).
-- [ ] `mcp/transport-known` (schema/warning): `type` in
+      `server` + `tool`; `prompt`/`agent` need `prompt`). _(one
+      diagnostic per missing field; unknown declared types left to
+      type-known; anchor walks the entry's per-key ranges since the
+      parser leaves `EventRange` unset)_
+- [x] `mcp/transport-known` (schema/warning): `type` in
       `stdio`/`http`/`sse`/`ws`; `sse` additionally flagged as
-      documented-deprecated (info).
-- [ ] `mcp/no-secrets-in-headers` (security/error): reuse the
+      documented-deprecated (info). _(split into two rules — the
+      engine assigns one severity per rule, same precedent as
+      version-semver/version-missing: `transport-known`
+      (schema/warning, unknown values) + `transport-deprecated`
+      (schema/info, sse advisory))_
+- [x] `mcp/no-secrets-in-headers` (security/error): reuse the
       `no-secrets-in-env` detector over `headers` values (or fold into
       that rule — pick during build, note in rules.md either way).
-- [ ] `mcp/timeout-minimum` (schema/warning): `timeout` below 1000 flagged
-      with a seconds-vs-milliseconds hint.
-- [ ] `marketplace/reserved-name` (schema/error): the 16 documented
+      _(kept separate so the two surfaces suppress independently; both
+      reuse `security.MatchesSecret`; decision noted in rules.md.
+      Placeholders like `Bearer ${API_KEY}` pass)_
+- [x] `mcp/timeout-minimum` (schema/warning): `timeout` below 1000 flagged
+      with a seconds-vs-milliseconds hint. _(message suggests the
+      ×1000 value; anchors at `NameRange` since the parser stores no
+      timeout range; absent (0) passes)_
+- [x] `marketplace/reserved-name` (schema/error): the 16 documented
       reserved names, exact match; impersonation heuristics deliberately
-      NOT attempted (enforced server-side by claude.ai).
-- [ ] `marketplace/name-format` (style/warning): kebab-case for
+      NOT attempted (enforced server-side by claude.ai). _(list
+      verified against the plugin-marketplaces reference as of
+      v2.1.205 — includes `first-party-plugins` + `healthcare`;
+      anchors at `NameRange`)_
+- [x] `marketplace/name-format` (style/warning): kebab-case for
       marketplace name + plugin entry names.
-- [ ] `marketplace/source-path-safety` (security/error): relative sources
-      start with `./`; no `..` segments.
-- [ ] `marketplace/renames-valid` (schema/error): chains terminate at
-      `null` or a listed plugin; no cycles.
-- [ ] `skills/description-length` (content/warning): `description` +
-      `when_to_use` combined at most 1,536 chars.
-- [ ] `skills/fork-agent-pairing` (schema/warning): `agent:` without
-      `context: fork`.
-- [ ] `claude_md/import-exists` (content/warning): `@path` imports resolve
+      _(`^[a-z0-9]+(-[a-z0-9]+)*$`; one diagnostic per offending name
+      at its range; empty names left to marketplace/name +
+      plugin-source-valid)_
+- [x] `marketplace/source-path-safety` (security/error): relative sources
+      start with `./`; no `..` segments. _(parser gained
+      `Marketplace.PluginRoot` (metadata.pluginRoot) — bare sources are
+      documented-valid under a pluginRoot, so only the `..` check
+      applies there; anchors at `SourceRange`)_
+- [x] `marketplace/renames-valid` (schema/error): chains terminate at
+      `null` or a listed plugin; no cycles. _(one diagnostic per
+      broken link — not per chain crossing it; cycles reported once,
+      rotated to the smallest member for determinism; anchors at
+      `NameRange` since the parser stores no renames{} entry ranges)_
+- [x] `skills/description-length` (content/warning): `description` +
+      `when_to_use` combined at most 1,536 chars. _(`max_chars` option,
+      default 1536; anchors at the description key range)_
+- [x] `skills/fork-agent-pairing` (schema/warning): `agent:` without
+      `context: fork`. _(anchors at the agent key range; fork without
+      agent stays silent — a fork defaults its agent type)_
+- [x] `claude_md/import-exists` (content/warning): `@path` imports resolve
       relative to the file (respecting `~`); flag chains beyond 4 hops;
-      skip code spans/fences per documented parser behavior.
-- [ ] Fixtures for every rule (valid + invalid pairs).
-- [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors.
-- [ ] Dogfood pass; add "implemented by IMPL-0004" note to INV-0006 and
-      flip this doc to Completed.
+      skip code spans/fences per documented parser behavior. _(regex
+      with word-boundary guard so emails don't match; trailing
+      sentence punctuation trimmed; ranges via
+      `artifact.ResolveOffsetRange`; chain walk is cycle-safe and
+      capped; filesystem access is deliberate, like
+      command-exists-on-path)_
+- [x] Fixtures for every rule (valid + invalid pairs). _(valid+invalid
+      pairs live inline in each package's table-driven tests with
+      range assertions, per the Phase 4 convention. New doc-valid
+      testdata: `ok/marketplaces/renames/` (renames{} + pluginRoot,
+      asserted by a parser test) and `ok/claudemd/imports.md`
+      (resolving import + span/fence literals, swept by
+      `TestImportExistsFixture`). The `traditional` marketplace
+      fixture was renamed off "anthropic-plugins" — that name is now
+      reserved, so it was no longer doc-valid)_
+- [x] Ruleset version bump + fingerprint ack; rules.md + README anchors.
+      _(v1.4.0 → v1.5.0 per OQ6; fingerprint `3247787b` acked
+      incrementally per rule commit. Catalog is 53 rules — above the
+      ~49 estimate because the engine's one-severity-per-rule
+      constraint split transport-known/transport-deprecated, on top
+      of the Phase 2 splits. All 53 IDs verified in both doc tables
+      via script; all 13 Phase 5 rules have rules.md prose)_
+- [x] Dogfood pass; add "implemented by IMPL-0004" note to INV-0006 and
+      flip this doc to Completed. _(claude-skills@6c326a3 at v1.5.0:
+      same 7 known-true-positive `agents/name-format` warnings as the
+      Phase 4 pass, zero findings from the 14 new Phase 5 rules across
+      149 files; `just self-check` clean 0/3; `just ci` green.
+      INV-0006 carries the implemented-by note; status flipped)_
 
 #### Success Criteria
 

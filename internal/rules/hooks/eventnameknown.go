@@ -17,7 +17,7 @@ func init() { rules.Register(&eventNameKnown{}) }
 type eventNameKnown struct{}
 
 func (*eventNameKnown) ID() string                     { return "hooks/event-name-known" }
-func (*eventNameKnown) Category() string               { return "schema" }
+func (*eventNameKnown) Category() string               { return categorySchema }
 func (*eventNameKnown) DefaultSeverity() diag.Severity { return diag.SeverityError }
 func (*eventNameKnown) DefaultOptions() map[string]any { return nil }
 func (*eventNameKnown) AppliesTo() []artifact.ArtifactKind {
@@ -37,11 +37,15 @@ func (r *eventNameKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diag
 		if e.Event == "" || artifact.IsKnownHookEvent(e.Event) {
 			continue
 		}
+		msg := fmt.Sprintf("unknown hook event %q", e.Event)
+		if want, ok := artifact.SuggestHookEvent(e.Event); ok {
+			msg = fmt.Sprintf("unknown hook event %q (did you mean %q?)", e.Event, want)
+		}
 		out = append(out, diag.Diagnostic{
 			RuleID:  r.ID(),
 			Path:    h.Path(),
 			Range:   e.EventRange,
-			Message: fmt.Sprintf("unknown hook event %q", e.Event),
+			Message: msg,
 		})
 	}
 	return out

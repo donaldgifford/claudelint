@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -385,6 +387,11 @@ func parseOne(c discovery.Candidate, src []byte) ([]artifact.Artifact, *artifact
 		return wrapOne(a, perr)
 	case artifact.KindAgent:
 		a, perr := artifact.ParseAgent(c.Path, src)
+		if perr == nil {
+			// Plugin-distributed agents silently drop several fields;
+			// the flag lets agents/plugin-ignored-fields scope itself.
+			artifact.MarkPluginDistributed(a, c.AbsPath, scanRootOf(c))
+		}
 		return wrapOne(a, perr)
 	case artifact.KindSkill:
 		s, perr := artifact.ParseSkill(c.Path, src)
@@ -461,6 +468,18 @@ func parsePluginWithEmbedded(path string, src []byte) ([]artifact.Artifact, *art
 		out = append(out, s)
 	}
 	return out, nil
+}
+
+// scanRootOf recovers the discovery root by stripping the candidate's
+// repo-relative Path suffix from its AbsPath. Falls back to "" —
+// which makes MarkPluginDistributed walk to the filesystem root,
+// bounded — when the suffix doesn't line up.
+func scanRootOf(c discovery.Candidate) string {
+	abs := filepath.ToSlash(c.AbsPath)
+	if suffix := "/" + c.Path; strings.HasSuffix(abs, suffix) {
+		return strings.TrimSuffix(abs, suffix)
+	}
+	return ""
 }
 
 func absSkillDir(skillFilePath string) string {

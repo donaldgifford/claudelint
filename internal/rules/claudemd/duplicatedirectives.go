@@ -24,7 +24,7 @@ func init() { rules.Register(&duplicateDirectives{}) }
 type duplicateDirectives struct{}
 
 func (*duplicateDirectives) ID() string                     { return "claude_md/duplicate-directives" }
-func (*duplicateDirectives) Category() string               { return "content" }
+func (*duplicateDirectives) Category() string               { return categoryContent }
 func (*duplicateDirectives) DefaultSeverity() diag.Severity { return diag.SeverityWarning }
 func (*duplicateDirectives) DefaultOptions() map[string]any { return nil }
 func (*duplicateDirectives) AppliesTo() []artifact.ArtifactKind {

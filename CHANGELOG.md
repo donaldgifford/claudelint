@@ -11,11 +11,73 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 ### Features
 
 - *(docs)* Dual-output docs site — MkDocs (TechDocs) + Starlight (claudelint.dev) ([#40](https://github.com/donaldgifford/claudelint/issues/40))
+- *(artifact)* Accept mcpServers as primary .mcp.json key
+- *(artifact)* Parse MCP transport fields on server entries
+- *(artifact)* Parse marketplace object sources into typed MarketplaceSource
+- *(artifact)* Parse marketplace owner{} and renames{} at the root
+- *(artifact)* Parse hook entry type and per-type fields
+- *(artifact)* Add shared tool-list splitter for string frontmatter forms
+- *(artifact)* Add Agent/Skill to KnownTools and tool-pattern classifier
+- *(artifact)* Expand KnownHookEvents to the full documented event set
+- *(artifact)* Parse merged skill/command frontmatter model fields
+- *(rules)* Suggest exact event casing in hooks/event-name-known
+- *(rules)* Accept tool patterns and skills in commands/allowed-tools-known
+- *(rules)* Add mcp/url-required for remote transports
+- *(rules)* Validate object sources in marketplace/plugin-source-valid
+- *(rules)* Rework marketplace/external-source-skipped for object sources
+- *(rules)* Split marketplace version checks into semver and missing
+- *(rules)* Replace marketplace/author-required with owner-required
+- *(rules)* Add mcp/legacy-servers-key deprecation notice
+- *(artifact)* Parse the full 16-field subagent frontmatter spec
+- *(rules)* Add agents package with agents/model-valid
+- *(rules)* Add agents/name-format
+- *(rules)* Add agents/tools-known
+- *(rules)* Add agents/plugin-ignored-fields
+- *(rules)* Add agents/field-enums
+- *(engine)* Add opt-in rule mechanism, migrate mcp/server-allowlist
+- *(rules)* Add agents/model-policy governance rule
+- *(rules)* Add hooks/type-known and hooks/type-fields
+- *(rules)* Add mcp/transport-known + mcp/transport-deprecated
+- *(rules)* Add mcp/no-secrets-in-headers
+- *(rules)* Add mcp/timeout-minimum
+- *(rules)* Add marketplace/reserved-name
+- *(rules)* Add marketplace/name-format
+- *(rules)* Add marketplace/source-path-safety
+- *(rules)* Add marketplace/renames-valid
+- *(rules)* Add skills/description-length
+- *(rules)* Add skills/fork-agent-pairing
+- *(rules)* Add claude_md/import-exists
+
+### Bug Fixes
+
+- *(rules)* Scope mcp/command-required to stdio transport
+- *(rules)* Skip non-stdio transports in mcp/command-exists-on-path
+- *(rules)* Cite documented per-type defaults in hooks/timeout-present
+- *(rules)* Scope hooks/no-unsafe-shell to shell-form command hooks
+- *(rules)* Best-practice phrasing for skill frontmatter diagnostics
 
 ### Documentation
 
 - *(impl-0003)* Close out — production live at claudelint.dev ([#51](https://github.com/donaldgifford/claudelint/issues/51))
 - INV-0006 rule coverage audit + IMPL-0004 implementation tracker ([#52](https://github.com/donaldgifford/claudelint/issues/52))
+- *(rules)* Cite current docs in no-version-field and manifest-fields
+- Sync README rule reference with the v1.3 ruleset
+- *(design)* Record the mcpServers resolution in DESIGN-0002
+- *(impl)* Record clean Phase 2 dogfood pass
+- *(design)* Add DESIGN-0005 agent rules and opt-in rule mechanism
+- *(impl)* Complete IMPL-0004 Phase 4 — coverage + dogfood
+- *(impl)* Complete IMPL-0004 — Phase 5 dogfood, flip to Completed
+
+### Testing
+
+- *(artifact)* Fixture sweep covering every doc-valid Phase 1 shape
+- *(rules)* Add Phase 4 agent fixtures + five-rule sweep
+- *(rules)* Phase 5 fixture coverage
+
+### Miscellaneous Tasks
+
+- *(rules)* Bump ruleset to v1.4.0
+- *(rules)* Bump ruleset to v1.5.0
 
 ## [0.2.3] - 2026-05-30
 

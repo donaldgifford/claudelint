@@ -9,19 +9,69 @@ import (
 
 func TestCommandRequired(t *testing.T) {
 	cases := []struct {
-		name    string
-		command string
-		wantN   int
+		name      string
+		command   string
+		transport string
+		wantN     int
 	}{
-		{"present", "uvx", 0},
-		{"missing", "", 1},
+		{"present", "uvx", "", 0},
+		{"missing", "", "", 1},
+		{"missing with explicit stdio", "", "stdio", 1},
+		{"http server has url instead", "", "http", 0},
+		{"sse server has url instead", "", "sse", 0},
+		{"ws server has url instead", "", "ws", 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &artifact.MCPServer{Name: "srv", Command: tc.command}
+			s := &artifact.MCPServer{Name: "srv", Command: tc.command, Transport: tc.transport}
 			got := (&commandRequired{}).Check(nil, s)
 			if len(got) != tc.wantN {
 				t.Errorf("got %d diagnostics, want %d", len(got), tc.wantN)
+			}
+		})
+	}
+}
+
+func TestLegacyServersKey(t *testing.T) {
+	legacy := &artifact.MCPServer{Name: "srv", Command: "uvx", LegacyServersKey: true}
+	d := (&legacyServersKey{}).Check(nil, legacy)
+	if len(d) != 1 {
+		t.Fatalf("legacy key: want 1 diagnostic, got %d", len(d))
+	}
+	if !strings.Contains(d[0].Message, "mcpServers") {
+		t.Errorf("message should point at mcpServers, got %q", d[0].Message)
+	}
+
+	modern := &artifact.MCPServer{Name: "srv", Command: "uvx"}
+	if d := (&legacyServersKey{}).Check(nil, modern); len(d) != 0 {
+		t.Errorf("mcpServers-keyed server should pass, got %v", d)
+	}
+}
+
+func TestURLRequired(t *testing.T) {
+	cases := []struct {
+		name      string
+		transport string
+		url       string
+		wantN     int
+	}{
+		{"http with url", "http", "https://mcp.example.com/mcp", 0},
+		{"http missing url", "http", "", 1},
+		{"sse missing url", "sse", "", 1},
+		{"ws missing url", "ws", "", 1},
+		{"stdio needs no url", "", "", 0},
+		{"explicit stdio needs no url", "stdio", "", 0},
+		{"unknown transport out of scope", "carrier-pigeon", "", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &artifact.MCPServer{Name: "srv", Transport: tc.transport, URL: tc.url}
+			got := (&urlRequired{}).Check(nil, s)
+			if len(got) != tc.wantN {
+				t.Errorf("got %d diagnostics, want %d", len(got), tc.wantN)
+			}
+			if tc.wantN == 1 && !strings.Contains(got[0].Message, tc.transport) {
+				t.Errorf("message should name the transport, got %q", got[0].Message)
 			}
 		})
 	}
@@ -47,6 +97,12 @@ func TestCommandExistsOnPath(t *testing.T) {
 			got := (&commandExistsOnPath{}).Check(nil, s)
 			if len(got) != tc.wantN {
 				t.Errorf("got %d diagnostics, want %d", len(got), tc.wantN)
+			}
+			// The same command on a remote transport is dead config,
+			// not a typo'd runner — always skipped.
+			remote := &artifact.MCPServer{Name: "srv", Command: tc.command, Transport: "http"}
+			if got := (&commandExistsOnPath{}).Check(nil, remote); len(got) != 0 {
+				t.Errorf("http transport should skip, got %d diagnostics", len(got))
 			}
 		})
 	}
@@ -200,5 +256,125 @@ func TestServerAllowlistRangePointsAtServer(t *testing.T) {
 	}
 	if d[0].Range.IsZero() {
 		t.Errorf("diagnostic Range is zero; should point at server name")
+	}
+}
+
+// parseOneServer parses a single-server mcpServers document built
+// from the given server-object JSON.
+func parseOneServer(t *testing.T, serverJSON string) *artifact.MCPServer {
+	t.Helper()
+	src := []byte(`{"mcpServers":{"s":` + serverJSON + `}}`)
+	servers, perr := artifact.ParseMCPFile(".mcp.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMCPFile: %v", perr)
+	}
+	if len(servers) != 1 {
+		t.Fatalf("expected 1 server, got %d", len(servers))
+	}
+	return servers[0]
+}
+
+func TestTransportKnown(t *testing.T) {
+	cases := []struct {
+		name   string
+		server string
+		wantN  int
+	}{
+		{"absent type defaults to stdio", `{"command":"uvx"}`, 0},
+		{"stdio", `{"type":"stdio","command":"uvx"}`, 0},
+		{"http", `{"type":"http","url":"https://x/mcp"}`, 0},
+		{"sse is known here", `{"type":"sse","url":"https://x/sse"}`, 0},
+		{"ws", `{"type":"ws","url":"wss://x/ws"}`, 0},
+		{"unknown grpc", `{"type":"grpc","url":"https://x"}`, 1},
+		{"casing counts", `{"type":"HTTP","url":"https://x"}`, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := parseOneServer(t, tc.server)
+			d := (&transportKnown{}).Check(nil, s)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, "want stdio, http, sse, or ws") {
+					t.Errorf("message should list transports, got %q", d[0].Message)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the type key")
+				}
+			}
+		})
+	}
+}
+
+func TestTransportDeprecated(t *testing.T) {
+	s := parseOneServer(t, `{"type":"sse","url":"https://x/sse"}`)
+	d := (&transportDeprecated{}).Check(nil, s)
+	if len(d) != 1 {
+		t.Fatalf("sse server: got %d diagnostics, want 1 (%v)", len(d), d)
+	}
+	if !strings.Contains(d[0].Message, "deprecated") || d[0].Range.IsZero() {
+		t.Errorf("diagnostic = %+v", d[0])
+	}
+
+	for _, ok := range []string{`{"type":"http","url":"https://x"}`, `{"command":"uvx"}`} {
+		if d := (&transportDeprecated{}).Check(nil, parseOneServer(t, ok)); len(d) != 0 {
+			t.Errorf("non-sse server flagged: %v", d)
+		}
+	}
+}
+
+func TestNoSecretsInHeaders(t *testing.T) {
+	secret := "sk-abcdefghijklmnopqrstuvwxyz0123456789"
+	cases := []struct {
+		name    string
+		headers map[string]string
+		wantN   int
+	}{
+		{"no headers", nil, 0},
+		{"benign values", map[string]string{"Accept": "application/json"}, 0},
+		{"env placeholder passes", map[string]string{"Authorization": "Bearer ${API_KEY}"}, 0},
+		{"literal secret", map[string]string{"Authorization": "Bearer " + secret}, 1},
+		{"two secret headers", map[string]string{"A": secret, "B": secret}, 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &artifact.MCPServer{Name: "srv", Headers: tc.headers}
+			got := (&noSecretsInHeaders{}).Check(nil, s)
+			if len(got) != tc.wantN {
+				t.Errorf("got %d diagnostics, want %d (%v)", len(got), tc.wantN, got)
+			}
+			for _, d := range got {
+				if !strings.Contains(d.Message, "headers[") {
+					t.Errorf("message should name the header key, got %q", d.Message)
+				}
+			}
+		})
+	}
+}
+
+func TestTimeoutMinimum(t *testing.T) {
+	cases := []struct {
+		name    string
+		timeout int64
+		wantN   int
+	}{
+		{"absent", 0, 0},
+		{"documented minimum", 1000, 0},
+		{"generous", 30000, 0},
+		{"seconds mistake", 30, 1},
+		{"just under", 999, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &artifact.MCPServer{Name: "srv", TimeoutMS: tc.timeout}
+			got := (&timeoutMinimum{}).Check(nil, s)
+			if len(got) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(got), tc.wantN, got)
+			}
+			if tc.wantN == 1 && !strings.Contains(got[0].Message, "milliseconds, not seconds") {
+				t.Errorf("message should carry the unit hint, got %q", got[0].Message)
+			}
+		})
 	}
 }

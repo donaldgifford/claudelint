@@ -63,6 +63,36 @@ func TestFixturesOK(t *testing.T) {
 			},
 		},
 		{
+			name: "skill deployer merged model",
+			rel:  "ok/skills/deployer.md",
+			parse: func(p string, b []byte) (Artifact, *ParseError) {
+				s, err := ParseSkill(p, b)
+				return s, err
+			},
+			assert: func(t *testing.T, a Artifact) {
+				t.Helper()
+				s := a.(*Skill)
+				if s.Context != "fork" || s.Agent != "shipper" {
+					t.Errorf("Context/Agent = %q/%q", s.Context, s.Agent)
+				}
+				if s.UserInvocable == nil || *s.UserInvocable {
+					t.Errorf("UserInvocable = %v, want declared false", s.UserInvocable)
+				}
+				want := []string{"Bash(just deploy:*)", "Read", "mcp__github"}
+				if len(s.AllowedTools) != len(want) {
+					t.Fatalf("AllowedTools = %v, want %v", s.AllowedTools, want)
+				}
+				for i := range want {
+					if s.AllowedTools[i] != want[i] {
+						t.Errorf("AllowedTools[%d] = %q, want %q", i, s.AllowedTools[i], want[i])
+					}
+				}
+				if len(s.DisallowedTools) != 2 {
+					t.Errorf("DisallowedTools = %v, want 2 entries", s.DisallowedTools)
+				}
+			},
+		},
+		{
 			name: "command review",
 			rel:  "ok/commands/review.md",
 			parse: func(p string, b []byte) (Artifact, *ParseError) {
@@ -81,6 +111,33 @@ func TestFixturesOK(t *testing.T) {
 			},
 		},
 		{
+			name: "command commit string tools",
+			rel:  "ok/commands/commit.md",
+			parse: func(p string, b []byte) (Artifact, *ParseError) {
+				c, err := ParseCommand(p, b)
+				return c, err
+			},
+			assert: func(t *testing.T, a Artifact) {
+				t.Helper()
+				c := a.(*Command)
+				if c.Model != "haiku" {
+					t.Errorf("Model = %q, want haiku", c.Model)
+				}
+				if !c.DisableModelInvocation {
+					t.Errorf("DisableModelInvocation = false, want true")
+				}
+				want := []string{"Bash(git add:*)", "Bash(git commit:*)", "Read"}
+				if len(c.AllowedTools) != len(want) {
+					t.Fatalf("AllowedTools = %v, want %v", c.AllowedTools, want)
+				}
+				for i := range want {
+					if c.AllowedTools[i] != want[i] {
+						t.Errorf("AllowedTools[%d] = %q, want %q", i, c.AllowedTools[i], want[i])
+					}
+				}
+			},
+		},
+		{
 			name: "agent scribe",
 			rel:  "ok/agents/scribe.md",
 			parse: func(p string, b []byte) (Artifact, *ParseError) {
@@ -92,6 +149,59 @@ func TestFixturesOK(t *testing.T) {
 				ag := a.(*Agent)
 				if ag.Name != "scribe" {
 					t.Errorf("Name = %q", ag.Name)
+				}
+			},
+		},
+		{
+			name: "agent full field model",
+			rel:  "ok/agents/full.md",
+			parse: func(p string, b []byte) (Artifact, *ParseError) {
+				a, err := ParseAgent(p, b)
+				return a, err
+			},
+			assert: func(t *testing.T, a Artifact) {
+				t.Helper()
+				ag := a.(*Agent)
+				if ag.Name != "full-agent" {
+					t.Errorf("Name = %q", ag.Name)
+				}
+				if len(ag.Tools) != 4 || ag.Tools[2] != "Bash(git diff:*)" {
+					t.Errorf("Tools = %v", ag.Tools)
+				}
+				if len(ag.DisallowedTools) != 2 {
+					t.Errorf("DisallowedTools = %v", ag.DisallowedTools)
+				}
+				if ag.Model != "claude-sonnet-5" {
+					t.Errorf("Model = %q", ag.Model)
+				}
+				if ag.PermissionMode != "acceptEdits" {
+					t.Errorf("PermissionMode = %q", ag.PermissionMode)
+				}
+				if ag.MaxTurns != 12 {
+					t.Errorf("MaxTurns = %d", ag.MaxTurns)
+				}
+				if len(ag.Skills) != 2 || ag.Skills[0] != "deployer" {
+					t.Errorf("Skills = %v", ag.Skills)
+				}
+				if !ag.HasMCPServers || !ag.HasHooks {
+					t.Errorf("HasMCPServers/HasHooks = %v/%v, want true/true",
+						ag.HasMCPServers, ag.HasHooks)
+				}
+				if ag.Memory != "project" || !ag.Background {
+					t.Errorf("Memory/Background = %q/%v", ag.Memory, ag.Background)
+				}
+				if ag.Effort != "high" || ag.Isolation != "worktree" || ag.Color != "cyan" {
+					t.Errorf("Effort/Isolation/Color = %q/%q/%q",
+						ag.Effort, ag.Isolation, ag.Color)
+				}
+				if ag.InitialPrompt == "" {
+					t.Errorf("InitialPrompt should be set")
+				}
+				if ag.PluginDistributed {
+					t.Errorf("parser must not set PluginDistributed — discovery owns it")
+				}
+				if r := ag.Frontmatter.KeyRange("permissionMode"); r.IsZero() {
+					t.Errorf("permissionMode key should have a range")
 				}
 			},
 		},

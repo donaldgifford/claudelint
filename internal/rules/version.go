@@ -17,7 +17,7 @@ import (
 // rule is added, removed, or changes its default severity or default
 // options. The CI guardrail test TestRulesetFingerprint fails loudly
 // if the ruleset content drifts without a corresponding bump.
-const RulesetVersion = "v1.2.0"
+const RulesetVersion = "v1.5.0"
 
 // RulesetFingerprint returns a short hex hash of the registered rules'
 // content. The hash covers:
@@ -25,6 +25,7 @@ const RulesetVersion = "v1.2.0"
 //   - every rule's ID,
 //   - its Category,
 //   - its DefaultSeverity,
+//   - its opt-in status (IsOptIn),
 //   - its DefaultOptions keys/values,
 //   - its AppliesTo kinds (sorted).
 //
@@ -37,7 +38,8 @@ func RulesetFingerprint() string {
 
 	var buf strings.Builder
 	for _, r := range rules {
-		fmt.Fprintf(&buf, "id=%s|cat=%s|sev=%d|", r.ID(), r.Category(), r.DefaultSeverity())
+		fmt.Fprintf(&buf, "id=%s|cat=%s|sev=%d|optin=%t|",
+			r.ID(), r.Category(), r.DefaultSeverity(), IsOptIn(r))
 
 		kinds := make([]string, 0, len(r.AppliesTo()))
 		for _, k := range r.AppliesTo() {

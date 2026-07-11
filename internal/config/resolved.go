@@ -107,6 +107,17 @@ func (rc *ResolvedConfig) ConfiguredRuleIDs() []string {
 	return rc.configuredRuleIDs
 }
 
+// HasRuleBlock reports whether the loaded config contains a
+// `rule "<id>"` block for id — even an empty one. The engine uses it
+// to activate opt-in rules (rules.OptIn): a block of any shape is the
+// opt-in signal; enabled/severity/options inside it then apply as
+// usual.
+func (rc *ResolvedConfig) HasRuleBlock(id string) bool {
+	// configuredRuleIDs is sorted by Resolve.
+	i := sort.SearchStrings(rc.configuredRuleIDs, id)
+	return i < len(rc.configuredRuleIDs) && rc.configuredRuleIDs[i] == id
+}
+
 // RuleEnabled reports whether the rule identified by id is enabled.
 // The default is true: users opt rules out rather than in.
 func (rc *ResolvedConfig) RuleEnabled(id string) bool {
