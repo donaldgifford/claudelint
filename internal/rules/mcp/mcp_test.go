@@ -82,6 +82,12 @@ func TestCommandExistsOnPath(t *testing.T) {
 			if len(got) != tc.wantN {
 				t.Errorf("got %d diagnostics, want %d", len(got), tc.wantN)
 			}
+			// The same command on a remote transport is dead config,
+			// not a typo'd runner — always skipped.
+			remote := &artifact.MCPServer{Name: "srv", Command: tc.command, Transport: "http"}
+			if got := (&commandExistsOnPath{}).Check(nil, remote); len(got) != 0 {
+				t.Errorf("http transport should skip, got %d diagnostics", len(got))
+			}
 		})
 	}
 }

@@ -218,7 +218,8 @@ fingerprint change).
       unknown transports deliberately out of scope pending
       `mcp/transport-known` in Phase 5; rules.md + README rows added,
       shared prose section with `mcp/command-required`)_
-- [ ] `mcp/command-exists-on-path`: skip non-stdio transports.
+- [x] `mcp/command-exists-on-path`: skip non-stdio transports.
+      _(no fingerprint impact — behavior-only change inside Check)_
 - [ ] `marketplace/plugin-source-valid`: object sources validate per-type
       required fields (`repo` / `url` / `url`+`path` / `package`); string
       sources keep the non-empty check; `sha` when present must be a
