@@ -1,7 +1,7 @@
 ---
 id: IMPL-0004
 title: "Phase 4 - Ruleset alignment and agent rules"
-status: Draft
+status: Completed
 author: Donald Gifford
 created: 2026-07-09
 ---
@@ -9,7 +9,7 @@ created: 2026-07-09
 
 # IMPL 0004: Phase 4 - Ruleset alignment and agent rules
 
-**Status:** Draft
+**Status:** Completed
 **Author:** Donald Gifford
 **Date:** 2026-07-09
 
@@ -531,8 +531,12 @@ proposed tables. One PR, minor release, fingerprint bump.
       constraint split transport-known/transport-deprecated, on top
       of the Phase 2 splits. All 53 IDs verified in both doc tables
       via script; all 13 Phase 5 rules have rules.md prose)_
-- [ ] Dogfood pass; add "implemented by IMPL-0004" note to INV-0006 and
-      flip this doc to Completed.
+- [x] Dogfood pass; add "implemented by IMPL-0004" note to INV-0006 and
+      flip this doc to Completed. _(claude-skills@6c326a3 at v1.5.0:
+      same 7 known-true-positive `agents/name-format` warnings as the
+      Phase 4 pass, zero findings from the 14 new Phase 5 rules across
+      149 files; `just self-check` clean 0/3; `just ci` green.
+      INV-0006 carries the implemented-by note; status flipped)_
 
 #### Success Criteria
 
