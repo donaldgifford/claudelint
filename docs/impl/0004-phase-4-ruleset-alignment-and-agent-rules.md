@@ -238,8 +238,12 @@ fingerprint change).
       overrides per-diagnostic values), so the info half is the new
       `marketplace/version-missing` (style/info) and `version-semver`
       keeps error for declared-but-malformed versions)_
-- [ ] `marketplace/author-required`: align with documented required
-      `owner{name}` (per OQ5 decision).
+- [x] `marketplace/author-required`: align with documented required
+      `owner{name}` (per OQ5 decision). _(became two rules for the same
+      one-severity-per-rule reason as the version split:
+      `marketplace/owner-required` (schema/warning, satisfied by owner
+      or legacy author) + `marketplace/author-legacy` (style/info
+      rename hint when only the legacy string is present))_
 - [ ] Deprecation diagnostic for the legacy `servers` key in `.mcp.json`
       (synthesized like `schema/parse` or a dedicated rule — pick during
       build) (per OQ1 decision).

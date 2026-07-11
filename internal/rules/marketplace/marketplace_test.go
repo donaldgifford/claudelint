@@ -176,14 +176,44 @@ func TestPluginNameMatchesDir(t *testing.T) {
 	}
 }
 
-func TestAuthorRequired(t *testing.T) {
-	missing := &artifact.Marketplace{}
-	if d := (&authorRequired{}).Check(nil, missing); len(d) != 1 {
-		t.Errorf("missing author: want 1, got %d", len(d))
+func TestOwnerRequiredAndAuthorLegacy(t *testing.T) {
+	cases := []struct {
+		name       string
+		body       string
+		wantOwner  int // diagnostics from marketplace/owner-required
+		wantLegacy int // diagnostics from marketplace/author-legacy
+	}{
+		{
+			"neither owner nor author",
+			`{"name":"m","plugins":[]}`,
+			1, 0,
+		},
+		{
+			"owner object",
+			`{"name":"m","owner":{"name":"Donald","email":"d@example.com"},"plugins":[]}`,
+			0, 0,
+		},
+		{
+			"legacy author only",
+			`{"name":"m","author":"Donald","plugins":[]}`,
+			0, 1,
+		},
+		{
+			"both owner and author",
+			`{"name":"m","author":"Donald","owner":{"name":"Donald"},"plugins":[]}`,
+			0, 0,
+		},
 	}
-	present := &artifact.Marketplace{Author: "someone"}
-	if d := (&authorRequired{}).Check(nil, present); len(d) != 0 {
-		t.Errorf("present author: want 0, got %v", d)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t, tc.body)
+			if d := (&ownerRequired{}).Check(nil, m); len(d) != tc.wantOwner {
+				t.Errorf("owner-required: want %d, got %d (%v)", tc.wantOwner, len(d), d)
+			}
+			if d := (&authorLegacy{}).Check(nil, m); len(d) != tc.wantLegacy {
+				t.Errorf("author-legacy: want %d, got %d (%v)", tc.wantLegacy, len(d), d)
+			}
+		})
 	}
 }
 

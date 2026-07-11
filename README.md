@@ -192,7 +192,8 @@ fails if the drift is not acknowledged.
 | `marketplace/plugin-source-valid`     | schema    | error    | marketplace                     |
 | `marketplace/plugin-name-unique`      | schema    | error    | marketplace                     |
 | `marketplace/plugin-name-matches-dir` | style     | warning  | marketplace                     |
-| `marketplace/author-required`         | style     | info     | marketplace                     |
+| `marketplace/owner-required`          | schema    | warning  | marketplace                     |
+| `marketplace/author-legacy`           | style     | info     | marketplace                     |
 | `marketplace/version-missing`         | style     | info     | marketplace                     |
 | `marketplace/external-source-skipped` | schema    | info     | marketplace                     |
 | `mcp/command-required`                | schema    | error    | mcp_server                      |

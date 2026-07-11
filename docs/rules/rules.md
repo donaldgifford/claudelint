@@ -33,7 +33,8 @@ acknowledged.
 | `marketplace/plugin-source-valid`     | schema   | error   | marketplace           |
 | `marketplace/plugin-name-unique`      | schema   | error   | marketplace           |
 | `marketplace/plugin-name-matches-dir` | style    | warning | marketplace           |
-| `marketplace/author-required`         | style    | info    | marketplace           |
+| `marketplace/owner-required`          | schema   | warning | marketplace           |
+| `marketplace/author-legacy`           | style    | info    | marketplace           |
 | `marketplace/version-missing`         | style    | info    | marketplace           |
 | `marketplace/external-source-skipped` | schema   | info    | marketplace           |
 | `mcp/command-required`                | schema   | error   | mcp_server            |
@@ -240,6 +241,16 @@ fields:
 A `sha` pin, when present on a git-backed source, must be a full
 40-character hex commit. Whether a local path exists on disk is out of
 scope for this rule.
+
+#### `marketplace/owner-required` and `marketplace/author-legacy`
+
+The docs require a root `owner` object (`{"name": ..., "email": ...}`)
+identifying the marketplace maintainer. `owner-required` warns when the
+manifest names no maintainer at all; the legacy top-level `author`
+string (documented backward-compat) satisfies it. `author-legacy` adds
+an info nudge when *only* the legacy string is present — rename it to
+the `owner{}` shape. These replace the pre-v1.3.0
+`marketplace/author-required` rule.
 
 #### `marketplace/version-semver` and `marketplace/version-missing`
 
