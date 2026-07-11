@@ -312,22 +312,32 @@ contains the research; the DESIGN settles the contested mechanics.
 
 #### Tasks
 
-- [ ] `docz create design` → DESIGN-0005 "Agent rules and opt-in rule
+- [x] `docz create design` → DESIGN-0005 "Agent rules and opt-in rule
       mechanism".
-- [ ] Specify the extended `Agent` artifact model (which of the 16
+- [x] Specify the extended `Agent` artifact model (which of the 16
       documented fields are parsed, their types/ranges; which are noted
-      but unparsed).
-- [ ] Specify each Phase 4 rule: id, category, severity, options,
+      but unparsed). _(all 16 modeled: 12 new typed fields,
+      `mcpServers`/`hooks` as presence bools, ranges via the existing
+      `Frontmatter.KeyRange`; field/enum set re-verified against the
+      sub-agents reference 2026-07-10)_
+- [x] Specify each Phase 4 rule: id, category, severity, options,
       diagnostics, range targets, and the shared model-value validator
       reused by skill/command `model` (values: `sonnet`/`opus`/`haiku`/
-      `fable`/`inherit`/full-ID shape).
-- [ ] Resolve the opt-in mechanism (OQ4) and write the chosen pattern up
+      `fable`/`inherit`/full-ID shape). _(DESIGN-0005 §4 table + §3
+      `IsValidModelRef`)_
+- [x] Resolve the opt-in mechanism (OQ4) and write the chosen pattern up
       as the house convention, superseding the CLAUDE.md
-      `mcp/server-allowlist` note.
-- [ ] Define how plugin-distributed agents are detected (path heuristic:
+      `mcp/server-allowlist` note. _(DESIGN-0005 §5 — `rules.OptIn`
+      interface + `HasRuleBlock` gate; CLAUDE.md bullet replaced)_
+- [x] Define how plugin-distributed agents are detected (path heuristic:
       agent file under a root containing `.claude-plugin/plugin.json`)
-      for `agents/plugin-ignored-fields`.
-- [ ] `docz update`; PR with `dont-release` label.
+      for `agents/plugin-ignored-fields`. _(DESIGN-0005 §2 — discovery
+      sets `Agent.PluginDistributed`, `IndexSkillCompanions` precedent)_
+- [x] `docz update`; PR with `dont-release` label. _(indexes + mkdocs nav
+      regenerated. No separate PR: per the work-loop instruction all
+      IMPL-0004 phases proceed sequentially on
+      `feat/impl-0004-ruleset-alignment`, so DESIGN-0005 rides this
+      branch's PR instead of a standalone dont-release one)_
 
 #### Success Criteria
 
