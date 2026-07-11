@@ -12,9 +12,12 @@ import (
 	"github.com/donaldgifford/claudelint/internal/rules"
 )
 
-// categorySchema is shared by this package's schema rules, declared
-// once so rules can reference it without triggering goconst.
-const categorySchema = "schema"
+// Shared category constants, declared once per package so rules can
+// reference them without triggering goconst.
+const (
+	categorySchema  = "schema"
+	categoryContent = "content"
+)
 
 func init() { rules.Register(&modelValid{}) }
 

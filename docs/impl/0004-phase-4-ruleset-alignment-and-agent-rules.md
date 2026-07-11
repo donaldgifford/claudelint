@@ -376,9 +376,13 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       silently ignores unknown names. _(splitting happens at parse time;
       the rule reuses `IsKnownTool` + `IsToolPattern` like
       `commands/allowed-tools-known`)_
-- [ ] `agents/plugin-ignored-fields` (content/warning): plugin-rooted
+- [x] `agents/plugin-ignored-fields` (content/warning): plugin-rooted
       agents declaring `mcpServers`/`hooks`/`permissionMode` (documented
-      as ignored for plugin subagents).
+      as ignored for plugin subagents). _(detection via
+      `artifact.MarkPluginDistributed` — bounded ancestor walk for
+      `.claude-plugin/plugin.json`, called from the CLI's parse wiring
+      with the scan root so the walk can't escape the repo; one
+      diagnostic per declared key at its `KeyRange`)_
 - [ ] `agents/field-enums` (schema/warning): `permissionMode`, `effort`,
       `color`, `isolation`, `memory` enum membership.
 - [ ] Fixtures: valid agent exercising all documented fields; invalid

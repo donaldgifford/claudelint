@@ -123,6 +123,39 @@ func TestToolsKnown(t *testing.T) {
 	}
 }
 
+func TestPluginIgnoredFields(t *testing.T) {
+	const ignored = "permissionMode: acceptEdits\nmcpServers:\n  - github\nhooks:\n  PreToolUse: []\n"
+
+	// Plugin-distributed: every declared ignored field flags.
+	a := newAgent(t, ignored)
+	a.PluginDistributed = true
+	d := (&pluginIgnoredFields{}).Check(nil, a)
+	if len(d) != 3 {
+		t.Fatalf("plugin agent: want 3 diagnostics, got %d (%v)", len(d), d)
+	}
+	for _, dd := range d {
+		if !strings.Contains(dd.Message, "ignored for plugin-distributed") {
+			t.Errorf("message = %q", dd.Message)
+		}
+		if dd.Range.IsZero() {
+			t.Errorf("diagnostic should anchor at the offending key")
+		}
+	}
+
+	// Same fields on a project-level agent: silent.
+	proj := newAgent(t, ignored)
+	if d := (&pluginIgnoredFields{}).Check(nil, proj); len(d) != 0 {
+		t.Errorf("project agent should be silent, got %v", d)
+	}
+
+	// Plugin-distributed but clean: silent.
+	clean := newAgent(t, "model: haiku\n")
+	clean.PluginDistributed = true
+	if d := (&pluginIgnoredFields{}).Check(nil, clean); len(d) != 0 {
+		t.Errorf("clean plugin agent should be silent, got %v", d)
+	}
+}
+
 func TestModelValidRunsOnSkillsAndCommands(t *testing.T) {
 	s, perr := artifact.ParseSkill("skills/x/SKILL.md",
 		[]byte("---\nname: x\ndescription: d\nmodel: sonet\n---\nbody\n"))

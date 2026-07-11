@@ -21,6 +21,7 @@ acknowledged.
 | `skills/no-version-field`             | schema   | warning | skill                 |
 | `agents/model-valid`                  | schema   | warning | agent, skill, command |
 | `agents/name-format`                  | schema   | warning | agent                 |
+| `agents/plugin-ignored-fields`        | content  | warning | agent                 |
 | `agents/tools-known`                  | schema   | warning | agent                 |
 | `claude_md/duplicate-directives`      | content  | warning | `CLAUDE.md`           |
 | `claude_md/size`                      | content  | warning | `CLAUDE.md`           |
@@ -146,6 +147,19 @@ resolve by undocumented filesystem order — nonconforming names misbehave
 in hard-to-debug ways.
 
 **Bad**: `name: Code_Reviewer` **Fix**: `name: code-reviewer`.
+
+#### `agents/plugin-ignored-fields`
+
+Claude Code ignores `permissionMode`, `mcpServers`, and `hooks` on
+subagents distributed inside a plugin (any agent file with a
+`.claude-plugin/plugin.json` in an ancestor directory). Declaring them
+there is dead config that reads as if it took effect. Each declared
+field gets its own diagnostic anchored at the key. Project-level
+(`.claude/agents/`) and user-level agents may declare all three
+freely — the rule stays silent for them.
+
+**Fix**: delete the ignored keys, or move the agent out of the plugin
+if it genuinely needs them.
 
 #### `agents/tools-known`
 
