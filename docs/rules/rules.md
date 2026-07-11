@@ -44,6 +44,7 @@ acknowledged.
 | `mcp/no-unsafe-shell`                 | security | error   | mcp_server            |
 | `mcp/no-secrets-in-env`               | security | error   | mcp_server            |
 | `mcp/disabled-commented`              | style    | info    | mcp_server            |
+| `mcp/legacy-servers-key`              | schema   | info    | mcp_server            |
 | `mcp/server-allowlist`                | security | error   | mcp_server            |
 | `security/secrets`                    | security | error   | every kind            |
 | `style/no-emoji`                      | style    | info    | every kind            |
@@ -282,6 +283,14 @@ server without a `url` is fine.
 
 **Bad**: `{ "type": "http" }` (no url) **Fix**:
 `{ "type": "http", "url": "https://mcp.example.com/mcp" }`.
+
+#### `mcp/legacy-servers-key`
+
+`.mcp.json` files historically used a top-level `servers{}` key; the docs
+standardized on `mcpServers{}`. claudelint accepts both (when both are
+present, `mcpServers` wins and `servers` is ignored), and this rule emits
+one info notice per legacy-keyed file. Support for `servers` is scheduled
+to drop at the next major ruleset revision — rename the key now.
 
 #### `mcp/server-allowlist`
 

@@ -244,9 +244,13 @@ fingerprint change).
       `marketplace/owner-required` (schema/warning, satisfied by owner
       or legacy author) + `marketplace/author-legacy` (style/info
       rename hint when only the legacy string is present))_
-- [ ] Deprecation diagnostic for the legacy `servers` key in `.mcp.json`
+- [x] Deprecation diagnostic for the legacy `servers` key in `.mcp.json`
       (synthesized like `schema/parse` or a dedicated rule — pick during
-      build) (per OQ1 decision).
+      build) (per OQ1 decision). _(dedicated rule
+      `mcp/legacy-servers-key` (schema/info) — simpler than engine
+      synthesis since `LegacyServersKey` is already parsed; identical
+      per-server diagnostics collapse to one per file via the engine's
+      exact-duplicate dedupe)_
 - [ ] `hooks/timeout-present`: reword message + rules.md entry around the
       documented 600 s default (severity per OQ8 decision).
 - [ ] `hooks/no-unsafe-shell`: skip exec-form entries (`args` present) and

@@ -32,6 +32,22 @@ func TestCommandRequired(t *testing.T) {
 	}
 }
 
+func TestLegacyServersKey(t *testing.T) {
+	legacy := &artifact.MCPServer{Name: "srv", Command: "uvx", LegacyServersKey: true}
+	d := (&legacyServersKey{}).Check(nil, legacy)
+	if len(d) != 1 {
+		t.Fatalf("legacy key: want 1 diagnostic, got %d", len(d))
+	}
+	if !strings.Contains(d[0].Message, "mcpServers") {
+		t.Errorf("message should point at mcpServers, got %q", d[0].Message)
+	}
+
+	modern := &artifact.MCPServer{Name: "srv", Command: "uvx"}
+	if d := (&legacyServersKey{}).Check(nil, modern); len(d) != 0 {
+		t.Errorf("mcpServers-keyed server should pass, got %v", d)
+	}
+}
+
 func TestURLRequired(t *testing.T) {
 	cases := []struct {
 		name      string

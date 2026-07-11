@@ -203,6 +203,7 @@ fails if the drift is not acknowledged.
 | `mcp/no-unsafe-shell`                 | security  | error    | mcp_server                      |
 | `mcp/no-secrets-in-env`               | security  | error    | mcp_server                      |
 | `mcp/disabled-commented`              | style     | info     | mcp_server                      |
+| `mcp/legacy-servers-key`              | schema    | info     | mcp_server                      |
 | `mcp/server-allowlist`                | security  | error    | mcp_server                      |
 | `security/secrets`                    | security  | error    | every kind                      |
 | `style/no-emoji`                      | style     | info     | every kind                      |
