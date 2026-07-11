@@ -524,7 +524,13 @@ proposed tables. One PR, minor release, fingerprint bump.
       `TestImportExistsFixture`). The `traditional` marketplace
       fixture was renamed off "anthropic-plugins" — that name is now
       reserved, so it was no longer doc-valid)_
-- [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors.
+- [x] Ruleset version bump + fingerprint ack; rules.md + README anchors.
+      _(v1.4.0 → v1.5.0 per OQ6; fingerprint `3247787b` acked
+      incrementally per rule commit. Catalog is 53 rules — above the
+      ~49 estimate because the engine's one-severity-per-rule
+      constraint split transport-known/transport-deprecated, on top
+      of the Phase 2 splits. All 53 IDs verified in both doc tables
+      via script; all 13 Phase 5 rules have rules.md prose)_
 - [ ] Dogfood pass; add "implemented by IMPL-0004" note to INV-0006 and
       flip this doc to Completed.
 
