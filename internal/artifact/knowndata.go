@@ -1,6 +1,9 @@
 package artifact
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // KnownTools is the canonical list of built-in Claude Code tools a
 // rule set or hook can reference. The list is maintained alongside
@@ -74,6 +77,72 @@ func isMCPToolPattern(name string) bool {
 	rest, ok := strings.CutPrefix(name, "mcp__")
 	return ok && rest != ""
 }
+
+// KnownModelAliases are the documented model alias values accepted by
+// agent, skill, and command `model` frontmatter.
+var KnownModelAliases = map[string]struct{}{
+	"sonnet": {},
+	"opus":   {},
+	"haiku":  {},
+	"fable":  {},
+}
+
+// modelIDPattern matches full model IDs like claude-sonnet-5 or
+// claude-opus-4-8.
+var modelIDPattern = regexp.MustCompile(`^claude-[a-z0-9-]+$`)
+
+// IsValidModelRef reports whether v is a documented model reference:
+// an alias from KnownModelAliases, "inherit", or a full model ID.
+// The empty string is the caller's concern — an absent model key
+// means inherit, which is valid, so rules skip it before calling.
+func IsValidModelRef(v string) bool {
+	if _, ok := KnownModelAliases[v]; ok {
+		return true
+	}
+	return v == "inherit" || modelIDPattern.MatchString(v)
+}
+
+// Agent frontmatter enum sets, mirroring the subagents reference
+// (2026-07). agents/field-enums validates membership; isolation has a
+// single documented value ("worktree") and is checked directly.
+var (
+	// AgentPermissionModes includes "manual", the documented alias
+	// for "default" (Claude Code v2.1.200+).
+	AgentPermissionModes = map[string]struct{}{
+		"default":           {},
+		"acceptEdits":       {},
+		"auto":              {},
+		"dontAsk":           {},
+		"bypassPermissions": {},
+		"plan":              {},
+		"manual":            {},
+	}
+
+	AgentEffortLevels = map[string]struct{}{
+		"low":    {},
+		"medium": {},
+		"high":   {},
+		"xhigh":  {},
+		"max":    {},
+	}
+
+	AgentColors = map[string]struct{}{
+		"red":    {},
+		"blue":   {},
+		"green":  {},
+		"yellow": {},
+		"purple": {},
+		"orange": {},
+		"pink":   {},
+		"cyan":   {},
+	}
+
+	AgentMemoryScopes = map[string]struct{}{
+		"user":    {},
+		"project": {},
+		"local":   {},
+	}
+)
 
 // KnownHookEvents is the canonical list of Claude Code hook event
 // names, mirroring the hooks reference

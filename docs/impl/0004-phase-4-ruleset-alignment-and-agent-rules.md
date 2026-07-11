@@ -360,10 +360,13 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       16-field set; new `has`/`asInt64` markdownDoc helpers; ranges via
       the existing `Frontmatter.KeyRange`; `PluginDistributed` field
       added for discovery to set)_
-- [ ] New package `internal/rules/agents/` with blank-import registration
+- [x] New package `internal/rules/agents/` with blank-import registration
       in `internal/rules/all/`.
-- [ ] `agents/model-valid` (schema/warning): shared validator; also
+- [x] `agents/model-valid` (schema/warning): shared validator; also
       registered for skill + command `model` fields.
+      _(`artifact.IsValidModelRef` + `KnownModelAliases`; agent enum
+      sets added alongside for field-enums; message names the full
+      valid-value list per the Phase 4 success criterion)_
 - [ ] `agents/name-format` (schema/warning): lowercase letters and hyphens
       only, per the documented constraint.
 - [ ] `agents/tools-known` (schema/warning): shared splitter + classifier

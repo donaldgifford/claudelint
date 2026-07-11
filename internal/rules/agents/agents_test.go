@@ -1,0 +1,78 @@
+package agents
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/donaldgifford/claudelint/internal/artifact"
+)
+
+// newAgent parses a minimal agent file with the given extra
+// frontmatter lines so rule tests exercise the real parser path.
+func newAgent(t *testing.T, extra string) *artifact.Agent {
+	t.Helper()
+	src := []byte("---\nname: helper\ndescription: d\n" + extra + "---\nbody\n")
+	a, perr := artifact.ParseAgent(".claude/agents/helper.md", src)
+	if perr != nil {
+		t.Fatalf("ParseAgent = %v", perr)
+	}
+	return a
+}
+
+func TestModelValid(t *testing.T) {
+	cases := []struct {
+		name  string
+		model string // empty = omit the key
+		wantN int
+	}{
+		{"omitted means inherit", "", 0},
+		{"alias sonnet", "sonnet", 0},
+		{"alias fable", "fable", 0},
+		{"inherit", "inherit", 0},
+		{"full model ID", "claude-opus-4-8", 0},
+		{"typo sonet", "sonet", 1},
+		{"uppercase alias", "Sonnet", 1},
+		{"bogus", "gpt-4", 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			extra := ""
+			if tc.model != "" {
+				extra = "model: " + tc.model + "\n"
+			}
+			a := newAgent(t, extra)
+			d := (&modelValid{}).Check(nil, a)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, "sonnet, opus, haiku, fable, inherit") {
+					t.Errorf("message should name the valid values, got %q", d[0].Message)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the model key range")
+				}
+			}
+		})
+	}
+}
+
+func TestModelValidRunsOnSkillsAndCommands(t *testing.T) {
+	s, perr := artifact.ParseSkill("skills/x/SKILL.md",
+		[]byte("---\nname: x\ndescription: d\nmodel: sonet\n---\nbody\n"))
+	if perr != nil {
+		t.Fatalf("ParseSkill = %v", perr)
+	}
+	if d := (&modelValid{}).Check(nil, s); len(d) != 1 {
+		t.Errorf("skill with typo'd model: want 1, got %d", len(d))
+	}
+
+	c, perr := artifact.ParseCommand(".claude/commands/x.md",
+		[]byte("---\ndescription: d\nmodel: haiku\n---\nbody\n"))
+	if perr != nil {
+		t.Fatalf("ParseCommand = %v", perr)
+	}
+	if d := (&modelValid{}).Check(nil, c); len(d) != 0 {
+		t.Errorf("command with valid model: want 0, got %v", d)
+	}
+}

@@ -13,6 +13,7 @@ import (
 	// registers that package's rules into the registry. Removing any
 	// of these silently drops the corresponding rules from the
 	// binary.
+	_ "github.com/donaldgifford/claudelint/internal/rules/agents"
 	_ "github.com/donaldgifford/claudelint/internal/rules/claudemd"
 	_ "github.com/donaldgifford/claudelint/internal/rules/commands"
 	_ "github.com/donaldgifford/claudelint/internal/rules/hooks"

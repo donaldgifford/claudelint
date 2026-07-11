@@ -19,6 +19,7 @@ acknowledged.
 | `skills/trigger-clarity`              | content  | warning | skill                 |
 | `skills/body-size`                    | content  | warning | skill                 |
 | `skills/no-version-field`             | schema   | warning | skill                 |
+| `agents/model-valid`                  | schema   | warning | agent, skill, command |
 | `claude_md/duplicate-directives`      | content  | warning | `CLAUDE.md`           |
 | `claude_md/size`                      | content  | warning | `CLAUDE.md`           |
 | `commands/allowed-tools-known`        | schema   | error   | command, skill        |
@@ -123,6 +124,17 @@ without ever taking effect.
 `plugin.json`. To enforce as a CI gate, override severity in `.claudelint.hcl`:
 
     rule "skills/no-version-field" { severity = "error" }
+
+#### `agents/model-valid`
+
+A declared `model` must be a documented reference: an alias (`sonnet`,
+`opus`, `haiku`, `fable`), `inherit`, or a full model ID
+(`claude-...`). Anything else silently falls back to the inherited
+model at runtime — the typo never surfaces. Omitting the key is fine
+(omitted means inherit). Skills and commands share the `model` field,
+so the rule runs on all three kinds.
+
+**Bad**: `model: sonet` **Fix**: `model: sonnet`.
 
 #### `claude_md/duplicate-directives`
 
