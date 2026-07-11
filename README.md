@@ -193,6 +193,7 @@ fails if the drift is not acknowledged.
 | `marketplace/plugin-name-unique`      | schema    | error    | marketplace                     |
 | `marketplace/plugin-name-matches-dir` | style     | warning  | marketplace                     |
 | `marketplace/author-required`         | style     | info     | marketplace                     |
+| `marketplace/version-missing`         | style     | info     | marketplace                     |
 | `marketplace/external-source-skipped` | schema    | info     | marketplace                     |
 | `mcp/command-required`                | schema    | error    | mcp_server                      |
 | `mcp/url-required`                    | schema    | error    | mcp_server                      |

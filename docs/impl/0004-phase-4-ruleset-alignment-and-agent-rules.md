@@ -232,8 +232,12 @@ fingerprint change).
       remote object kinds + remote string shorthands with a
       kind-aware locator in the message; absent/invalid sources left to
       plugin-source-valid to avoid double-reporting)_
-- [ ] `marketplace/version-semver`: split — missing root `version` → info;
-      present-but-not-semver → error.
+- [x] `marketplace/version-semver`: split — missing root `version` → info;
+      present-but-not-semver → error. _(implemented as two rules — the
+      engine assigns one severity per rule (`finalizeDiagnostic`
+      overrides per-diagnostic values), so the info half is the new
+      `marketplace/version-missing` (style/info) and `version-semver`
+      keeps error for declared-but-malformed versions)_
 - [ ] `marketplace/author-required`: align with documented required
       `owner{name}` (per OQ5 decision).
 - [ ] Deprecation diagnostic for the legacy `servers` key in `.mcp.json`

@@ -34,6 +34,7 @@ acknowledged.
 | `marketplace/plugin-name-unique`      | schema   | error   | marketplace           |
 | `marketplace/plugin-name-matches-dir` | style    | warning | marketplace           |
 | `marketplace/author-required`         | style    | info    | marketplace           |
+| `marketplace/version-missing`         | style    | info    | marketplace           |
 | `marketplace/external-source-skipped` | schema   | info    | marketplace           |
 | `mcp/command-required`                | schema   | error   | mcp_server            |
 | `mcp/url-required`                    | schema   | error   | mcp_server            |
@@ -239,6 +240,14 @@ fields:
 A `sha` pin, when present on a git-backed source, must be a full
 40-character hex commit. Whether a local path exists on disk is out of
 scope for this rule.
+
+#### `marketplace/version-semver` and `marketplace/version-missing`
+
+The docs make the root `version` optional, so its absence is only an
+info nudge (`version-missing`) — a declared version lets consumers order
+releases. A version that **is** declared must be valid semver
+(`version-semver`, error): `MAJOR.MINOR.PATCH` with optional prerelease
+/ build metadata and an optional leading `v`.
 
 #### `marketplace/external-source-skipped`
 

@@ -42,7 +42,7 @@ func TestVersionSemver(t *testing.T) {
 	}{
 		{"valid 1.0.0", "1.0.0", 0},
 		{"valid v2.3.4", "v2.3.4", 0},
-		{"missing", "", 1},
+		{"missing is version-missing's job", "", 0},
 		{"not semver", "dev", 1},
 		{"partial", "1.2", 1},
 	}
@@ -54,6 +54,17 @@ func TestVersionSemver(t *testing.T) {
 				t.Errorf("want %d diagnostics, got %d (%v)", tc.wantN, len(d), d)
 			}
 		})
+	}
+}
+
+func TestVersionMissing(t *testing.T) {
+	missing := &artifact.Marketplace{}
+	if d := (&versionMissing{}).Check(nil, missing); len(d) != 1 {
+		t.Errorf("missing version: want 1 info, got %d", len(d))
+	}
+	declared := &artifact.Marketplace{Version: "dev"}
+	if d := (&versionMissing{}).Check(nil, declared); len(d) != 0 {
+		t.Errorf("declared version (even malformed): want 0, got %v", d)
 	}
 }
 
