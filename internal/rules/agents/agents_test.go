@@ -57,6 +57,41 @@ func TestModelValid(t *testing.T) {
 	}
 }
 
+func TestNameFormat(t *testing.T) {
+	cases := []struct {
+		name      string
+		agentName string
+		wantN     int
+	}{
+		{"simple", "scribe", 0},
+		{"hyphenated", "code-reviewer", 0},
+		{"uppercase", "Reviewer", 1},
+		{"underscore", "code_reviewer", 1},
+		{"digits", "agent2", 1},
+		{"trailing hyphen", "reviewer-", 1},
+		{"double hyphen", "code--reviewer", 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			src := []byte("---\nname: " + tc.agentName + "\ndescription: d\n---\nbody\n")
+			a, perr := artifact.ParseAgent(".claude/agents/x.md", src)
+			if perr != nil {
+				t.Fatalf("ParseAgent = %v", perr)
+			}
+			d := (&nameFormat{}).Check(nil, a)
+			if len(d) != tc.wantN {
+				t.Errorf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+		})
+	}
+
+	// Empty name is frontmatter-required's finding, not ours.
+	empty := &artifact.Agent{}
+	if d := (&nameFormat{}).Check(nil, empty); len(d) != 0 {
+		t.Errorf("empty name should be skipped, got %v", d)
+	}
+}
+
 func TestModelValidRunsOnSkillsAndCommands(t *testing.T) {
 	s, perr := artifact.ParseSkill("skills/x/SKILL.md",
 		[]byte("---\nname: x\ndescription: d\nmodel: sonet\n---\nbody\n"))

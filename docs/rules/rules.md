@@ -20,6 +20,7 @@ acknowledged.
 | `skills/body-size`                    | content  | warning | skill                 |
 | `skills/no-version-field`             | schema   | warning | skill                 |
 | `agents/model-valid`                  | schema   | warning | agent, skill, command |
+| `agents/name-format`                  | schema   | warning | agent                 |
 | `claude_md/duplicate-directives`      | content  | warning | `CLAUDE.md`           |
 | `claude_md/size`                      | content  | warning | `CLAUDE.md`           |
 | `commands/allowed-tools-known`        | schema   | error   | command, skill        |
@@ -135,6 +136,15 @@ model at runtime — the typo never surfaces. Omitting the key is fine
 so the rule runs on all three kinds.
 
 **Bad**: `model: sonet` **Fix**: `model: sonnet`.
+
+#### `agents/name-format`
+
+Agent names are documented as lowercase letters and hyphens. Hooks
+receive the value as `agent_type`, and duplicate names across scopes
+resolve by undocumented filesystem order — nonconforming names misbehave
+in hard-to-debug ways.
+
+**Bad**: `name: Code_Reviewer` **Fix**: `name: code-reviewer`.
 
 #### `claude_md/duplicate-directives`
 

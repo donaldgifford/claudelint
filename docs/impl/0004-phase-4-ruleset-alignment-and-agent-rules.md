@@ -367,8 +367,10 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       _(`artifact.IsValidModelRef` + `KnownModelAliases`; agent enum
       sets added alongside for field-enums; message names the full
       valid-value list per the Phase 4 success criterion)_
-- [ ] `agents/name-format` (schema/warning): lowercase letters and hyphens
-      only, per the documented constraint.
+- [x] `agents/name-format` (schema/warning): lowercase letters and hyphens
+      only, per the documented constraint. _(`^[a-z]+(-[a-z]+)*$` — also
+      rejects leading/trailing/double hyphens; empty names left to
+      `schema/frontmatter-required`)_
 - [ ] `agents/tools-known` (schema/warning): shared splitter + classifier
       over `tools` and `disallowedTools`; diagnostic explains Claude Code
       silently ignores unknown names.
