@@ -169,8 +169,11 @@ July 2026). Names are case-sensitive.
 
 #### `hooks/timeout-present`
 
-Every hook entry should declare a `timeout` (seconds) so a runaway hook cannot
-hang the session.
+Every hook entry should declare a `timeout` (seconds). Claude Code applies
+documented per-type defaults when it's omitted — 600 s for `command`,
+`http`, and `mcp_tool` hooks, 30 s for `prompt`, 60 s for `agent` — so a
+missing timeout won't hang the session, but an explicit one fails faster
+in CI and records the latency you actually expect.
 
 **Bad**:
 

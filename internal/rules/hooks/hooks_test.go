@@ -90,8 +90,39 @@ func TestTimeoutPresent(t *testing.T) {
 
 	without := nestedHook("Stop", "", "true", 0)
 	h2, _ := artifact.ParseHook(".claude/hooks/x.json", without)
-	if d := (&timeoutPresent{}).Check(nil, h2); len(d) != 1 {
+	d := (&timeoutPresent{}).Check(nil, h2)
+	if len(d) != 1 {
 		t.Fatalf("without-timeout should warn, got %d", len(d))
+	}
+	if !strings.Contains(d[0].Message, "600 s") {
+		t.Errorf("command hook message should cite the 600 s default, got %q", d[0].Message)
+	}
+}
+
+// TestTimeoutPresentPerTypeDefaults pins the documented default cited
+// in the message for each hook type.
+func TestTimeoutPresentPerTypeDefaults(t *testing.T) {
+	cases := []struct {
+		hookJSON string
+		want     string
+	}{
+		{`{"type":"prompt","prompt":"check $ARGUMENTS"}`, "30 s"},
+		{`{"type":"agent","prompt":"verify $ARGUMENTS"}`, "60 s"},
+		{`{"type":"http","url":"http://localhost:1/h"}`, "600 s"},
+	}
+	for _, tc := range cases {
+		src := []byte(`{"hooks":{"Stop":[{"hooks":[` + tc.hookJSON + `]}]}}`)
+		h, perr := artifact.ParseHook(".claude/hooks/x.json", src)
+		if perr != nil {
+			t.Fatalf("ParseHook = %v", perr)
+		}
+		d := (&timeoutPresent{}).Check(nil, h)
+		if len(d) != 1 {
+			t.Fatalf("want 1 diagnostic for %s, got %d", tc.hookJSON, len(d))
+		}
+		if !strings.Contains(d[0].Message, tc.want) {
+			t.Errorf("message for %s should cite %s, got %q", tc.hookJSON, tc.want, d[0].Message)
+		}
 	}
 }
 

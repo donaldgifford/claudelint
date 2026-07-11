@@ -251,8 +251,11 @@ fingerprint change).
       synthesis since `LegacyServersKey` is already parsed; identical
       per-server diagnostics collapse to one per file via the engine's
       exact-duplicate dedupe)_
-- [ ] `hooks/timeout-present`: reword message + rules.md entry around the
-      documented 600 s default (severity per OQ8 decision).
+- [x] `hooks/timeout-present`: reword message + rules.md entry around the
+      documented 600 s default (severity per OQ8 decision). _(stays
+      warning; message cites the per-type documented default — 600 s
+      command/http/mcp_tool, 30 s prompt, 60 s agent — and frames the
+      nudge as fail-faster-in-CI, not hang prevention)_
 - [ ] `hooks/no-unsafe-shell`: skip exec-form entries (`args` present) and
       non-`command` hook types.
 - [ ] `schema/frontmatter-required`: reword skill diagnostics to
