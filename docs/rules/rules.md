@@ -73,6 +73,13 @@ downgraded with `severity`.
 Each artifact kind declares required frontmatter keys; the rule fires when any
 required key is missing or empty.
 
+> **Stricter than spec, by design.** Claude Code itself tolerates a skill
+> without `name` (it falls back to the directory name) and loads one
+> without `description`, but a skill the model can't reliably discover is
+> a skill that silently never runs — so claudelint keeps both required at
+> error severity. The skill diagnostics phrase this as best practice and
+> name the runtime fallback.
+
 **Bad** (skill without `name`):
 
     ---

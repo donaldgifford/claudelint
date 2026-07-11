@@ -260,8 +260,11 @@ fingerprint change).
       non-`command` hook types. _(gates on `EffectiveType() == "command"
       && !ExecForm`; rules.md entry corrected — it described eval/unquoted-
       var smells the rule never actually checked)_
-- [ ] `schema/frontmatter-required`: reword skill diagnostics to
+- [x] `schema/frontmatter-required`: reword skill diagnostics to
       best-practice phrasing without changing behavior (per OQ2 decision).
+      _(skill messages name the runtime fallback — directory-name for
+      `name`, invocation-matching for `description`; command/agent keep
+      the plain form; stricter-than-spec blockquote added to rules.md)_
 - [ ] `skills/no-version-field` + `plugin/manifest-fields`: help-text
       updates citing the current docs (stricter-than-spec note for plugin
       `version`, per OQ3 decision).

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
@@ -36,6 +37,23 @@ func TestFrontmatterRequiredSkillMissingName(t *testing.T) {
 	}
 	if d[0].RuleID != "schema/frontmatter-required" {
 		t.Errorf("RuleID = %q", d[0].RuleID)
+	}
+	// Skill diagnostics use best-practice phrasing that names the
+	// runtime fallback (OQ2) rather than the plain missing-key form.
+	if !strings.Contains(d[0].Message, "directory name") {
+		t.Errorf("skill name message should cite the fallback, got %q", d[0].Message)
+	}
+}
+
+func TestFrontmatterRequiredSkillMissingDescriptionPhrasing(t *testing.T) {
+	src := []byte("---\nname: y\n---\n")
+	s, _ := artifact.ParseSkill("s.md", src)
+	d := (&frontmatterRequired{}).Check(nil, s)
+	if len(d) != 1 {
+		t.Fatalf("expected 1 diagnostic, got %d", len(d))
+	}
+	if !strings.Contains(d[0].Message, "when to invoke") {
+		t.Errorf("skill description message should explain invocation impact, got %q", d[0].Message)
 	}
 }
 
