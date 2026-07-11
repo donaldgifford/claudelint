@@ -29,7 +29,7 @@ var defaultTriggerPhrases = []string{
 }
 
 func (*triggerClarity) ID() string                     { return "skills/trigger-clarity" }
-func (*triggerClarity) Category() string               { return "content" }
+func (*triggerClarity) Category() string               { return categoryContent }
 func (*triggerClarity) DefaultSeverity() diag.Severity { return diag.SeverityWarning }
 func (*triggerClarity) DefaultOptions() map[string]any {
 	return map[string]any{"phrases": defaultTriggerPhrases}

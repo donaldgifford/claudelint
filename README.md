@@ -177,6 +177,7 @@ fails if the drift is not acknowledged.
 | `schema/frontmatter-required`         | schema    | error    | skill, command, agent           |
 | `skills/trigger-clarity`              | content   | warning  | skill                           |
 | `skills/body-size`                    | content   | warning  | skill                           |
+| `skills/description-length`           | content   | warning  | skill                           |
 | `skills/no-version-field`             | schema    | warning  | skill                           |
 | `agents/field-enums`                  | schema    | warning  | agent                           |
 | `agents/model-policy` (opt-in)        | schema    | error    | agent                           |

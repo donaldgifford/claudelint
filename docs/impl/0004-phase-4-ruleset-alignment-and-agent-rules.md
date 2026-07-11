@@ -501,8 +501,9 @@ proposed tables. One PR, minor release, fingerprint bump.
       broken link — not per chain crossing it; cycles reported once,
       rotated to the smallest member for determinism; anchors at
       `NameRange` since the parser stores no renames{} entry ranges)_
-- [ ] `skills/description-length` (content/warning): `description` +
-      `when_to_use` combined at most 1,536 chars.
+- [x] `skills/description-length` (content/warning): `description` +
+      `when_to_use` combined at most 1,536 chars. _(`max_chars` option,
+      default 1536; anchors at the description key range)_
 - [ ] `skills/fork-agent-pairing` (schema/warning): `agent:` without
       `context: fork`.
 - [ ] `claude_md/import-exists` (content/warning): `@path` imports resolve

@@ -18,6 +18,7 @@ acknowledged.
 | `schema/frontmatter-required`         | schema   | error   | skill, command, agent |
 | `skills/trigger-clarity`              | content  | warning | skill                 |
 | `skills/body-size`                    | content  | warning | skill                 |
+| `skills/description-length`           | content  | warning | skill                 |
 | `skills/no-version-field`             | schema   | warning | skill                 |
 | `agents/field-enums`                  | schema   | warning | agent                 |
 | `agents/model-policy` (opt-in)        | schema   | error   | agent                 |
@@ -103,6 +104,17 @@ required key is missing or empty.
     ---
 
 **Fix**: add `name: my-skill` to the frontmatter.
+
+#### `skills/description-length`
+
+`description` and `when_to_use` are injected into the skill-selection
+prompt together; past the documented budget the tail is truncated and
+silently stops influencing selection. Default combined limit is 1536
+characters, overridable:
+
+    rule "skills/description-length" { options = { max_chars = 1024 } }
+
+**Fix**: tighten the description; move detail into the skill body.
 
 #### `skills/trigger-clarity`
 

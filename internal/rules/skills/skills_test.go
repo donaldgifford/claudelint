@@ -108,3 +108,47 @@ func TestNoVersionFieldCommentedOut(t *testing.T) {
 		t.Errorf("commented-out version in body should not trigger, got %v", d)
 	}
 }
+
+func TestDescriptionLength(t *testing.T) {
+	long := strings.Repeat("x", 1600)
+	half := strings.Repeat("y", 800)
+	cases := []struct {
+		name  string
+		fm    string
+		wantN int
+	}{
+		{"short description", "description: does the thing\n", 0},
+		{"long description alone", "description: " + long + "\n", 1},
+		{"combined overflow", "description: " + half + "\nwhen_to_use: " + half + "\n", 1},
+		{"combined under limit", "description: " + half[:400] + "\nwhen_to_use: " + half[:400] + "\n", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			src := []byte("---\nname: s\n" + tc.fm + "---\nbody\n")
+			s, perr := artifact.ParseSkill("skills/s/SKILL.md", src)
+			if perr != nil {
+				t.Fatalf("ParseSkill = %v", perr)
+			}
+			d := (&descriptionLength{}).Check(&optCtx{}, s)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d", len(d), tc.wantN)
+			}
+			if tc.wantN == 1 {
+				if !strings.Contains(d[0].Message, "limit 1536") {
+					t.Errorf("message = %q", d[0].Message)
+				}
+				if d[0].Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the description key")
+				}
+			}
+		})
+	}
+
+	// Option override tightens the budget.
+	src := []byte("---\nname: s\ndescription: " + strings.Repeat("z", 200) + "\n---\nbody\n")
+	s, _ := artifact.ParseSkill("skills/s/SKILL.md", src)
+	strict := &optCtx{opts: map[string]any{"max_chars": 100}}
+	if d := (&descriptionLength{}).Check(strict, s); len(d) != 1 {
+		t.Errorf("max_chars=100 should flag a 200-char description, got %v", d)
+	}
+}
