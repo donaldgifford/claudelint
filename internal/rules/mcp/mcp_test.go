@@ -323,3 +323,32 @@ func TestTransportDeprecated(t *testing.T) {
 		}
 	}
 }
+
+func TestNoSecretsInHeaders(t *testing.T) {
+	secret := "sk-abcdefghijklmnopqrstuvwxyz0123456789"
+	cases := []struct {
+		name    string
+		headers map[string]string
+		wantN   int
+	}{
+		{"no headers", nil, 0},
+		{"benign values", map[string]string{"Accept": "application/json"}, 0},
+		{"env placeholder passes", map[string]string{"Authorization": "Bearer ${API_KEY}"}, 0},
+		{"literal secret", map[string]string{"Authorization": "Bearer " + secret}, 1},
+		{"two secret headers", map[string]string{"A": secret, "B": secret}, 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &artifact.MCPServer{Name: "srv", Headers: tc.headers}
+			got := (&noSecretsInHeaders{}).Check(nil, s)
+			if len(got) != tc.wantN {
+				t.Errorf("got %d diagnostics, want %d (%v)", len(got), tc.wantN, got)
+			}
+			for _, d := range got {
+				if !strings.Contains(d.Message, "headers[") {
+					t.Errorf("message should name the header key, got %q", d.Message)
+				}
+			}
+		})
+	}
+}

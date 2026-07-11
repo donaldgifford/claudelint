@@ -470,9 +470,12 @@ proposed tables. One PR, minor release, fingerprint bump.
       version-semver/version-missing: `transport-known`
       (schema/warning, unknown values) + `transport-deprecated`
       (schema/info, sse advisory))_
-- [ ] `mcp/no-secrets-in-headers` (security/error): reuse the
+- [x] `mcp/no-secrets-in-headers` (security/error): reuse the
       `no-secrets-in-env` detector over `headers` values (or fold into
       that rule — pick during build, note in rules.md either way).
+      _(kept separate so the two surfaces suppress independently; both
+      reuse `security.MatchesSecret`; decision noted in rules.md.
+      Placeholders like `Bearer ${API_KEY}` pass)_
 - [ ] `mcp/timeout-minimum` (schema/warning): `timeout` below 1000 flagged
       with a seconds-vs-milliseconds hint.
 - [ ] `marketplace/reserved-name` (schema/error): the 16 documented

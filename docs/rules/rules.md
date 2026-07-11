@@ -51,6 +51,7 @@ acknowledged.
 | `mcp/command-exists-on-path`          | schema   | warning | mcp_server            |
 | `mcp/no-unsafe-shell`                 | security | error   | mcp_server            |
 | `mcp/no-secrets-in-env`               | security | error   | mcp_server            |
+| `mcp/no-secrets-in-headers`           | security | error   | mcp_server            |
 | `mcp/transport-known`                 | schema   | warning | mcp_server            |
 | `mcp/transport-deprecated`            | schema   | info    | mcp_server            |
 | `mcp/disabled-commented`              | style    | info    | mcp_server            |
@@ -417,6 +418,18 @@ server without a `url` is fine.
 
 **Bad**: `{ "type": "http" }` (no url) **Fix**:
 `{ "type": "http", "url": "https://mcp.example.com/mcp" }`.
+
+#### `mcp/no-secrets-in-headers`
+
+Same detector as `mcp/no-secrets-in-env`, applied to a remote
+server's `headers{}` values. Kept as a separate rule (not folded into
+the env rule) so the two surfaces can be suppressed independently;
+both share the `security/secrets` matcher, so the regex tables live
+in one place. Placeholders like `Bearer ${API_KEY}` pass — only
+credential-looking literals flag.
+
+**Fix**: use `headersHelper` or an environment reference instead of a
+literal token.
 
 #### `mcp/transport-known` and `mcp/transport-deprecated`
 
