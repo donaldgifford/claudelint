@@ -383,8 +383,11 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
       `.claude-plugin/plugin.json`, called from the CLI's parse wiring
       with the scan root so the walk can't escape the repo; one
       diagnostic per declared key at its `KeyRange`)_
-- [ ] `agents/field-enums` (schema/warning): `permissionMode`, `effort`,
-      `color`, `isolation`, `memory` enum membership.
+- [x] `agents/field-enums` (schema/warning): `permissionMode`, `effort`,
+      `color`, `isolation`, `memory` enum membership. _(uses the
+      `Agent*` enum sets from knowndata.go; isolation is a one-entry
+      set (`worktree`); messages hardcode the documented value order
+      since map iteration is unstable)_
 - [ ] Fixtures: valid agent exercising all documented fields; invalid
       variants per rule; a plugin-rooted agent fixture.
 - [ ] Ruleset version bump + fingerprint ack; rules.md + README anchors;

@@ -178,6 +178,7 @@ fails if the drift is not acknowledged.
 | `skills/trigger-clarity`              | content   | warning  | skill                           |
 | `skills/body-size`                    | content   | warning  | skill                           |
 | `skills/no-version-field`             | schema    | warning  | skill                           |
+| `agents/field-enums`                  | schema    | warning  | agent                           |
 | `agents/model-valid`                  | schema    | warning  | agent, skill, command           |
 | `agents/name-format`                  | schema    | warning  | agent                           |
 | `agents/plugin-ignored-fields`        | content   | warning  | agent                           |

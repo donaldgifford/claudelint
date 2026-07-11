@@ -156,6 +156,41 @@ func TestPluginIgnoredFields(t *testing.T) {
 	}
 }
 
+func TestFieldEnums(t *testing.T) {
+	cases := []struct {
+		name  string
+		extra string
+		wantN int
+	}{
+		{"no enum fields", "", 0},
+		{"all valid", "permissionMode: plan\neffort: high\ncolor: cyan\nisolation: worktree\nmemory: project\n", 0},
+		{"manual alias accepted", "permissionMode: manual\n", 0},
+		{"typo'd permissionMode", "permissionMode: acceptedits\n", 1},
+		{"unknown effort", "effort: turbo\n", 1},
+		{"unknown color", "color: magenta\n", 1},
+		{"unknown isolation", "isolation: container\n", 1},
+		{"unknown memory", "memory: global\n", 1},
+		{"two bad fields", "effort: turbo\ncolor: magenta\n", 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			a := newAgent(t, tc.extra)
+			d := (&fieldEnums{}).Check(nil, a)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			for _, dd := range d {
+				if !strings.Contains(dd.Message, "want one of:") {
+					t.Errorf("message should list the valid values, got %q", dd.Message)
+				}
+				if dd.Range.IsZero() {
+					t.Errorf("diagnostic should anchor at the offending key range")
+				}
+			}
+		})
+	}
+}
+
 func TestModelValidRunsOnSkillsAndCommands(t *testing.T) {
 	s, perr := artifact.ParseSkill("skills/x/SKILL.md",
 		[]byte("---\nname: x\ndescription: d\nmodel: sonet\n---\nbody\n"))

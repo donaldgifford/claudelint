@@ -19,6 +19,7 @@ acknowledged.
 | `skills/trigger-clarity`              | content  | warning | skill                 |
 | `skills/body-size`                    | content  | warning | skill                 |
 | `skills/no-version-field`             | schema   | warning | skill                 |
+| `agents/field-enums`                  | schema   | warning | agent                 |
 | `agents/model-valid`                  | schema   | warning | agent, skill, command |
 | `agents/name-format`                  | schema   | warning | agent                 |
 | `agents/plugin-ignored-fields`        | content  | warning | agent                 |
@@ -127,6 +128,19 @@ without ever taking effect.
 `plugin.json`. To enforce as a CI gate, override severity in `.claudelint.hcl`:
 
     rule "skills/no-version-field" { severity = "error" }
+
+#### `agents/field-enums`
+
+Agent frontmatter has five closed-enum fields; a value outside the
+documented set silently falls back to the default at runtime. Checked
+sets: `permissionMode` (`default`, `acceptEdits`, `auto`, `dontAsk`,
+`bypassPermissions`, `plan`, `manual`), `effort` (`low`, `medium`,
+`high`, `xhigh`, `max`), `color` (`red`, `blue`, `green`, `yellow`,
+`purple`, `orange`, `pink`, `cyan`), `isolation` (`worktree`), and
+`memory` (`user`, `project`, `local`). Absent keys are fine — every
+field has a default.
+
+**Bad**: `effort: turbo` **Fix**: `effort: high`.
 
 #### `agents/model-valid`
 
