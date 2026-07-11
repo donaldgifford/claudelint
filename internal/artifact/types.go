@@ -93,15 +93,47 @@ type Command struct {
 // Kind implements Artifact.
 func (*Command) Kind() ArtifactKind { return KindCommand }
 
-// Agent is a subagent definition (.claude/agents/*.md).
+// Agent is a subagent definition (.claude/agents/*.md). The typed
+// fields mirror the documented 16-field subagent frontmatter spec
+// (DESIGN-0005 §1); every declared key's range is available via
+// Frontmatter.KeyRange.
 type Agent struct {
 	Base
 	Frontmatter Frontmatter
 	Body        diag.Range
 
-	Name        string
-	Description string
-	Tools       []string
+	Name            string
+	Description     string
+	Tools           []string
+	DisallowedTools []string
+	// Model is the raw declared value; absent means inherit.
+	Model          string
+	PermissionMode string
+	// MaxTurns is 0 when absent or non-numeric; presence is
+	// distinguishable via Frontmatter.KeyRange("maxTurns").
+	MaxTurns int64
+	// Skills is the list of skills preloaded into the subagent's
+	// context — skill names, not tool syntax, so no splitting.
+	Skills []string
+	// HasMCPServers / HasHooks record presence only; the value
+	// shapes are not modeled (DESIGN-0005 non-goal).
+	HasMCPServers bool
+	HasHooks      bool
+	Memory        string
+	// Background false covers both declared-false and absent
+	// ("Claude chooses"); rules that need the distinction can check
+	// the key range.
+	Background    bool
+	Effort        string
+	Isolation     string
+	Color         string
+	InitialPrompt string
+
+	// PluginDistributed is set by discovery (not the parser) when the
+	// agent file lives under a root containing
+	// .claude-plugin/plugin.json. Claude Code ignores permissionMode,
+	// mcpServers, and hooks on plugin-distributed subagents.
+	PluginDistributed bool
 }
 
 // Kind implements Artifact.

@@ -190,6 +190,95 @@ func TestParseCommandMergedModelFields(t *testing.T) {
 	}
 }
 
+// TestParseAgentFullFieldSet covers the documented 16-field subagent
+// frontmatter spec (DESIGN-0005 §1).
+func TestParseAgentFullFieldSet(t *testing.T) {
+	src := []byte(`---
+name: reviewer
+description: reviews changes
+tools: Read, Grep, Bash(git diff:*)
+disallowedTools: Write, Edit
+model: opus
+permissionMode: acceptEdits
+maxTurns: 12
+skills:
+  - go
+  - docz
+mcpServers:
+  - github
+hooks:
+  PreToolUse:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: ./guard.sh
+memory: project
+background: true
+effort: high
+isolation: worktree
+color: cyan
+initialPrompt: Review the latest diff.
+---
+body
+`)
+	a, perr := ParseAgent(".claude/agents/reviewer.md", src)
+	if perr != nil {
+		t.Fatalf("ParseAgent = %v", perr)
+	}
+	if len(a.Tools) != 3 || a.Tools[2] != "Bash(git diff:*)" {
+		t.Errorf("Tools = %v", a.Tools)
+	}
+	if len(a.DisallowedTools) != 2 || a.DisallowedTools[0] != "Write" {
+		t.Errorf("DisallowedTools = %v", a.DisallowedTools)
+	}
+	if a.Model != "opus" || a.PermissionMode != "acceptEdits" {
+		t.Errorf("Model/PermissionMode = %q/%q", a.Model, a.PermissionMode)
+	}
+	if a.MaxTurns != 12 {
+		t.Errorf("MaxTurns = %d, want 12", a.MaxTurns)
+	}
+	if len(a.Skills) != 2 || a.Skills[0] != "go" {
+		t.Errorf("Skills = %v", a.Skills)
+	}
+	if !a.HasMCPServers || !a.HasHooks {
+		t.Errorf("HasMCPServers/HasHooks = %v/%v, want true/true", a.HasMCPServers, a.HasHooks)
+	}
+	if a.Memory != "project" || !a.Background {
+		t.Errorf("Memory/Background = %q/%v", a.Memory, a.Background)
+	}
+	if a.Effort != "high" || a.Isolation != "worktree" || a.Color != "cyan" {
+		t.Errorf("Effort/Isolation/Color = %q/%q/%q", a.Effort, a.Isolation, a.Color)
+	}
+	if a.InitialPrompt != "Review the latest diff." {
+		t.Errorf("InitialPrompt = %q", a.InitialPrompt)
+	}
+	if a.PluginDistributed {
+		t.Errorf("PluginDistributed should be false straight from the parser")
+	}
+	if a.Frontmatter.KeyRange("maxTurns").IsZero() {
+		t.Errorf("maxTurns key range should be recorded")
+	}
+}
+
+// TestParseAgentAbsentFieldsZero pins absent-key zero values for the
+// extended field set.
+func TestParseAgentAbsentFieldsZero(t *testing.T) {
+	src := []byte("---\nname: minimal\ndescription: d\n---\nbody\n")
+	a, perr := ParseAgent(".claude/agents/minimal.md", src)
+	if perr != nil {
+		t.Fatalf("ParseAgent = %v", perr)
+	}
+	if a.Model != "" || a.PermissionMode != "" || a.MaxTurns != 0 {
+		t.Errorf("scalars should be zero: %+v", a)
+	}
+	if a.HasMCPServers || a.HasHooks || a.Background {
+		t.Errorf("presence bools should be false: %+v", a)
+	}
+	if a.DisallowedTools != nil || a.Skills != nil {
+		t.Errorf("lists should be nil: %+v", a)
+	}
+}
+
 // TestParseToolListStringForms covers the doc-canonical string forms:
 // comma-separated agent tools and space/comma-separated allowed-tools,
 // including permission-rule entries that must survive as one token.

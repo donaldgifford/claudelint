@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"unicode"
 
@@ -267,6 +268,32 @@ func (d *markdownDoc) asStringList(key string) []string {
 		return out
 	default:
 		return nil
+	}
+}
+
+// has reports whether key is declared in the frontmatter at all,
+// regardless of its value type.
+func (d *markdownDoc) has(key string) bool {
+	_, ok := d.fm[key]
+	return ok
+}
+
+// asInt64 returns the integer value for key, or 0 when the key is
+// absent or not an integer. goccy decodes YAML integers as uint64
+// (non-negative) or int64 (negative).
+func (d *markdownDoc) asInt64(key string) int64 {
+	switch v := d.fm[key].(type) {
+	case uint64:
+		if v > math.MaxInt64 {
+			return 0
+		}
+		return int64(v)
+	case int64:
+		return v
+	case int:
+		return int64(v)
+	default:
+		return 0
 	}
 }
 

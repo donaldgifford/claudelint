@@ -353,10 +353,13 @@ First agent-specific rules. One PR, minor release, fingerprint bump.
 
 #### Tasks
 
-- [ ] Extend `ParseAgent` per DESIGN-0005: `model`, `disallowedTools`,
+- [x] Extend `ParseAgent` per DESIGN-0005: `model`, `disallowedTools`,
       `permissionMode`, `maxTurns`, `skills`, `mcpServers` (presence),
       `hooks` (presence), `memory`, `background`, `effort`, `isolation`,
-      `color` — with key ranges.
+      `color` — with key ranges. _(plus `initialPrompt` for the full
+      16-field set; new `has`/`asInt64` markdownDoc helpers; ranges via
+      the existing `Frontmatter.KeyRange`; `PluginDistributed` field
+      added for discovery to set)_
 - [ ] New package `internal/rules/agents/` with blank-import registration
       in `internal/rules/all/`.
 - [ ] `agents/model-valid` (schema/warning): shared validator; also

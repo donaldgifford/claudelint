@@ -83,5 +83,18 @@ func ParseAgent(path string, src []byte) (*Agent, *ParseError) {
 	a.Name = doc.asString("name")
 	a.Description = doc.asString("description")
 	a.Tools = doc.asToolList("tools")
+	a.DisallowedTools = doc.asToolList("disallowedTools")
+	a.Model = doc.asString("model")
+	a.PermissionMode = doc.asString("permissionMode")
+	a.MaxTurns = doc.asInt64("maxTurns")
+	a.Skills = doc.asStringList("skills")
+	a.HasMCPServers = doc.has("mcpServers")
+	a.HasHooks = doc.has("hooks")
+	a.Memory = doc.asString("memory")
+	a.Background, _ = doc.asBool("background")
+	a.Effort = doc.asString("effort")
+	a.Isolation = doc.asString("isolation")
+	a.Color = doc.asString("color")
+	a.InitialPrompt = doc.asString("initialPrompt")
 	return a, nil
 }
