@@ -352,3 +352,29 @@ func TestNoSecretsInHeaders(t *testing.T) {
 		})
 	}
 }
+
+func TestTimeoutMinimum(t *testing.T) {
+	cases := []struct {
+		name    string
+		timeout int64
+		wantN   int
+	}{
+		{"absent", 0, 0},
+		{"documented minimum", 1000, 0},
+		{"generous", 30000, 0},
+		{"seconds mistake", 30, 1},
+		{"just under", 999, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &artifact.MCPServer{Name: "srv", TimeoutMS: tc.timeout}
+			got := (&timeoutMinimum{}).Check(nil, s)
+			if len(got) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(got), tc.wantN, got)
+			}
+			if tc.wantN == 1 && !strings.Contains(got[0].Message, "milliseconds, not seconds") {
+				t.Errorf("message should carry the unit hint, got %q", got[0].Message)
+			}
+		})
+	}
+}

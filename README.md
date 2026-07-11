@@ -211,6 +211,7 @@ fails if the drift is not acknowledged.
 | `mcp/no-unsafe-shell`                 | security  | error    | mcp_server                      |
 | `mcp/no-secrets-in-env`               | security  | error    | mcp_server                      |
 | `mcp/no-secrets-in-headers`           | security  | error    | mcp_server                      |
+| `mcp/timeout-minimum`                 | schema    | warning  | mcp_server                      |
 | `mcp/transport-known`                 | schema    | warning  | mcp_server                      |
 | `mcp/transport-deprecated`            | schema    | info     | mcp_server                      |
 | `mcp/disabled-commented`              | style     | info     | mcp_server                      |

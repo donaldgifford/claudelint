@@ -52,6 +52,7 @@ acknowledged.
 | `mcp/no-unsafe-shell`                 | security | error   | mcp_server            |
 | `mcp/no-secrets-in-env`               | security | error   | mcp_server            |
 | `mcp/no-secrets-in-headers`           | security | error   | mcp_server            |
+| `mcp/timeout-minimum`                 | schema   | warning | mcp_server            |
 | `mcp/transport-known`                 | schema   | warning | mcp_server            |
 | `mcp/transport-deprecated`            | schema   | info    | mcp_server            |
 | `mcp/disabled-commented`              | style    | info    | mcp_server            |
@@ -430,6 +431,15 @@ credential-looking literals flag.
 
 **Fix**: use `headersHelper` or an environment reference instead of a
 literal token.
+
+#### `mcp/timeout-minimum`
+
+A server's `timeout` is in **milliseconds** with a documented minimum
+of 1000. Nearly every sub-1000 value in the wild is someone writing
+seconds (`"timeout": 30`), so the diagnostic leads with the unit hint
+and suggests the ×1000 value. Absent is fine.
+
+**Bad**: `"timeout": 30` **Fix**: `"timeout": 30000`.
 
 #### `mcp/transport-known` and `mcp/transport-deprecated`
 

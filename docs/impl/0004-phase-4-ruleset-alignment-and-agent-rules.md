@@ -476,8 +476,10 @@ proposed tables. One PR, minor release, fingerprint bump.
       _(kept separate so the two surfaces suppress independently; both
       reuse `security.MatchesSecret`; decision noted in rules.md.
       Placeholders like `Bearer ${API_KEY}` pass)_
-- [ ] `mcp/timeout-minimum` (schema/warning): `timeout` below 1000 flagged
-      with a seconds-vs-milliseconds hint.
+- [x] `mcp/timeout-minimum` (schema/warning): `timeout` below 1000 flagged
+      with a seconds-vs-milliseconds hint. _(message suggests the
+      ×1000 value; anchors at `NameRange` since the parser stores no
+      timeout range; absent (0) passes)_
 - [ ] `marketplace/reserved-name` (schema/error): the 16 documented
       reserved names, exact match; impersonation heuristics deliberately
       NOT attempted (enforced server-side by claude.ai).
