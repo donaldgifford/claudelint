@@ -28,12 +28,19 @@ func (*transportKnown) AppliesTo() []artifact.ArtifactKind {
 
 func (*transportKnown) HelpURI() string { return rules.DefaultHelpURI("mcp/transport-known") }
 
+// Transport value constants shared by the transport rules so the
+// documented strings stay in one place.
+const (
+	transportStdio = "stdio"
+	transportSSE   = "sse"
+)
+
 // knownTransports mirrors the documented `type` values (2026-07).
 var knownTransports = map[string]struct{}{
-	"stdio": {},
-	"http":  {},
-	"sse":   {},
-	"ws":    {},
+	transportStdio: {},
+	"http":         {},
+	transportSSE:   {},
+	"ws":           {},
 }
 
 func (r *transportKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {

@@ -60,7 +60,7 @@ func (r *commandExistsOnPath) Check(_ rules.Context, a artifact.Artifact) []diag
 	}
 	// Remote transports don't launch a local process; a stray command
 	// field there is dead config, not a typo'd runner.
-	if s.EffectiveTransport() != "stdio" {
+	if s.EffectiveTransport() != transportStdio {
 		return nil
 	}
 	// Absolute or path-qualified commands are always fine.

@@ -116,6 +116,10 @@ linters:
     goconst:
       min-len: 3
       min-occurrences: 3  # Uber: Extract repeated strings
+      # goconst 2.12+ counts literals in _test files; prior versions did
+      # not. Test fixtures read better as literals, so only production
+      # code is subject to the rule (restores the pre-2.12 gate).
+      ignore-tests: true
 
     gocritic:
       enabled-tags:

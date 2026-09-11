@@ -33,7 +33,7 @@ func (r *urlRequired) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnos
 		return nil
 	}
 	transport := s.EffectiveTransport()
-	if transport != "http" && transport != "sse" && transport != "ws" {
+	if transport != "http" && transport != transportSSE && transport != "ws" {
 		return nil
 	}
 	if s.URL != "" {

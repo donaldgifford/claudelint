@@ -27,6 +27,10 @@ func (*fieldEnums) AppliesTo() []artifact.ArtifactKind {
 
 func (*fieldEnums) HelpURI() string { return rules.DefaultHelpURI("agents/field-enums") }
 
+// fieldPermissionMode is the agent frontmatter key shared by the
+// enum and plugin-ignored-fields rules.
+const fieldPermissionMode = "permissionMode"
+
 // enumFields lists the closed-enum agent fields with their valid sets
 // and the documented value order for messages (map iteration order is
 // unstable). Isolation has a single documented value, expressed as a
@@ -37,7 +41,7 @@ var enumFields = []struct {
 	want  string
 }{
 	{
-		key:   "permissionMode",
+		key:   fieldPermissionMode,
 		valid: artifact.AgentPermissionModes,
 		want:  "default, acceptEdits, auto, dontAsk, bypassPermissions, plan, manual",
 	},
@@ -69,11 +73,11 @@ func (r *fieldEnums) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnost
 		return nil
 	}
 	values := map[string]string{
-		"permissionMode": ag.PermissionMode,
-		"effort":         ag.Effort,
-		"color":          ag.Color,
-		"isolation":      ag.Isolation,
-		"memory":         ag.Memory,
+		fieldPermissionMode: ag.PermissionMode,
+		"effort":            ag.Effort,
+		"color":             ag.Color,
+		"isolation":         ag.Isolation,
+		"memory":            ag.Memory,
 	}
 	var out []diag.Diagnostic
 	for _, f := range enumFields {

@@ -40,7 +40,7 @@ func (r *commandRequired) Check(_ rules.Context, a artifact.Artifact) []diag.Dia
 	if !ok {
 		return nil
 	}
-	if s.EffectiveTransport() != "stdio" || s.Command != "" {
+	if s.EffectiveTransport() != transportStdio || s.Command != "" {
 		return nil
 	}
 	return []diag.Diagnostic{{
