@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 
 	"github.com/donaldgifford/claudelint/internal/diag"
 	"github.com/donaldgifford/claudelint/internal/rules"
@@ -26,8 +26,14 @@ func loadSARIFSchema(t *testing.T) *jsonschema.Schema {
 	if err != nil {
 		t.Fatalf("read schema: %v", err)
 	}
+	// jsonschema/v6 takes a decoded JSON value (not a reader) as the
+	// resource. Decode first so AddResource sees plain maps/slices.
+	var resource any
+	if err := json.Unmarshal(raw, &resource); err != nil {
+		t.Fatalf("decode schema: %v", err)
+	}
 	c := jsonschema.NewCompiler()
-	if err := c.AddResource(sarifSchemaPath, bytes.NewReader(raw)); err != nil {
+	if err := c.AddResource(sarifSchemaPath, resource); err != nil {
 		t.Fatalf("add resource: %v", err)
 	}
 	sch, err := c.Compile(sarifSchemaPath)

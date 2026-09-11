@@ -28,7 +28,7 @@ func (*transportDeprecated) HelpURI() string {
 
 func (r *transportDeprecated) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
-	if !ok || s.Transport != "sse" {
+	if !ok || s.Transport != transportSSE {
 		return nil
 	}
 	return []diag.Diagnostic{{

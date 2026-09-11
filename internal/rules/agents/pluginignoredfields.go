@@ -38,7 +38,7 @@ func (r *pluginIgnoredFields) Check(_ rules.Context, a artifact.Artifact) []diag
 		key string
 		set bool
 	}{
-		{"permissionMode", ag.PermissionMode != ""},
+		{fieldPermissionMode, ag.PermissionMode != ""},
 		{"mcpServers", ag.HasMCPServers},
 		{"hooks", ag.HasHooks},
 	}

@@ -98,7 +98,7 @@ was INV-0005 (the `claude-skills` dogfood) during Phase 2.
 ## Environment
 
 | Component | Version / Value |
-|-----------|----------------|
+| ----------- | ---------------- |
 | claudelint ruleset | v1.2.0, fingerprint `e7f26796`, 30 rules |
 | claudelint release | v0.2.3 (latest tag) |
 | Docs source | `code.claude.com/docs/en/*`, fetched 2026-07-09 |
@@ -119,7 +119,7 @@ Verdict legend:
 #### Cross-cutting rules
 
 | Rule | Verdict | Action needed |
-|---|---|---|
+| --- | --- | --- |
 | `schema/parse` | Keep | None. |
 | `schema/frontmatter-required` | Decide | Skill `name`/`description` are optional/recommended per docs (name defaults to dir name; description falls back to first body paragraph). Agent `name`+`description` genuinely required — matches spec. Keep skill checks as best-practice but reword messages to not claim Claude Code requires them. |
 | `security/secrets` | Keep | None. Raw-source scan already covers new file surfaces. |
@@ -128,28 +128,28 @@ Verdict legend:
 #### CLAUDE.md rules
 
 | Rule | Verdict | Action needed |
-|---|---|---|
+| --- | --- | --- |
 | `claude_md/size` | Keep | Docs now advise "under 200 lines"; our default `max_lines = 500` is more lenient. Add a doc note; no behavior change. |
 | `claude_md/duplicate-directives` | Keep | None. |
 
 #### Skill rules
 
 | Rule | Verdict | Action needed |
-|---|---|---|
+| --- | --- | --- |
 | `skills/trigger-clarity` | Keep | Still valid — `description` drives auto-invocation. New `when_to_use` field carries trigger phrases too; rule should check the concatenation once the parser reads it. |
 | `skills/body-size` | Keep | Docs guidance is now "under 500 lines" (we count words, default 1000). Compatible; consider an optional `max_lines` variant. |
 | `skills/no-version-field` | Keep | Docs now explicitly confirm `version` is accepted-but-ignored. Rule validated; cite the doc in its help text. |
 
 #### Command rules
 
-| Rule | Verdict | Action needed |
-|---|---|---|
-| `commands/allowed-tools-known` | Fix | (a) String form never splits on commas/whitespace — `allowed-tools: Read, Grep` is one unknown tool. (b) Permission-rule syntax (`Bash(git add:*)`), `mcp__*` patterns, and `Agent(...)` forms all flagged as unknown. (c) `KnownTools` (16 names) predates the `Task` → `Agent` rename and lacks `Agent`/`Skill`. (d) Commands and skills now share one frontmatter model — rule should also run on skill `allowed-tools`. |
+| Rule                           | Verdict | Action needed                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `commands/allowed-tools-known` | Fix     | (a) String form never splits on commas/whitespace — `allowed-tools: Read, Grep` is one unknown tool. (b) Permission-rule syntax (`Bash(git add:*)`), `mcp__*` patterns, and `Agent(...)` forms all flagged as unknown. (c) `KnownTools` (16 names) predates the `Task` → `Agent` rename and lacks `Agent`/`Skill`. (d) Commands and skills now share one frontmatter model — rule should also run on skill `allowed-tools`. |
 
 #### Hook rules
 
 | Rule | Verdict | Action needed |
-|---|---|---|
+| --- | --- | --- |
 | `hooks/event-name-known` | Fix | Knows 9 of ~29 documented events; default-error rule fails valid configs (`SubagentStart`, `Setup`, `PermissionRequest`, ...). Expand list. |
 | `hooks/timeout-present` | Update | Command hooks have a documented 600 s default timeout — premise ("runaway hook can hang the session") is stale. Keep as style nudge; fix message + docs; account for per-type defaults (prompt 30 s, agent 60 s). |
 | `hooks/no-unsafe-shell` | Update | Only meaningful for `type: command` (and only shell-form: `args` present means exec-form, no shell). Needs `type` parsed to scope correctly and to skip exec-form false positives. |
@@ -157,14 +157,14 @@ Verdict legend:
 #### Plugin rules
 
 | Rule | Verdict | Action needed |
-|---|---|---|
+| --- | --- | --- |
 | `plugin/manifest-fields` | Keep (stricter) | Docs require only `name`; `version` optional (falls back to git SHA). Keep requiring `version` as an opinionated default — pinned versions are what marketplaces should ship — but document the stance and consider downgrading the version half to warning. |
 | `plugin/semver` | Keep | None. |
 
 #### Marketplace rules
 
 | Rule | Verdict | Action needed |
-|---|---|---|
+| --- | --- | --- |
 | `marketplace/name` | Keep | Presence check matches spec (kebab-case format is a new-rule candidate below). |
 | `marketplace/version-semver` | Update | Root `version` is optional per docs. Split: missing → info, present-but-not-semver → error. |
 | `marketplace/author-required` | Update | Docs make root `owner{name}` **required** (we treat author/owner as info-level nicety). Align: missing owner → warning or error; keep parsing both `author` and `owner` shapes (both documented). |
@@ -177,7 +177,7 @@ Verdict legend:
 #### MCP rules
 
 | Rule | Verdict | Action needed |
-|---|---|---|
+| --- | --- | --- |
 | `mcp/command-required` | Fix | `command` is required **only for stdio** transport. Doc-valid `http`/`ws` servers (url, no command) would false-positive once the `mcpServers` key fix lands. Scope to stdio; pair with new url-required rule. |
 | `mcp/server-name-required` | Keep | None. |
 | `mcp/command-exists-on-path` | Update | Scope to stdio transport. |
@@ -192,7 +192,7 @@ Several "rule bugs" above are actually parser bugs — the rule layer never
 sees the data. These block the fixes and the new rules:
 
 | Parser / helper | Gap | Effect | Blocks |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `ParseMCPFile` (`parse_mcp.go:37`) | Reads top-level `servers`; docs standardized on `mcpServers` | Doc-valid `.mcp.json` lints as zero servers — every MCP rule silently skips | All MCP rules |
 | `ParseMCPFile` server entries | Only `command`/`args`/`env`/`disabled`; no `type`, `url`, `headers`, `headersHelper`, `oauth`, `timeout`, `alwaysLoad` | Remote transports invisible; transport-aware scoping impossible | `mcp/command-required` fix, url-required, header secrets |
 | `ParseMarketplace` (`parse_marketplace.go`) | `source` read as string only | Object sources parse empty → `plugin-source-valid` false positive | Source-shape validation, reserved names |
@@ -211,7 +211,7 @@ deferred to a later backlog.
 #### Agents (no rules exist today)
 
 | Proposed rule | Checks | Severity | Phase |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `agents/model-valid` | `model` is an alias (`sonnet`/`opus`/`haiku`/`fable`), `inherit`, or full-ID shape (`^claude-[a-z0-9-]+$`). Catches typos that silently fall back to the inherited model. Same value set applies to skill/command `model` — share the validator. | warning | PR 2 |
 | `agents/name-format` | `name` is lowercase letters + hyphens only (documented constraint; duplicates resolve by undocumented filesystem order). | warning | PR 2 |
 | `agents/tools-known` | Entries in `tools`/`disallowedTools` are known tools, `mcp__*` patterns, or `Agent(...)` forms — Claude Code **silently ignores** unknown names. | warning | PR 2 |
@@ -222,7 +222,7 @@ deferred to a later backlog.
 #### Skills and commands
 
 | Proposed rule | Checks | Severity | Phase |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `skills/description-length` | `description` + `when_to_use` combined ≤ 1,536 chars (documented truncation silently drops trigger phrases). | warning | PR 3 |
 | `skills/fork-agent-pairing` | `agent:` set without `context: fork` does nothing. | warning | PR 3 |
 | (extend) `commands/allowed-tools-known` → skills | Same rule runs on skill `allowed-tools`/`disallowed-tools` after the merged-model parser update. | error | PR 1 |
@@ -230,14 +230,14 @@ deferred to a later backlog.
 #### Hooks
 
 | Proposed rule | Checks | Severity | Phase |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `hooks/type-known` | `type` ∈ `command`/`http`/`mcp_tool`/`prompt`/`agent` (absent defaults to `command`). | error | PR 3 |
 | `hooks/type-fields` | Per-type required fields present: `command` → `command`; `http` → `url`; `mcp_tool` → `server`+`tool`; `prompt`/`agent` → `prompt`. | error | PR 3 |
 
 #### Marketplaces
 
 | Proposed rule | Checks | Severity | Phase |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `marketplace/reserved-name` | Name not in the 16 documented reserved names (and obvious impersonations); claude.ai sync blocks these. | error | PR 3 |
 | `marketplace/name-format` | Marketplace + plugin-entry names kebab-case (claude.ai sync rejects violations). | warning | PR 3 |
 | `marketplace/source-path-safety` | Relative sources start with `./`; no `..` traversal (validator-rejected). | error | PR 3 |
@@ -246,7 +246,7 @@ deferred to a later backlog.
 #### MCP servers
 
 | Proposed rule | Checks | Severity | Phase |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `mcp/url-required` | `http`/`sse`/`ws` transports declare `url` (counterpart to stdio-scoped `command-required`). | error | PR 1 |
 | `mcp/transport-known` | `type` ∈ `stdio`/`http`/`sse`/`ws`; flag `sse` as documented-deprecated (info). | warning | PR 3 |
 | `mcp/no-secrets-in-headers` | Secrets scan over `headers` values (or fold into `no-secrets-in-env`). | error | PR 3 |
@@ -254,9 +254,9 @@ deferred to a later backlog.
 
 #### CLAUDE.md
 
-| Proposed rule | Checks | Severity | Phase |
-|---|---|---|---|
-| `claude_md/import-exists` | `@path` imports resolve on disk; flag chains beyond the documented 4-hop depth. | warning | PR 3 |
+| Proposed rule             | Checks                                                                          | Severity | Phase |
+| ------------------------- | ------------------------------------------------------------------------------- | -------- | ----- |
+| `claude_md/import-exists` | `@path` imports resolve on disk; flag chains beyond the documented 4-hop depth. | warning  | PR 3  |
 
 #### Deliberately not chasing yet
 

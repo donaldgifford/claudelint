@@ -11,6 +11,10 @@ import (
 	"github.com/donaldgifford/claudelint/internal/diag"
 )
 
+// ownerKey is the marketplace manifest key for the owner{name,email}
+// object, the ecosystem alternative to a top-level author string.
+const ownerKey = "owner"
+
 // ParseMarketplace parses a .claude-plugin/marketplace.json manifest.
 // It mirrors ParsePlugin's shape: syntactic errors are reported as a
 // *ParseError pointing at the offending bytes; missing optional fields
@@ -49,9 +53,9 @@ func ParseMarketplace(filePath string, src []byte) (*Marketplace, *ParseError) {
 	// present so authors who follow DESIGN-0002 §2.1 literally still
 	// see their range point at the obvious token.
 	m.Version, m.VersionRange = stringFieldPath(src, &base, []string{"version"}, []string{"metadata", "version"})
-	m.Author, m.AuthorRange = stringFieldPath(src, &base, []string{"author"}, []string{"owner", "name"})
-	m.OwnerName, m.OwnerRange = stringFieldPath(src, &base, []string{"owner", "name"})
-	m.OwnerEmail, _ = stringFieldPath(src, &base, []string{"owner", "email"})
+	m.Author, m.AuthorRange = stringFieldPath(src, &base, []string{"author"}, []string{ownerKey, "name"})
+	m.OwnerName, m.OwnerRange = stringFieldPath(src, &base, []string{ownerKey, "name"})
+	m.OwnerEmail, _ = stringFieldPath(src, &base, []string{ownerKey, "email"})
 	m.Renames = parseRenames(src)
 	m.PluginRoot, _ = stringFieldPath(src, &base, []string{"metadata", "pluginRoot"})
 	m.Plugins = parseMarketplacePlugins(src, &base, marketplaceRoot(filePath))

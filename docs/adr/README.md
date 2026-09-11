@@ -36,7 +36,7 @@ docz create adr "Your ADR Title"
 <!-- BEGIN DOCZ AUTO-GENERATED -->
 ## All ADRs
 
-| ID | Title | Status | Date | Author | Link |
-|----|-------|--------|------|--------|------|
+| ID       | Title                                      | Status   | Date       | Author         | Link                                                                                                     |
+| -------- | ------------------------------------------ | -------- | ---------- | -------------- | -------------------------------------------------------------------------------------------------------- |
 | ADR-0001 | Use HCL as the linter configuration format | Proposed | 2026-04-18 | Donald Gifford | [0001-use-hcl-as-the-linter-configuration-format.md](0001-use-hcl-as-the-linter-configuration-format.md) |
 <!-- END DOCZ AUTO-GENERATED -->

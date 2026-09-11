@@ -193,7 +193,7 @@ Key design points:
 ## Risks and Mitigations
 
 | Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
+| ------ | -------- | ------------ | ------------ |
 | Claude artifact formats evolve and break the linter | High | High | Version the ruleset (`claudelint.version`); treat unknown fields as warnings, not errors; fast release cadence pinned to Claude changelog. |
 | HCL unfamiliar to users who expect YAML | Medium | Medium | Ship a `claudelint init` scaffolder with a well-commented default config; provide a YAML → HCL translator. |
 | Format conversion produces lossy output users mistake for lossless | High | Medium | `convert` always emits a diagnostics report of dropped/approximated fields; non-zero exit when loss exceeds a configurable threshold. |

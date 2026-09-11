@@ -88,7 +88,7 @@ useful, and where the unavoidable losses are.
 ## Environment
 
 | Component | Version / Value |
-|-----------|----------------|
+| ----------- | ---------------- |
 | Claude Code CLI | latest at investigation time |
 | OpenAI platform | Custom GPTs + Apps manifest as of investigation date |
 | OpenCode | latest release at investigation time |
@@ -103,7 +103,7 @@ useful, and where the unavoidable losses are.
 Placeholder for the mapping table. Populate with rows of the form:
 
 | Claude field | OpenCode field | OpenAI field | Loss class | Notes |
-|--------------|----------------|--------------|------------|-------|
+| -------------- | ---------------- | -------------- | ------------ | ------- |
 | `name` (frontmatter) | `name` | GPT name | lossless | |
 | `description` | `description` | GPT description | lossless | |
 | `allowed-tools` | `tools` | Action operationIds | approximated | tool naming differs |

@@ -517,7 +517,7 @@ Rough inventory. Not exhaustive — intent is to make review coverage
 obvious. New files are marked Create; edits are Modify.
 
 | File | Action | Description |
-|---|---|---|
+| --- | --- | --- |
 | `internal/artifact/artifact.go` | Modify | Add `KindMarketplace`, `KindMCPServer` |
 | `internal/artifact/types.go` | Modify | Add `Marketplace`, `MarketplacePlugin`, `MCPServer` |
 | `internal/artifact/parse_marketplace.go` | Create | Marketplace JSON parser |
@@ -553,7 +553,7 @@ obvious. New files are marked Create; edits are Modify.
 Out-of-repo (`donaldgifford/claudelint-action`):
 
 | File | Action | Description |
-|---|---|---|
+| --- | --- | --- |
 | `action.yml` | Create | Composite action definition |
 | `README.md` | Create | Usage + inputs/outputs |
 | `.github/workflows/test.yml` | Create | Action E2E |

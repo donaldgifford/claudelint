@@ -486,7 +486,7 @@ Implement every rule from the DESIGN-0001 MVP table. Each is its own
 ## File Changes
 
 | File | Action | Description |
-|------|--------|-------------|
+| ------ | -------- | ------------- |
 | `cmd/claudelint/main.go` | Create | Cobra entrypoint; `run`, `rules`, `init`, `version` subcommands; blank-imports `internal/rules/all` |
 | `internal/diag/*.go` | Create | `Diagnostic`, `Severity`, `Range`, `Position`, `Fix` types |
 | `internal/artifact/*.go` | Create | `ArtifactKind`, `Artifact` interface, typed structs, parsers, known-data constants |

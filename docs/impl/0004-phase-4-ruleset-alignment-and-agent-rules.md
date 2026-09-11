@@ -556,7 +556,7 @@ proposed tables. One PR, minor release, fingerprint bump.
 ## File Changes
 
 | File | Action | Description |
-|------|--------|-------------|
+| ------ | -------- | ------------- |
 | `internal/artifact/parse_mcp.go` | Modify | `mcpServers` key, transport fields, deprecation tagging |
 | `internal/artifact/parse_marketplace.go` | Modify | Object sources, `owner{}`, `renames{}` |
 | `internal/artifact/parse_json.go` | Modify | Hook `type` + per-type fields, exec-form detection |

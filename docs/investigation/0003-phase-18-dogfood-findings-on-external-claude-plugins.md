@@ -63,11 +63,11 @@ cannot.
 
 ## Environment
 
-| Component        | Version / Value |
-|------------------|-----------------|
-| `claudelint`     | pre-v0.1.0 (branch `docs/claudelint-linter-rfc`) |
-| Go               | 1.26.1          |
-| Plugin cache     | `~/.claude/plugins/cache/donaldgifford-claude-skills/` |
+| Component    | Version / Value                                        |
+| ------------ | ------------------------------------------------------ |
+| `claudelint` | pre-v0.1.0 (branch `docs/claudelint-linter-rfc`)       |
+| Go           | 1.26.1                                                 |
+| Plugin cache | `~/.claude/plugins/cache/donaldgifford-claude-skills/` |
 
 ## Findings
 

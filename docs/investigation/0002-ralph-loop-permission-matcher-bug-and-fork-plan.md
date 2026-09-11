@@ -112,7 +112,7 @@ completion).
 ## Environment
 
 | Component | Value |
-|-----------|-------|
+| ----------- | ------- |
 | Claude Code CLI | version present as of 2026-04-20 |
 | Plugin | `ralph-loop@claude-plugins-official` |
 | Cached versions | `1.0.0` (user scope), `61c0597779bd` (project scope, different project) |
