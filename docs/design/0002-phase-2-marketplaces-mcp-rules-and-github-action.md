@@ -165,7 +165,7 @@ Initial rule set (each ~50 LOC, one rule per file, per IMPL-0001
 conventions):
 
 | Rule ID | Severity | Catches |
-|---|---|---|
+| --- | --- | --- |
 | `marketplace/name` | error | `name` missing or empty |
 | `marketplace/version-semver` | error | `version` missing or not a valid semver |
 | `marketplace/plugins-nonempty` | warn | `plugins: []` (nothing to distribute) |
@@ -235,7 +235,7 @@ Phase 1) to preserve byte offsets for `Range`.
 Initial rule set:
 
 | Rule ID | Severity | Catches |
-|---|---|---|
+| --- | --- | --- |
 | `mcp/command-required` | error | `command` missing or empty |
 | `mcp/command-exists-on-path` | warn | `command` is a bare name (not absolute, no `/`) AND not a common shell builtin — catches typos like `"uvv"` instead of `"uvx"` |
 | `mcp/no-secrets-in-env` | error | `env{}` value matches the existing `security/secrets` regexes (API keys, tokens). Reuses `rules/security/secrets.go` matcher |

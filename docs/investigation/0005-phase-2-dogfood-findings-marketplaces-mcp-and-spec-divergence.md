@@ -70,11 +70,11 @@ that generates the problems.
 
 ## Environment
 
-| Component      | Version / Value                                      |
-|----------------|------------------------------------------------------|
-| `claudelint`   | pre-v0.1.0 (branch `docs/impl-0002-phase-2`, ruleset v1.1.0, fingerprint `4cee5ee7`) |
-| Go             | 1.26.1                                               |
-| Marketplace    | `donaldgifford/claude-skills` at `~/code/claude-skills` (HEAD, 2026-04-23) |
+| Component    | Version / Value                                                                      |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `claudelint` | pre-v0.1.0 (branch `docs/impl-0002-phase-2`, ruleset v1.1.0, fingerprint `4cee5ee7`) |
+| Go           | 1.26.1                                                                               |
+| Marketplace  | `donaldgifford/claude-skills` at `~/code/claude-skills` (HEAD, 2026-04-23)           |
 
 ## Findings
 

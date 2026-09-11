@@ -18,14 +18,14 @@ Design docs, plans, and implementation docs can reference investigations by ID
 <!-- BEGIN DOCZ AUTO-GENERATED -->
 ## All Investigations
 
-| ID | Title | Status | Date | Author | Link |
-|----|-------|--------|------|--------|------|
-| INV-0001 | OpenAI and OpenCode skill/plugin format compatibility with Claude | Open | 2026-04-18 | Donald Gifford | [0001-openai-and-opencode-skill-and-plugin-format-compatibility-with.md](0001-openai-and-opencode-skill-and-plugin-format-compatibility-with.md) |
-| INV-0002 | Ralph-loop permission matcher bug and fork plan | Concluded | 2026-04-20 | Donald Gifford | [0002-ralph-loop-permission-matcher-bug-and-fork-plan.md](0002-ralph-loop-permission-matcher-bug-and-fork-plan.md) |
-| INV-0003 | Phase 1.8 dogfood findings on external Claude plugins | Closed | 2026-04-21 | Donald Gifford | [0003-phase-18-dogfood-findings-on-external-claude-plugins.md](0003-phase-18-dogfood-findings-on-external-claude-plugins.md) |
-| INV-0004 | Donald-loop stop hook silently fails promise detection on transcripts with unescaped newlines | Closed | 2026-04-21 | Donald Gifford | [0004-donald-loop-stop-hook-silently-fails-promise-detection-on.md](0004-donald-loop-stop-hook-silently-fails-promise-detection-on.md) |
-| INV-0005 | Phase 2 dogfood findings: marketplaces, MCP, and spec divergence | Closed | 2026-04-23 | Donald Gifford | [0005-phase-2-dogfood-findings-marketplaces-mcp-and-spec-divergence.md](0005-phase-2-dogfood-findings-marketplaces-mcp-and-spec-divergence.md) |
-| INV-0006 | Rule coverage audit against current Claude Code docs | Concluded | 2026-07-09 | Donald Gifford | [0006-rule-coverage-audit-against-current-claude-code-docs.md](0006-rule-coverage-audit-against-current-claude-code-docs.md) |
+| ID       | Title                                                                                         | Status    | Date       | Author         | Link                                                                                                                                             |
+| -------- | --------------------------------------------------------------------------------------------- | --------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| INV-0001 | OpenAI and OpenCode skill/plugin format compatibility with Claude                             | Open      | 2026-04-18 | Donald Gifford | [0001-openai-and-opencode-skill-and-plugin-format-compatibility-with.md](0001-openai-and-opencode-skill-and-plugin-format-compatibility-with.md) |
+| INV-0002 | Ralph-loop permission matcher bug and fork plan                                               | Concluded | 2026-04-20 | Donald Gifford | [0002-ralph-loop-permission-matcher-bug-and-fork-plan.md](0002-ralph-loop-permission-matcher-bug-and-fork-plan.md)                               |
+| INV-0003 | Phase 1.8 dogfood findings on external Claude plugins                                         | Closed    | 2026-04-21 | Donald Gifford | [0003-phase-18-dogfood-findings-on-external-claude-plugins.md](0003-phase-18-dogfood-findings-on-external-claude-plugins.md)                     |
+| INV-0004 | Donald-loop stop hook silently fails promise detection on transcripts with unescaped newlines | Closed    | 2026-04-21 | Donald Gifford | [0004-donald-loop-stop-hook-silently-fails-promise-detection-on.md](0004-donald-loop-stop-hook-silently-fails-promise-detection-on.md)           |
+| INV-0005 | Phase 2 dogfood findings: marketplaces, MCP, and spec divergence                              | Closed    | 2026-04-23 | Donald Gifford | [0005-phase-2-dogfood-findings-marketplaces-mcp-and-spec-divergence.md](0005-phase-2-dogfood-findings-marketplaces-mcp-and-spec-divergence.md)   |
+| INV-0006 | Rule coverage audit against current Claude Code docs                                          | Concluded | 2026-07-09 | Donald Gifford | [0006-rule-coverage-audit-against-current-claude-code-docs.md](0006-rule-coverage-audit-against-current-claude-code-docs.md)                     |
 <!-- END DOCZ AUTO-GENERATED -->
 <!-- BEGIN DOCZ AUTO-GENERATED -->
 <!-- END DOCZ AUTO-GENERATED -->

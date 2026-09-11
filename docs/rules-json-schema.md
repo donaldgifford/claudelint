@@ -56,14 +56,14 @@ Each entry in `rules` has this shape:
 }
 ```
 
-| Field              | Type    | Description                                                                                            |
-| ------------------ | ------- | ------------------------------------------------------------------------------------------------------ |
-| `id`               | string  | Stable rule identifier (`category/name`) used by config and `<!-- claudelint:ignore=<id> -->`.         |
-| `category`         | string  | One of `schema`, `content`, `security`, `style`, `meta`.                                               |
-| `default_severity` | string  | One of `error`, `warning`, `info`. Matches the engine's severity vocabulary.                           |
-| `applies_to`       | array   | Artifact kinds this rule analyzes (e.g. `claude_md`, `skill`, `plugin`, `marketplace`, `mcp_server`).  |
-| `help_uri`         | string  | URL to documentation for this rule. Rules without bespoke docs point at the README anchor.             |
-| `default_options`  | object  | Option keys and their default values. Empty object (never `null`) when the rule takes no options.      |
+| Field              | Type    | Description                                                                                                                            |
+| ------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | string  | Stable rule identifier (`category/name`) used by config and `<!-- claudelint:ignore=<id> -->`.                                         |
+| `category`         | string  | One of `schema`, `content`, `security`, `style`, `meta`.                                                                               |
+| `default_severity` | string  | One of `error`, `warning`, `info`. Matches the engine's severity vocabulary.                                                           |
+| `applies_to`       | array   | Artifact kinds this rule analyzes (e.g. `claude_md`, `skill`, `plugin`, `marketplace`, `mcp_server`).                                  |
+| `help_uri`         | string  | URL to documentation for this rule. Rules without bespoke docs point at the README anchor.                                             |
+| `default_options`  | object  | Option keys and their default values. Empty object (never `null`) when the rule takes no options.                                      |
 | `opt_in`           | boolean | `true` when the rule only runs if `.claudelint.hcl` contains a `rule "<id>"` block for it (added in schema-compatible ruleset v1.4.0). |
 
 ## Stability

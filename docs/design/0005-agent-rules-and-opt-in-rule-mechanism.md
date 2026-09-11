@@ -101,7 +101,7 @@ byte-accurate ranges for all keys, so no new range plumbing is needed;
 rules anchor diagnostics per the range-emission conventions.
 
 | Field | Parsed as | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `name` | `Name string` | already parsed |
 | `description` | `Description string` | already parsed |
 | `tools` | `Tools []string` | already parsed; via shared tool-list splitter |
@@ -157,7 +157,7 @@ New package `internal/rules/agents/`, blank-imported by
 file-level `(0,0)` ranges.
 
 | Rule | Category / severity | AppliesTo | Fires when | Range | Message sketch |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | `agents/model-valid` | schema / warning | agent, skill, command | `model` declared, non-empty, and `!IsValidModelRef` | `KeyRange("model")` | `model "sonet" is not a known value; want sonnet, opus, haiku, fable, inherit, or a full model ID (claude-...)` |
 | `agents/name-format` | schema / warning | agent | `name` non-empty and not `^[a-z]+(-[a-z]+)*$` | `KeyRange("name")` | `agent name "My_Agent" should be lowercase letters and hyphens` (empties are `schema/frontmatter-required`'s job) |
 | `agents/tools-known` | schema / warning | agent | entry in `tools`/`disallowedTools` fails `IsKnownTool` and `IsToolPattern` | `KeyRange` of the offending key | `unknown tool "Wrte" in tools — Claude Code silently ignores unknown names` |

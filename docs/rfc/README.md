@@ -38,7 +38,7 @@ docz create rfc "Your RFC Title"
 <!-- BEGIN DOCZ AUTO-GENERATED -->
 ## All RFCs
 
-| ID | Title | Status | Date | Author | Link |
-|----|-------|--------|------|--------|------|
-| RFC-0001 | Claudelint: a Go-based linter with HCL config for Claude plugins, skills, hooks, and CLAUDE.md | Draft | 2026-04-18 | Donald Gifford | [0001-claudelint-go-based-linter-with-hcl-config-for-claude-plugins.md](0001-claudelint-go-based-linter-with-hcl-config-for-claude-plugins.md) |
+| ID       | Title                                                                                          | Status | Date       | Author         | Link                                                                                                                                           |
+| -------- | ---------------------------------------------------------------------------------------------- | ------ | ---------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| RFC-0001 | Claudelint: a Go-based linter with HCL config for Claude plugins, skills, hooks, and CLAUDE.md | Draft  | 2026-04-18 | Donald Gifford | [0001-claudelint-go-based-linter-with-hcl-config-for-claude-plugins.md](0001-claudelint-go-based-linter-with-hcl-config-for-claude-plugins.md) |
 <!-- END DOCZ AUTO-GENERATED -->

@@ -74,13 +74,13 @@ during the Phase 1.8 wrap-up of IMPL-0001.
 
 ## Environment
 
-| Component         | Version / Value |
-|-------------------|-----------------|
-| `donald-loop`     | `donaldgifford-claude-skills@1.0.0` (fork of upstream `ralph-loop` — see INV-0002) |
-| `jq`              | bundled with macOS (`jq-1.7.x`) |
-| Claude Code       | 2.1.112 |
-| Shell             | bash (`/bin/bash`) |
-| State file        | `.claude/donald-loop.local.md` with `completion_promise: "MVP COMPLETE"` |
+| Component     | Version / Value                                                                    |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `donald-loop` | `donaldgifford-claude-skills@1.0.0` (fork of upstream `ralph-loop` — see INV-0002) |
+| `jq`          | bundled with macOS (`jq-1.7.x`)                                                    |
+| Claude Code   | 2.1.112                                                                            |
+| Shell         | bash (`/bin/bash`)                                                                 |
+| State file    | `.claude/donald-loop.local.md` with `completion_promise: "MVP COMPLETE"`           |
 
 ## Findings
 

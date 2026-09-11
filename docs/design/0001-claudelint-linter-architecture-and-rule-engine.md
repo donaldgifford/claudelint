@@ -289,7 +289,7 @@ automatically.
 ### Parsers
 
 | Kind | Parser |
-|------|--------|
+| ------ | -------- |
 | `claude_md` | Markdown parser with frontmatter extraction. YAML frontmatter uses `github.com/goccy/go-yaml` for precise line/column positions on every key. Body split into directive blocks by heading. |
 | `skill` | Frontmatter (`name`, `description`, optional `allowed-tools`, `model`) + Markdown body. Companion files indexed. |
 | `command` | Frontmatter (`description`, `argument-hint`, `allowed-tools`) + body. |
@@ -349,7 +349,7 @@ content diagnostics.
 ### Built-in rules (MVP shortlist)
 
 | Rule ID | Kind | Severity | What it checks |
-|---------|------|----------|----------------|
+| --------- | ------ | ---------- | ---------------- |
 | `schema/parse` | * | error | File parses at all |
 | `schema/frontmatter-required` | skill, command, agent | error | `name` and `description` present |
 | `skills/body-size` | skill | warning | `SKILL.md` body ≤ configurable word count |
