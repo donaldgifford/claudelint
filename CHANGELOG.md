@@ -15,6 +15,11 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - *(deps)* Update dependency astro to v7 [security]
 - *(deps)* Update dependency sharp to ^0.35.0 [security]
 - *(reporter)* Adapt SARIF schema loading to jsonschema v6 API
+- Satisfy golangci-lint 2.12 goconst findings
+
+### Documentation
+
+- Align markdown tables for markdownlint MD060
 
 ## [0.3.0] - 2026-07-11
 
