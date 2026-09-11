@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [unreleased]
+
+### Bug Fixes
+
+- *(deps)* Update go modules (non-major)
+- *(deps)* Update module github.com/santhosh-tekuri/jsonschema/v5 to v6
+- *(deps)* Update dependency astro to v7 [security]
+- *(deps)* Update dependency sharp to ^0.35.0 [security]
+- *(reporter)* Adapt SARIF schema loading to jsonschema v6 API
+
 ## [0.3.0] - 2026-07-11
 
 ### Features
