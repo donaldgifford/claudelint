@@ -43,4 +43,5 @@ docz create impl "Your Implementation Title"
 | IMPL-0002 | Phase 2 — marketplaces, MCP rules, SARIF, and GitHub Action    | Draft     | 2026-04-23 | Donald Gifford | [0002-phase-2-marketplaces-mcp-rules-sarif-and-github-action.md](0002-phase-2-marketplaces-mcp-rules-sarif-and-github-action.md)       |
 | IMPL-0003 | Phase 3 — Dual-output docs site with Starlight                 | Completed | 2026-05-31 | Donald Gifford | [0003-phase-3-dual-output-docs-site-with-starlight.md](0003-phase-3-dual-output-docs-site-with-starlight.md)                           |
 | IMPL-0004 | Phase 4 - Ruleset alignment and agent rules                    | Completed | 2026-07-09 | Donald Gifford | [0004-phase-4-ruleset-alignment-and-agent-rules.md](0004-phase-4-ruleset-alignment-and-agent-rules.md)                                 |
+| IMPL-0005 | Phase 5 — Upstream spec drift detection                        | Draft     | 2026-09-13 | Donald Gifford | [0005-phase-5-upstream-spec-drift-detection.md](0005-phase-5-upstream-spec-drift-detection.md)                                         |
 <!-- END DOCZ AUTO-GENERATED -->
