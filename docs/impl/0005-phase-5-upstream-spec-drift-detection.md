@@ -124,7 +124,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       is the source of truth and lists fifteen), plus the two
       `code.claude.com/schemas/*.json` probes that are recorded in the
       lock with their HTTP status but never fail a run.
-- [ ] `internal/upstream/fetch.go`: `Fetch(ctx, sources, workDir)` using
+- [x] `internal/upstream/fetch.go`: `Fetch(ctx, sources, workDir)` using
       `http.NewRequestWithContext` (the `noctx` and `bodyclose` linters
       are on), three retries with backoff on 5xx and transport errors,
       a 30-second per-source timeout, a `User-Agent` naming the repo,
