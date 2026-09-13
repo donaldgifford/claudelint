@@ -10,7 +10,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 
-- DESIGN-0006 + IMPL-0005 upstream spec drift detection
+- DESIGN-0006 + IMPL-0005 upstream spec drift detection ([#58](https://github.com/donaldgifford/claudelint/issues/58))
 
 ## [0.3.0] - 2026-07-11
 
