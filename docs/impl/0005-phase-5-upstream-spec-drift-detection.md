@@ -118,11 +118,12 @@ Branch `chore/spec-drift-tool`; label per OQ1.
 
 #### Tasks
 
-- [ ] `internal/upstream/source.go`: the source table from DESIGN §1 as a
-      sorted slice of `Source{ID, Tier, URL, Ext}` (sixteen entries,
-      Tiers A–D), plus the two `code.claude.com/schemas/*.json` probes
-      that are recorded in the lock with their HTTP status but never
-      fail a run.
+- [x] `internal/upstream/source.go`: the source table from DESIGN §1 as a
+      sorted slice of `Source{ID, Tier, URL, Ext}` (fifteen entries,
+      Tiers A–D — this doc previously said sixteen; the DESIGN §1 table
+      is the source of truth and lists fifteen), plus the two
+      `code.claude.com/schemas/*.json` probes that are recorded in the
+      lock with their HTTP status but never fail a run.
 - [ ] `internal/upstream/fetch.go`: `Fetch(ctx, sources, workDir)` using
       `http.NewRequestWithContext` (the `noctx` and `bodyclose` linters
       are on), three retries with backoff on 5xx and transport errors,
