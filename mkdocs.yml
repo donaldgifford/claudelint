@@ -13,12 +13,14 @@ nav:
         - 'DESIGN-0003: Dual-output docs site — shared source, MkDocs for TechDocs, Starlight for public': design/0003-dual-output-docs-site-shared-source-mkdocs-for-techdocs.md
         - 'DESIGN-0004: Starlight landing page polish and brand pass': design/0004-starlight-landing-page-polish-and-brand-pass.md
         - 'DESIGN-0005: Agent rules and opt-in rule mechanism': design/0005-agent-rules-and-opt-in-rule-mechanism.md
+        - 'DESIGN-0006: Upstream spec drift detection': design/0006-upstream-spec-drift-detection.md
     - Implementation Plans:
         - Overview: impl/README.md
         - 'IMPL-0001: Phase 1: core linter for CLAUDE.md, skills, plugins, and hooks': impl/0001-phase-1-core-linter-for-claudemd-skills-plugins-and-hooks.md
         - 'IMPL-0002: Phase 2 — marketplaces, MCP rules, SARIF, and GitHub Action': impl/0002-phase-2-marketplaces-mcp-rules-sarif-and-github-action.md
         - 'IMPL-0003: Phase 3 — Dual-output docs site with Starlight': impl/0003-phase-3-dual-output-docs-site-with-starlight.md
         - 'IMPL-0004: Phase 4 - Ruleset alignment and agent rules': impl/0004-phase-4-ruleset-alignment-and-agent-rules.md
+        - 'IMPL-0005: Phase 5 — Upstream spec drift detection': impl/0005-phase-5-upstream-spec-drift-detection.md
     - Investigations:
         - Overview: investigation/README.md
         - 'INV-0001: OpenAI and OpenCode skill/plugin format compatibility with Claude': investigation/0001-openai-and-opencode-skill-and-plugin-format-compatibility-with.md
@@ -42,7 +44,7 @@ nav:
         - Github Action: install/github-action.md
         - Quickstart: install/quickstart.md
     - Rules:
-        - Only silence this rule inside vendored docs.: rules/exit-codes.md
+        - Exit Codes: rules/exit-codes.md
         - Rules: rules/rules.md
 plugins:
     - techdocs-core
