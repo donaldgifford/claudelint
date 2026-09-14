@@ -13,11 +13,23 @@ import (
 )
 
 // RulesetVersion is the hand-bumped semver of the built-in ruleset,
-// independent of the binary version. It must be updated whenever a
-// rule is added, removed, or changes its default severity or default
-// options. The CI guardrail test TestRulesetFingerprint fails loudly
-// if the ruleset content drifts without a corresponding bump.
-const RulesetVersion = "v1.5.0"
+// independent of the binary version. It must be updated whenever:
+//
+//   - a rule is added or removed,
+//   - a rule changes its default severity or default options, or
+//   - the canonical data the rules check against changes — the tool
+//     list, the hook event list, the reserved marketplace names, the
+//     accepted source kinds, and anything else the upstream guardrail
+//     compares with internal/upstream/digest.json.
+//
+// The third trigger is easy to miss because it moves no rule metadata
+// and so leaves the fingerprint untouched. It still changes what
+// claudelint accepts, which is the thing a user reads the ruleset
+// version to learn.
+//
+// The CI guardrail test TestRulesetFingerprint fails loudly if the
+// ruleset content drifts without a corresponding bump.
+const RulesetVersion = "v1.6.0"
 
 // RulesetFingerprint returns a short hex hash of the registered rules'
 // content. The hash covers:

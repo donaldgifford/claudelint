@@ -378,7 +378,7 @@ version per OQ3).
       `SendMessage`, `TaskCreate`) in `tools` / `allowed-tools`; the
       archive-and-command marketplace; a marketplace named
       `claude-tag-plugins` in the reserved-name rule test.
-- [ ] Ruleset version bump per OQ3; amend the `RulesetVersion` doc
+- [x] Ruleset version bump per OQ3; amend the `RulesetVersion` doc
       comment in `internal/rules/version.go` so known-data changes are
       an explicit bump trigger; `docs/rules/rules.md` header and README
       rows updated. The fingerprint should not move (no rule ids,

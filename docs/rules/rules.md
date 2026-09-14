@@ -5,12 +5,18 @@ tableOfContents:
   maxHeadingLevel: 4
 ---
 
-## Ruleset v1.5
+## Ruleset v1.6
 
 Every rule is built into the binary. The fingerprint under `claudelint version`
 changes whenever rules are added, removed, or have their ID / category /
 severity / options changed — a CI guardrail fails if the drift is not
 acknowledged.
+
+The ruleset version also moves when the canonical data the rules check
+against changes: the tool list, the hook event list, the reserved
+marketplace names, the accepted plugin source kinds. Those changes leave
+the fingerprint alone, because no rule's metadata moved, but they do
+change what claudelint accepts. v1.6.0 is one of them.
 
 | ID                                    | Category | Default | Applies to            |
 | ------------------------------------- | -------- | ------- | --------------------- |
