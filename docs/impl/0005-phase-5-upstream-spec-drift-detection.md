@@ -269,7 +269,8 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       any code that catches up.
 - [x] Coverage: `internal/upstream` clears the 55% floor
       (`just coverage-gate`).
-- [ ] PR opened with the label from OQ1; `just ci` green.
+- [x] PR opened with the label from OQ1; `just ci` green.
+      ([#59](https://github.com/donaldgifford/claudelint/pull/59))
 
 #### Success Criteria
 
