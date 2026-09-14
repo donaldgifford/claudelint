@@ -106,11 +106,18 @@ func LookupDeprecatedTool(name string) (DeprecatedTool, bool) {
 	return d, ok
 }
 
-// IsSupersededTool reports whether a tool has been renamed or removed,
-// as opposed to merely deprecated. A superseded tool should not be
-// declared in new artifacts; a deprecated one still works.
-func IsSupersededTool(name string) bool {
+// SupersededToolAdvice returns the explanation a tools-known rule
+// should report for a tool that has been renamed or removed, and false
+// for every other tool.
+//
+// A merely deprecated tool is still documented and still works, so it
+// produces no diagnostic: warning about it would be noise on a valid
+// artifact.
+func SupersededToolAdvice(name string) (string, bool) {
 	d, ok := DeprecatedTools[name]
+	if !ok || d.Status == ToolDeprecated {
+		return "", false
+	}
 
-	return ok && (d.Status == ToolRenamed || d.Status == ToolRemoved)
+	return d.Advice(name), true
 }
