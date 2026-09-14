@@ -156,6 +156,11 @@ func Extract(pages map[string][]byte, opts ExtractOptions) (*Digest, error) {
 	d.Meta.DocsMaxMarker = maxDocsMarker(pages)
 	d.Normalize()
 
+	// Cross-checking reads the extracted sets, so it runs after every
+	// extractor and after normalisation has sorted and deduplicated
+	// them.
+	d.Disagreements = CrossCheck(d)
+
 	if err := checkFloors(d, opts.Baseline); err != nil {
 		return nil, err
 	}

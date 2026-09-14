@@ -189,7 +189,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
         `## X.Y.Z` heading; `meta.docs_max_marker` as the highest
         `v2.N.N` marker across the docs pages (also written per page
         into the lock as `version_marker`).
-- [ ] `disagreements.go`: compute docs-versus-SchemaStore set differences
+- [x] `disagreements.go`: compute docs-versus-SchemaStore set differences
       for hook events, hook types, MCP transports, marketplace source
       kinds, and plugin manifest properties; write them under
       `digest.disagreements` (informational per DESIGN OQ9).
