@@ -8,9 +8,27 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [unreleased]
 
+### Features
+
+- *(upstream)* Add the upstream source table
+- *(upstream)* Add the context-aware source fetcher
+- *(upstream)* Add the GFM table scanner and digest types
+- *(upstream)* Extract the digest from the fetched upstream sources
+- *(upstream)* Record docs-versus-SchemaStore disagreements
+- *(upstream)* Commit the source lock
+- *(upstream)* Diff two digests structurally
+- *(specdrift)* Add the command tree and the cmd entry point
+- *(specdrift)* Commit the first digest and source lock
+- *(ci)* Add the weekly upstream spec drift workflow
+
 ### Documentation
 
 - DESIGN-0006 + IMPL-0005 upstream spec drift detection ([#58](https://github.com/donaldgifford/claudelint/issues/58))
+- *(impl)* Mark IMPL-0005 in progress and DESIGN-0006 approved
+
+### Testing
+
+- *(upstream)* Assert exit 2 when an anchor is gone
 
 ## [0.3.0] - 2026-07-11
 
