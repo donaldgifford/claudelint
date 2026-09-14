@@ -321,16 +321,16 @@ version per OQ3).
       `hooks/timeout-present` cites. Failure messages follow the
       fingerprint test: identifier, digest path, delta, and the two ways
       to resolve. A stale acknowledgement (item no longer upstream) fails.
-- [ ] `KnownHookEvents`: add `DirectoryAdded`, `PreModelSwitch`,
+- [x] `KnownHookEvents`: add `DirectoryAdded`, `PreModelSwitch`,
       `PostModelSwitch`; update the count in the `knowndata.go` comment,
       the lifecycle table under `hooks/event-name-known` in
       `docs/rules/rules.md`, and the "30 events" sentence in `README.md`.
-- [ ] `KnownTools`: add the 31 documented tools missing today; per OQ2
+- [x] `KnownTools`: add the 31 documented tools missing today; per OQ2
       keep `Task` with an acknowledgement citing the v2.1.63 rename and
       drop `BashOutput`, `KillShell`, and `MultiEdit`; update the
       `agents/tools-known` and `commands/allowed-tools-known` prose in
       `rules.md` and README where they enumerate tools.
-- [ ] `artifact.DeprecatedTools` (OQ2 addendum): a map of tool name to
+- [x] `artifact.DeprecatedTools` (OQ2 addendum): a map of tool name to
       `{Status, Since, ReplacedBy, Source}` with status `renamed`,
       `removed`, or `deprecated`. Seed it from the Claude Code changelog
       where an entry exists and from the first docs marker at which the

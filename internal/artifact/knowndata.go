@@ -181,6 +181,7 @@ var (
 var KnownHookEvents = map[string]struct{}{
 	"ConfigChange":        {},
 	"CwdChanged":          {},
+	"DirectoryAdded":      {},
 	"Elicitation":         {},
 	"ElicitationResult":   {},
 	"FileChanged":         {},
@@ -190,10 +191,12 @@ var KnownHookEvents = map[string]struct{}{
 	"PermissionDenied":    {},
 	"PermissionRequest":   {},
 	"PostCompact":         {},
+	"PostModelSwitch":     {},
 	"PostToolBatch":       {},
 	"PostToolUse":         {},
 	"PostToolUseFailure":  {},
 	"PreCompact":          {},
+	"PreModelSwitch":      {},
 	"PreToolUse":          {},
 	"SessionEnd":          {},
 	"SessionStart":        {},
@@ -209,9 +212,6 @@ var KnownHookEvents = map[string]struct{}{
 	"UserPromptSubmit":    {},
 	"WorktreeCreate":      {},
 	"WorktreeRemove":      {},
-	"DirectoryAdded":      {},
-	"PreModelSwitch":      {},
-	"PostModelSwitch":     {},
 }
 
 // IsKnownHookEvent reports whether name is in the canonical hook

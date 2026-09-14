@@ -247,6 +247,36 @@ access with no runtime signal.
 
 **Bad**: `tools: Read, Wrte` **Fix**: `tools: Read, Write`.
 
+The canonical tool list mirrors the
+[tools reference](https://code.claude.com/docs/en/settings) — 45
+documented tools as of September 2026, plus `Task`, which the runtime
+still accepts after its rename. The upstream guardrail keeps the list in
+step with the published table.
+
+##### Deprecated and removed tools
+
+A tool that left the reference table is not the same as a tool that
+never existed, and the two deserve different messages. Before reporting
+an unknown name, both tools-known rules consult the table below and say
+what to write instead.
+
+| Tool | Status | Version | Replacement | Source |
+| --- | --- | --- | --- | --- |
+| `BashOutput` | removed | v2.0.64 | `TaskOutput` | Claude Code changelog, "Unshipped BashOutputTool" |
+| `KillShell` | removed | v2.1.268 | `TaskStop` | no changelog entry; last docs marker carrying it in the tools reference |
+| `MultiEdit` | removed | v2.1.268 | `Edit` | no changelog entry; last docs marker carrying it in the tools reference |
+| `Task` | renamed | v2.1.63 | `Agent` | INV-0006; the runtime still accepts the old name |
+| `TaskOutput` | deprecated | v2.1.83 | `Read` | Claude Code changelog |
+
+A `removed` or `renamed` tool produces a diagnostic naming its
+replacement. A `deprecated` tool is still documented and still works, so
+it produces none — warning about it would be noise on a valid artifact.
+
+This table is the rendering of `artifact.DeprecatedTools`, and the
+guardrail checks the two against each other: every removed or renamed
+entry must be absent from the documented tool list and every deprecated
+entry present.
+
 #### `claude_md/duplicate-directives`
 
 `CLAUDE.md` files sometimes accumulate duplicate rules as teams merge guidance.
@@ -286,6 +316,11 @@ parentheses don't split an entry.
 
 **Bad**: `allowed-tools: [WriteFil]` (typo) **Fix**: `allowed-tools: [Write]`.
 
+Tools that upstream renamed or removed are reported with their
+replacement rather than as typos — see
+[Deprecated and removed tools](#deprecated-and-removed-tools) under
+`agents/tools-known`.
+
 #### `hooks/event-name-known`
 
 Each top-level key under `"hooks"` is the event name. It must match one of the
@@ -298,8 +333,8 @@ When the name matches a known event apart from casing, the diagnostic
 suggests the exact spelling (`did you mean "PreToolUse"?`).
 
 The canonical event list mirrors the
-[hooks reference](https://code.claude.com/docs/en/hooks) (30 events as of
-July 2026). Names are case-sensitive.
+[hooks reference](https://code.claude.com/docs/en/hooks) (33 events as of
+September 2026). Names are case-sensitive.
 
 | Lifecycle stage | Events |
 | --- | --- |
@@ -309,8 +344,13 @@ July 2026). Names are case-sensitive.
 | Permissions | `PermissionRequest`, `PermissionDenied` |
 | Subagents & tasks | `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle` |
 | Context & config | `PreCompact`, `PostCompact`, `InstructionsLoaded`, `ConfigChange` |
-| Environment | `CwdChanged`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove` |
+| Model | `PreModelSwitch`, `PostModelSwitch` |
+| Environment | `CwdChanged`, `DirectoryAdded`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove` |
 | UI & elicitation | `Notification`, `MessageDisplay`, `Elicitation`, `ElicitationResult` |
+
+The upstream guardrail (`go test ./internal/upstream`) compares this set
+with the published reference on every run, so a new event shows up as a
+test failure rather than as a false positive in someone's repository.
 
 #### `hooks/type-known`
 
