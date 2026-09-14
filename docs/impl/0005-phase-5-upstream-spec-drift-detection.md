@@ -299,6 +299,12 @@ issue into a failing test.
 Branch `fix/upstream-drift-2026-09`; label `minor` (the ruleset changes;
 version per OQ3).
 
+**Shipped differently.** Phases 1 and 2 landed on one branch,
+`feat/impl-0005-spec-drift-tool`, under PR #59, because Phase 1 was
+still open when Phase 2 started. The label moved from `dont-release` to
+`minor` when the ruleset bump landed, which is the part that matters —
+the branch name is cosmetic, the label drives the release.
+
 #### Tasks
 
 - [x] `internal/artifact`: export `SkillFrontmatterKeys`,
@@ -393,7 +399,7 @@ version per OQ3).
       CWD); triage every new or removed diagnostic. Expect the
       `agents/tools-known` and `commands/allowed-tools-known` warning
       count to drop.
-- [ ] DESIGN-0006 §7 table updated for `HookEntryKeys` and
+- [x] DESIGN-0006 §7 table updated for `HookEntryKeys` and
       `DeprecatedTools`; PR labelled `minor`; `just ci` green.
 
 #### Success Criteria
