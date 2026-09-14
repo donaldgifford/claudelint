@@ -122,8 +122,10 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       sorted slice of `Source{ID, Tier, URL, Ext}` (fifteen entries,
       Tiers A–D — this doc previously said sixteen; the DESIGN §1 table
       is the source of truth and lists fifteen), plus the two
-      `code.claude.com/schemas/*.json` probes that are recorded in the
-      lock with their HTTP status but never fail a run.
+      `code.claude.com/schemas/*.json` probes, which are fetched on every
+      run but never fail one. They are recorded in the work-directory
+      manifest with their HTTP status and kept out of the committed lock
+      (see Amendments).
 - [x] `internal/upstream/fetch.go`: `Fetch(ctx, sources, workDir)` using
       `http.NewRequestWithContext` (the `noctx` and `bodyclose` linters
       are on), three retries with backoff on 5xx and transport errors,
@@ -220,7 +222,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       fetch against `httptest.Server` covering retry, timeout, redirect,
       and manifest fields; `check` end-to-end against an `httptest`-served
       fixture set asserting each exit code. No test touches the network.
-- [ ] Run `go run ./cmd/specdrift check --update` on the branch and commit
+- [x] Run `go run ./cmd/specdrift check --update` on the branch and commit
       the first `digest.json` and `sources.lock.json`; run it twice and
       assert a clean `git diff`.
 - [ ] `justfile`: `spec-check` and `spec-sync` under `[group('spec')]`,
@@ -582,6 +584,18 @@ Task references such as "per OQ2" point here.
   appended, and the issue script runs once.
 - **OQ11 — marketplace `archive` and `command` source kinds:** fix in
   Phase 2 as part of the catch-up.
+
+### Amendments made while implementing
+
+- **Lock fields (Phase 1).** DESIGN §4 specified `last_modified` per
+  source and made no exception for the optional probes. Measuring both
+  against the live sources showed each one breaks the invariant the lock
+  exists for. `code.claude.com` sets `Last-Modified` to the time of the
+  request, so two fetches five seconds apart differ for byte-identical
+  pages; the two `code.claude.com/schemas` probes resolve to a product
+  page whose body carries a per-request nonce. Both were dropped from
+  the committed lock and DESIGN §4 was amended in the same commit. The
+  header is still recorded in the work-directory `manifest.json`.
 
 ## Open Questions
 

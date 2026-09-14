@@ -24,20 +24,33 @@ const LockFile = "sources.lock.json"
 // without affecting the digest" line and turns a silent no-op into an
 // explicit one.
 //
-// Every field is derived from the response: a URL, a content hash, the
-// server's own Last-Modified, and the release marker found in the page.
-// Nothing is a clock reading, so re-running the tool against unchanged
-// sources rewrites the file byte for byte.
+// Every field is derived from the content: a URL, a hash of the body,
+// and the release marker found in the page. Nothing is a clock reading,
+// so re-running the tool against unchanged sources rewrites the file
+// byte for byte.
+//
+// Two things DESIGN-0006 put in the lock are deliberately absent,
+// because measuring them showed they break that invariant:
+//
+// Last-Modified. The design records the header per source. On
+// code.claude.com it is the time of the request, not of the content:
+// two fetches five seconds apart report timestamps five seconds apart
+// for identical bytes. Committing it would make every sync a diff. The
+// header is still recorded in the work-directory manifest, where a
+// clock reading is diagnostic rather than committed.
+//
+// Optional probes. The two code.claude.com/schemas URLs do not exist
+// yet and the site answers them with its product page, whose body
+// carries a per-request nonce. A probe answers a yes-or-no question
+// about a URL, and its body is not a specification until someone
+// writes an extractor for it, so it stays out of the committed
+// record.
 
 // LockEntry is the committed state of one source.
 //
 // Fields are declared in alphabetical order of their json tag, for the
 // same reason Digest's are: Go emits struct fields in declaration order.
 type LockEntry struct {
-	// LastModified is the server's Last-Modified header, verbatim. It is
-	// advisory: not every source sends one, and the hash is what decides
-	// whether the content changed.
-	LastModified string `json:"last_modified,omitempty"`
 	// SHA256 is the hex digest of the response body.
 	SHA256 string `json:"sha256"`
 	// URL is the final URL after redirects.
@@ -52,19 +65,17 @@ type LockEntry struct {
 type Lock map[string]LockEntry
 
 // NewLock builds a lock from a fetch manifest and the pages it
-// produced. A source the manifest has no successful record for is left
-// out, which is how an optional probe that did not answer stays out of
-// the committed file.
+// produced. A source with no successful record, and any optional probe,
+// is left out.
 func NewLock(m Manifest, pages map[string][]byte) Lock {
 	lock := make(Lock, len(m))
 
 	for id, rec := range m {
-		if rec.SHA256 == "" {
+		if rec.SHA256 == "" || isOptional(id) {
 			continue
 		}
 
 		lock[id] = LockEntry{
-			LastModified:  rec.LastModified,
 			SHA256:        rec.SHA256,
 			URL:           rec.URL,
 			VersionMarker: VersionMarker(pages[id]),
@@ -72,6 +83,15 @@ func NewLock(m Manifest, pages map[string][]byte) Lock {
 	}
 
 	return lock
+}
+
+// isOptional reports whether a source id belongs to an optional probe.
+// An id the table does not know is treated as required, so a manifest
+// entry is never dropped by accident.
+func isOptional(id string) bool {
+	s, ok := SourceByID(id)
+
+	return ok && s.Optional
 }
 
 // Encode returns the canonical lock bytes: key-sorted, two-space

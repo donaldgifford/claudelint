@@ -309,7 +309,8 @@ Rules every extractor follows:
     "docs_max_marker": "v2.1.268"
   },
   "tools": {
-    "builtin": ["Agent", "Artifact", "AskUserQuestion", "Bash", "..."]
+    "builtin": ["Agent", "Artifact", "AskUserQuestion", "Bash", "..."],
+    "deprecated": []
   },
   "hooks": {
     "events": ["ConfigChange", "CwdChanged", "DirectoryAdded", "..."],
@@ -371,7 +372,7 @@ Rules every extractor follows:
     "settings": {"default_modes": ["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"], "hook_events": ["..."]}
   },
   "disagreements": [
-    {"topic": "hooks.events", "docs_only": ["MessageDisplay", "PostModelSwitch", "PreModelSwitch"], "schemastore_plugin_only": []}
+    {"docs_only": ["DirectoryAdded", "MessageDisplay", "PostModelSwitch", "PreModelSwitch"], "source": "schemastore.plugin", "source_only": [], "topic": "hooks.events"}
   ]
 }
 ```
@@ -382,16 +383,31 @@ so it changes when upstream changes and at no other time:
 ```json
 {
   "docs.hooks": {
+    "sha256": "a6f4f8...",
     "url": "https://code.claude.com/docs/en/hooks.md",
-    "sha256": "3f1c...",
-    "last_modified": "Fri, 11 Sep 2026 13:04:33 GMT",
-    "version_marker": "v2.1.265"
+    "version_marker": "v2.1.267"
   }
 }
 ```
 
 A lock change without a digest change means a prose-only edit; the report
 lists it under "sources changed without affecting the digest".
+
+**Amended during IMPL-0005 Phase 1.** Two fields this section originally
+specified were removed after measuring them against the live sources,
+because both break the invariant the lock exists for:
+
+- `last_modified`. On `code.claude.com` the header carries the time of
+  the request, not of the content: two fetches five seconds apart report
+  timestamps five seconds apart for byte-identical pages. Committing it
+  would make every `just spec-sync` a diff. The header is still recorded
+  in the work-directory `manifest.json`, where a clock reading is
+  diagnostic rather than committed.
+- Optional probe entries. The two `code.claude.com/schemas` URLs do not
+  exist yet, and the site answers them with its product page, whose body
+  carries a per-request nonce. A probe answers a yes-or-no question about
+  a URL; its body is not a specification until an extractor reads it, so
+  it stays out of the committed record.
 
 **Why the digest is embedded.** The CI comparison in §5 is always file
 against file: the digest freshly generated from the live docs against the
@@ -666,10 +682,12 @@ type Source struct {
     URL  string
 }
 
+// Fields are declared in alphabetical order of their json tag, because
+// encoding/json emits struct fields in declaration order and sorts only
+// map keys. LastModified was dropped; see the amendment in section 4.
 type LockEntry struct {
-    URL           string `json:"url"`
     SHA256        string `json:"sha256"`
-    LastModified  string `json:"last_modified,omitempty"`
+    URL           string `json:"url"`
     VersionMarker string `json:"version_marker,omitempty"`
 }
 

@@ -38,8 +38,47 @@ func TestNewLockFromManifest(t *testing.T) {
 	if entry.VersionMarker != "v2.1.265" {
 		t.Errorf("version_marker = %q, want %q", entry.VersionMarker, "v2.1.265")
 	}
-	if entry.LastModified != "Fri, 11 Sep 2026 13:04:33 GMT" {
-		t.Errorf("last_modified = %q, want the response header", entry.LastModified)
+}
+
+// TestNewLockDropsTheLastModifiedHeader pins the correction to
+// DESIGN-0006: code.claude.com answers with the time of the request, so
+// committing the header would make every sync a diff.
+func TestNewLockDropsTheLastModifiedHeader(t *testing.T) {
+	t.Parallel()
+
+	lock := upstream.NewLock(upstream.Manifest{
+		"docs.hooks": {
+			LastModified: "Fri, 11 Sep 2026 13:04:33 GMT",
+			SHA256:       "3f1c",
+			URL:          "https://code.claude.com/docs/en/hooks.md",
+		},
+	}, nil)
+
+	raw, err := lock.Encode()
+	if err != nil {
+		t.Fatalf("Encode() error = %v", err)
+	}
+	if bytes.Contains(raw, []byte("13:04:33")) {
+		t.Errorf("lock carries the Last-Modified header:\n%s", raw)
+	}
+}
+
+// TestNewLockSkipsOptionalProbes keeps the two code.claude.com/schemas
+// URLs out of the committed record. They do not exist yet and the site
+// answers them with a page carrying a per-request nonce.
+func TestNewLockSkipsOptionalProbes(t *testing.T) {
+	t.Parallel()
+
+	lock := upstream.NewLock(upstream.Manifest{
+		"probe.plugin_schema": {SHA256: "nonce1", URL: "https://claude.com/product/claude-code"},
+		"docs.hooks":          {SHA256: "3f1c", URL: "https://code.claude.com/docs/en/hooks.md"},
+	}, nil)
+
+	if _, ok := lock["probe.plugin_schema"]; ok {
+		t.Errorf("lock = %v, want no probe entry", lock)
+	}
+	if _, ok := lock["docs.hooks"]; !ok {
+		t.Errorf("lock = %v, want the docs entry", lock)
 	}
 }
 
@@ -97,8 +136,8 @@ func TestLockEncodeIsCanonical(t *testing.T) {
 }
 
 // TestLockOmitsEmptyOptionalFields keeps the committed file free of keys
-// that carry nothing, so a source that gains a Last-Modified header
-// shows up as an addition rather than a change from "".
+// that carry nothing, so a source that gains a version marker shows up
+// as an addition rather than a change from "".
 func TestLockOmitsEmptyOptionalFields(t *testing.T) {
 	t.Parallel()
 
@@ -109,7 +148,7 @@ func TestLockOmitsEmptyOptionalFields(t *testing.T) {
 		t.Fatalf("Encode() error = %v", err)
 	}
 
-	for _, key := range []string{"last_modified", "version_marker"} {
+	for _, key := range []string{"version_marker"} {
 		if bytes.Contains(got, []byte(key)) {
 			t.Errorf("Encode() emitted empty %s:\n%s", key, got)
 		}
@@ -121,7 +160,6 @@ func TestLockRoundTrip(t *testing.T) {
 
 	lock := upstream.Lock{
 		"docs.hooks": {
-			LastModified:  "Fri, 11 Sep 2026 13:04:33 GMT",
 			SHA256:        "aaa",
 			URL:           "https://example.test/hooks.md",
 			VersionMarker: "v2.1.265",
