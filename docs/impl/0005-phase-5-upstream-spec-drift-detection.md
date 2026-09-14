@@ -1,7 +1,7 @@
 ---
 id: IMPL-0005
 title: "Phase 5 — Upstream spec drift detection"
-status: Draft
+status: In Progress
 author: Donald Gifford
 created: 2026-09-13
 ---
@@ -10,7 +10,7 @@ created: 2026-09-13
 
 # IMPL-0005: Phase 5 — Upstream spec drift detection
 
-**Status:** Draft
+**Status:** In Progress
 **Author:** Donald Gifford
 **Date:** 2026-09-13
 
@@ -33,6 +33,7 @@ created: 2026-09-13
 - [Testing Plan](#testing-plan)
 - [Dependencies](#dependencies)
 - [Resolved Decisions](#resolved-decisions)
+  - [Amendments made while implementing](#amendments-made-while-implementing)
 - [Open Questions](#open-questions)
 - [References](#references)
 <!--toc:end-->

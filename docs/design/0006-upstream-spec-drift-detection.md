@@ -1,7 +1,7 @@
 ---
 id: DESIGN-0006
 title: "Upstream spec drift detection"
-status: Draft
+status: Approved
 author: Donald Gifford
 created: 2026-09-12
 ---
@@ -10,7 +10,7 @@ created: 2026-09-12
 
 # DESIGN-0006: Upstream spec drift detection
 
-**Status:** Draft
+**Status:** Approved
 **Author:** Donald Gifford
 **Date:** 2026-09-12
 
