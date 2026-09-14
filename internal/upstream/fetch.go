@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -315,6 +316,24 @@ func sleepCtx(ctx context.Context, d time.Duration) error {
 	case <-t.C:
 		return nil
 	}
+}
+
+// LoadManifest reads back the manifest a Fetch wrote, so a later
+// command can build the lock from a work directory it did not fetch.
+func LoadManifest(workDir string) (Manifest, error) {
+	path := filepath.Join(workDir, ManifestFile)
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+
+	var m Manifest
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return nil, fmt.Errorf("decode %s: %w", path, err)
+	}
+
+	return m, nil
 }
 
 // LoadPages reads back the pages a Fetch wrote, keyed by source id. A

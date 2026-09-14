@@ -202,7 +202,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       `markdown` (Markdown groups by section, one line per change, and
       appends "sources changed without affecting the digest" from the
       lock diff).
-- [ ] `internal/upstream/command.go`: `NewRootCommand()` (cobra, already
+- [x] `internal/upstream/command.go`: `NewRootCommand()` (cobra, already
       a dependency) wiring `pull`, `digest`, `diff`, and `check` with the
       flags from DESIGN §2; `check --work DIR` keeps the fetched pages for
       artifact upload; `check --update` rewrites the committed digest and
@@ -211,7 +211,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
 - [x] Golden snippet fixtures under `internal/upstream/testdata/snippets/`
       produced per OQ6, one per extractor, plus one SchemaStore excerpt
       per schema and the three Tier C files.
-- [ ] Tests: table scanner (escaped pipes, alignment rows, trailing
+- [x] Tests: table scanner (escaped pipes, alignment rows, trailing
       whitespace, nested backticks, table ending at a heading versus a
       blank line); every extractor against its snippet with the exact
       expected set; negatives for missing anchor, wrong headers, and
