@@ -1,0 +1,5 @@
+no drift: only informational sections changed
+
+informational:
+  ~ meta: claude_code_latest: 2.1.270 -> 2.1.271
+  + schemastore.plugin_manifest.hook_events: Notification

@@ -1,0 +1,105 @@
+{
+  "changes": [
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool0"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool1"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool10"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool11"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool12"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool13"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool14"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool15"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool16"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool17"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool18"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool19"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool2"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool3"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool4"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool5"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool6"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool7"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool8"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Tool9"
+    }
+  ],
+  "informational": []
+}

@@ -195,7 +195,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       `digest.disagreements` (informational per DESIGN OQ9).
 - [x] `lock.go`: `sources.lock.json` with `url`, `sha256`,
       `last_modified`, `version_marker` per source. No timestamps.
-- [ ] `diff.go`: structural diff per DESIGN §5 (`Change{Path, Kind,
+- [x] `diff.go`: structural diff per DESIGN §5 (`Change{Path, Kind,
       Item, Old, New}`), with `meta.*`, `schemastore.*`, and
       `disagreements` partitioned into an informational block that never
       affects the exit code; renderers for `text`, `json`, and

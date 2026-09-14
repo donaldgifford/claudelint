@@ -1,0 +1,1 @@
+no drift (docs.hooks, docs.tools changed without affecting the digest)
