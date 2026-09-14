@@ -373,7 +373,7 @@ version per OQ3).
 - [x] Verify the remaining rows come out equal with no acknowledgement:
       model aliases, the four agent enum sets, hook types, MCP
       transports, timeout defaults by type.
-- [ ] Fixtures: a hooks file using the three new events; an agent and a
+- [x] Fixtures: a hooks file using the three new events; an agent and a
       skill declaring newly documented tools (`EnterPlanMode`,
       `SendMessage`, `TaskCreate`) in `tools` / `allowed-tools`; the
       archive-and-command marketplace; a marketplace named
