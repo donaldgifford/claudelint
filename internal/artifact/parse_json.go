@@ -105,12 +105,12 @@ func ParsePlugin(path string, src []byte) (*Plugin, *ParseError) {
 	}
 
 	p := &Plugin{Base: base}
-	p.Name, p.NameRange = stringField(src, &base, "name")
-	p.Version, p.VersionRange = stringField(src, &base, "version")
-	p.Description, _ = stringField(src, &base, "description")
-	p.Commands = stringArrayField(src, "commands")
-	p.Skills = stringArrayField(src, "skills")
-	p.Agents = stringArrayField(src, "agents")
+	p.Name, p.NameRange = stringField(src, &base, keyName)
+	p.Version, p.VersionRange = stringField(src, &base, keyVersion)
+	p.Description, _ = stringField(src, &base, keyDescription)
+	p.Commands = stringArrayField(src, keyCommands)
+	p.Skills = stringArrayField(src, keySkills)
+	p.Agents = stringArrayField(src, keyAgents)
 	return p, nil
 }
 
@@ -124,7 +124,7 @@ func ParsePlugin(path string, src []byte) (*Plugin, *ParseError) {
 // absent. Callers decide whether absence is an error (dedicated hook
 // files) or acceptable (settings files that carry no hooks).
 func collectHooks(src []byte, base *Base, h *Hook) (missing bool, err error) {
-	hooksRaw, dt, _, gerr := jsonparser.Get(src, "hooks")
+	hooksRaw, dt, _, gerr := jsonparser.Get(src, keyHooks)
 	if gerr != nil {
 		if errors.Is(gerr, jsonparser.KeyPathNotFoundError) {
 			return true, nil
@@ -163,16 +163,16 @@ func collectMatcherGroup(group []byte, base *Base, event string, h *Hook) {
 			Event:   event,
 			Matcher: matcher,
 		}
-		entry.Type, entry.TypeRange = stringField(item, base, "type")
-		entry.Command, entry.CommandRange = stringField(item, base, "command")
-		entry.URL, entry.URLRange = stringField(item, base, "url")
-		entry.Server, _ = stringField(item, base, "server")
-		entry.Tool, _ = stringField(item, base, "tool")
-		entry.Prompt, _ = stringField(item, base, "prompt")
-		entry.Shell, _ = stringField(item, base, "shell")
-		entry.ExecForm = arrayPresent(item, "args")
-		entry.Async = boolField(item, "async")
-		entry.Timeout, entry.TimeoutRange = intField(item, base, "timeout")
+		entry.Type, entry.TypeRange = stringField(item, base, keyType)
+		entry.Command, entry.CommandRange = stringField(item, base, keyCommand)
+		entry.URL, entry.URLRange = stringField(item, base, keyURL)
+		entry.Server, _ = stringField(item, base, keyServer)
+		entry.Tool, _ = stringField(item, base, keyTool)
+		entry.Prompt, _ = stringField(item, base, keyPrompt)
+		entry.Shell, _ = stringField(item, base, keyShell)
+		entry.ExecForm = arrayPresent(item, keyArgs)
+		entry.Async = boolField(item, keyAsync)
+		entry.Timeout, entry.TimeoutRange = intField(item, base, keyTimeout)
 		h.Entries = append(h.Entries, entry)
 	}, "hooks")
 	if aerr != nil && !errors.Is(aerr, jsonparser.KeyPathNotFoundError) {

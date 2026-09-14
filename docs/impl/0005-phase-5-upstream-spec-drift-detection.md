@@ -300,7 +300,7 @@ version per OQ3).
 
 #### Tasks
 
-- [ ] `internal/artifact`: export `SkillFrontmatterKeys`,
+- [x] `internal/artifact`: export `SkillFrontmatterKeys`,
       `CommandFrontmatterKeys`, `AgentFrontmatterKeys`,
       `PluginManifestKeys`, and `HookEntryKeys` as sorted string slices;
       `ParseSkill`, `ParseCommand`, `ParseAgent`, `ParsePlugin`, and
