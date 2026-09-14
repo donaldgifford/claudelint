@@ -1,0 +1,1327 @@
+{
+  "$id": "https://json.schemastore.org/claude-code-marketplace.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "allowCrossMarketplaceDependenciesOn": {
+      "items": {
+        "type": {}
+      },
+      "type": "array"
+    },
+    "description": {
+      "type": "string"
+    },
+    "forceRemoveDeletedPlugins": {
+      "type": "boolean"
+    },
+    "metadata": {
+      "properties": {
+        "description": {},
+        "pluginRoot": {},
+        "version": {}
+      },
+      "type": "object"
+    },
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "owner": {
+      "properties": {
+        "email": {},
+        "name": {},
+        "url": {}
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "plugins": {
+      "items": {
+        "properties": {
+          "$schema": {
+            "type": {}
+          },
+          "agents": {
+            "anyOf": {}
+          },
+          "author": {
+            "properties": {},
+            "required": {},
+            "type": {}
+          },
+          "category": {
+            "type": {}
+          },
+          "channels": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "displayName": {
+                  "type": {}
+                },
+                "server": {
+                  "minLength": {},
+                  "type": {}
+                },
+                "userConfig": {
+                  "additionalProperties": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "default": {
+                        "anyOf": {}
+                      },
+                      "description": {
+                        "type": {}
+                      },
+                      "max": {
+                        "type": {}
+                      },
+                      "min": {
+                        "type": {}
+                      },
+                      "multiple": {
+                        "type": {}
+                      },
+                      "required": {
+                        "type": {}
+                      },
+                      "sensitive": {
+                        "type": {}
+                      },
+                      "title": {
+                        "type": {}
+                      },
+                      "type": {
+                        "enum": [
+                          "string",
+                          "number",
+                          "boolean",
+                          "directory",
+                          "file"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "title",
+                      "description"
+                    ],
+                    "type": "object"
+                  },
+                  "propertyNames": {
+                    "type": {}
+                  },
+                  "type": "object"
+                }
+              },
+              "required": [
+                "server"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "commands": {
+            "anyOf": {}
+          },
+          "dependencies": {
+            "items": {},
+            "type": {}
+          },
+          "description": {
+            "type": {}
+          },
+          "homepage": {
+            "format": {},
+            "type": {}
+          },
+          "hooks": {
+            "anyOf": [
+              {
+                "allOf": {},
+                "type": {}
+              },
+              {
+                "additionalProperties": {
+                  "items": {
+                    "properties": {
+                      "hooks": {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "properties": {
+                                "async": {
+                                  "type": {}
+                                },
+                                "asyncRewake": {
+                                  "type": {}
+                                },
+                                "command": {
+                                  "type": {}
+                                },
+                                "if": {
+                                  "type": {}
+                                },
+                                "once": {
+                                  "type": {}
+                                },
+                                "shell": {
+                                  "enum": [
+                                    "bash",
+                                    "powershell"
+                                  ],
+                                  "type": "string"
+                                },
+                                "statusMessage": {
+                                  "type": {}
+                                },
+                                "timeout": {
+                                  "exclusiveMinimum": {},
+                                  "type": {}
+                                },
+                                "type": {
+                                  "const": "command",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "command"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "if": {
+                                  "type": {}
+                                },
+                                "model": {
+                                  "type": {}
+                                },
+                                "once": {
+                                  "type": {}
+                                },
+                                "prompt": {
+                                  "type": {}
+                                },
+                                "statusMessage": {
+                                  "type": {}
+                                },
+                                "timeout": {
+                                  "exclusiveMinimum": {},
+                                  "type": {}
+                                },
+                                "type": {
+                                  "const": "prompt",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "prompt"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "if": {
+                                  "type": {}
+                                },
+                                "model": {
+                                  "type": {}
+                                },
+                                "once": {
+                                  "type": {}
+                                },
+                                "prompt": {
+                                  "type": {}
+                                },
+                                "statusMessage": {
+                                  "type": {}
+                                },
+                                "timeout": {
+                                  "exclusiveMinimum": {},
+                                  "type": {}
+                                },
+                                "type": {
+                                  "const": "agent",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "prompt"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "allowedEnvVars": {
+                                  "items": {},
+                                  "type": {}
+                                },
+                                "headers": {
+                                  "additionalProperties": {},
+                                  "propertyNames": {},
+                                  "type": {}
+                                },
+                                "if": {
+                                  "type": {}
+                                },
+                                "once": {
+                                  "type": {}
+                                },
+                                "statusMessage": {
+                                  "type": {}
+                                },
+                                "timeout": {
+                                  "exclusiveMinimum": {},
+                                  "type": {}
+                                },
+                                "type": {
+                                  "const": "http",
+                                  "type": "string"
+                                },
+                                "url": {
+                                  "format": {},
+                                  "type": {}
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "url"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "if": {
+                                  "type": {}
+                                },
+                                "input": {
+                                  "additionalProperties": {},
+                                  "propertyNames": {},
+                                  "type": {}
+                                },
+                                "once": {
+                                  "type": {}
+                                },
+                                "server": {
+                                  "type": {}
+                                },
+                                "statusMessage": {
+                                  "type": {}
+                                },
+                                "timeout": {
+                                  "exclusiveMinimum": {},
+                                  "type": {}
+                                },
+                                "tool": {
+                                  "type": {}
+                                },
+                                "type": {
+                                  "const": "mcp_tool",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "server",
+                                "tool"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      "matcher": {
+                        "type": {}
+                      }
+                    },
+                    "required": [
+                      "hooks"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "propertyNames": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "PreToolUse",
+                        "PostToolUse",
+                        "PostToolUseFailure",
+                        "PostToolBatch",
+                        "Notification",
+                        "UserPromptSubmit",
+                        "UserPromptExpansion",
+                        "SessionStart",
+                        "SessionEnd",
+                        "Stop",
+                        "StopFailure",
+                        "SubagentStart",
+                        "SubagentStop",
+                        "PreCompact",
+                        "PostCompact",
+                        "PermissionRequest",
+                        "PermissionDenied",
+                        "Setup",
+                        "TeammateIdle",
+                        "TaskCreated",
+                        "TaskCompleted",
+                        "Elicitation",
+                        "ElicitationResult",
+                        "ConfigChange",
+                        "WorktreeCreate",
+                        "WorktreeRemove",
+                        "InstructionsLoaded",
+                        "CwdChanged",
+                        "FileChanged"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "not": {}
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "allOf": {},
+                      "type": {}
+                    },
+                    {
+                      "additionalProperties": {
+                        "items": {
+                          "properties": {
+                            "hooks": {
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "properties": {
+                                      "async": {
+                                        "type": {}
+                                      },
+                                      "asyncRewake": {
+                                        "type": {}
+                                      },
+                                      "command": {
+                                        "type": {}
+                                      },
+                                      "if": {
+                                        "type": {}
+                                      },
+                                      "once": {
+                                        "type": {}
+                                      },
+                                      "shell": {
+                                        "enum": [
+                                          "bash",
+                                          "powershell"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "statusMessage": {
+                                        "type": {}
+                                      },
+                                      "timeout": {
+                                        "exclusiveMinimum": {},
+                                        "type": {}
+                                      },
+                                      "type": {
+                                        "const": "command",
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "command"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  {
+                                    "properties": {
+                                      "if": {
+                                        "type": {}
+                                      },
+                                      "model": {
+                                        "type": {}
+                                      },
+                                      "once": {
+                                        "type": {}
+                                      },
+                                      "prompt": {
+                                        "type": {}
+                                      },
+                                      "statusMessage": {
+                                        "type": {}
+                                      },
+                                      "timeout": {
+                                        "exclusiveMinimum": {},
+                                        "type": {}
+                                      },
+                                      "type": {
+                                        "const": "prompt",
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "prompt"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  {
+                                    "properties": {
+                                      "if": {
+                                        "type": {}
+                                      },
+                                      "model": {
+                                        "type": {}
+                                      },
+                                      "once": {
+                                        "type": {}
+                                      },
+                                      "prompt": {
+                                        "type": {}
+                                      },
+                                      "statusMessage": {
+                                        "type": {}
+                                      },
+                                      "timeout": {
+                                        "exclusiveMinimum": {},
+                                        "type": {}
+                                      },
+                                      "type": {
+                                        "const": "agent",
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "prompt"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  {
+                                    "properties": {
+                                      "allowedEnvVars": {
+                                        "items": {},
+                                        "type": {}
+                                      },
+                                      "headers": {
+                                        "additionalProperties": {},
+                                        "propertyNames": {},
+                                        "type": {}
+                                      },
+                                      "if": {
+                                        "type": {}
+                                      },
+                                      "once": {
+                                        "type": {}
+                                      },
+                                      "statusMessage": {
+                                        "type": {}
+                                      },
+                                      "timeout": {
+                                        "exclusiveMinimum": {},
+                                        "type": {}
+                                      },
+                                      "type": {
+                                        "const": "http",
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "format": {},
+                                        "type": {}
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "url"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  {
+                                    "properties": {
+                                      "if": {
+                                        "type": {}
+                                      },
+                                      "input": {
+                                        "additionalProperties": {},
+                                        "propertyNames": {},
+                                        "type": {}
+                                      },
+                                      "once": {
+                                        "type": {}
+                                      },
+                                      "server": {
+                                        "type": {}
+                                      },
+                                      "statusMessage": {
+                                        "type": {}
+                                      },
+                                      "timeout": {
+                                        "exclusiveMinimum": {},
+                                        "type": {}
+                                      },
+                                      "tool": {
+                                        "type": {}
+                                      },
+                                      "type": {
+                                        "const": "mcp_tool",
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "server",
+                                      "tool"
+                                    ],
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              "type": "array"
+                            },
+                            "matcher": {
+                              "type": {}
+                            }
+                          },
+                          "required": [
+                            "hooks"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "propertyNames": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "PreToolUse",
+                              "PostToolUse",
+                              "PostToolUseFailure",
+                              "PostToolBatch",
+                              "Notification",
+                              "UserPromptSubmit",
+                              "UserPromptExpansion",
+                              "SessionStart",
+                              "SessionEnd",
+                              "Stop",
+                              "StopFailure",
+                              "SubagentStart",
+                              "SubagentStop",
+                              "PreCompact",
+                              "PostCompact",
+                              "PermissionRequest",
+                              "PermissionDenied",
+                              "Setup",
+                              "TeammateIdle",
+                              "TaskCreated",
+                              "TaskCompleted",
+                              "Elicitation",
+                              "ElicitationResult",
+                              "ConfigChange",
+                              "WorktreeCreate",
+                              "WorktreeRemove",
+                              "InstructionsLoaded",
+                              "CwdChanged",
+                              "FileChanged"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "not": {}
+                          }
+                        ]
+                      },
+                      "type": "object"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "keywords": {
+            "items": {},
+            "type": {}
+          },
+          "license": {
+            "type": {}
+          },
+          "lspServers": {
+            "anyOf": [
+              {
+                "allOf": {},
+                "type": {}
+              },
+              {
+                "additionalProperties": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "args": {
+                      "items": {},
+                      "type": {}
+                    },
+                    "command": {
+                      "minLength": {},
+                      "type": {}
+                    },
+                    "env": {
+                      "additionalProperties": {},
+                      "propertyNames": {},
+                      "type": {}
+                    },
+                    "extensionToLanguage": {
+                      "additionalProperties": {},
+                      "propertyNames": {},
+                      "type": {}
+                    },
+                    "initializationOptions": {},
+                    "maxRestarts": {
+                      "maximum": {},
+                      "minimum": {},
+                      "type": {}
+                    },
+                    "restartOnCrash": {
+                      "type": {}
+                    },
+                    "settings": {},
+                    "shutdownTimeout": {
+                      "exclusiveMinimum": {},
+                      "maximum": {},
+                      "type": {}
+                    },
+                    "startupTimeout": {
+                      "exclusiveMinimum": {},
+                      "maximum": {},
+                      "type": {}
+                    },
+                    "transport": {
+                      "enum": [
+                        "stdio",
+                        "socket"
+                      ],
+                      "type": "string"
+                    },
+                    "workspaceFolder": {
+                      "type": {}
+                    }
+                  },
+                  "required": [
+                    "command",
+                    "extensionToLanguage"
+                  ],
+                  "type": "object"
+                },
+                "propertyNames": {
+                  "type": {}
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "allOf": {},
+                      "type": {}
+                    },
+                    {
+                      "additionalProperties": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "args": {
+                            "items": {},
+                            "type": {}
+                          },
+                          "command": {
+                            "minLength": {},
+                            "type": {}
+                          },
+                          "env": {
+                            "additionalProperties": {},
+                            "propertyNames": {},
+                            "type": {}
+                          },
+                          "extensionToLanguage": {
+                            "additionalProperties": {},
+                            "propertyNames": {},
+                            "type": {}
+                          },
+                          "initializationOptions": {},
+                          "maxRestarts": {
+                            "maximum": {},
+                            "minimum": {},
+                            "type": {}
+                          },
+                          "restartOnCrash": {
+                            "type": {}
+                          },
+                          "settings": {},
+                          "shutdownTimeout": {
+                            "exclusiveMinimum": {},
+                            "maximum": {},
+                            "type": {}
+                          },
+                          "startupTimeout": {
+                            "exclusiveMinimum": {},
+                            "maximum": {},
+                            "type": {}
+                          },
+                          "transport": {
+                            "enum": [
+                              "stdio",
+                              "socket"
+                            ],
+                            "type": "string"
+                          },
+                          "workspaceFolder": {
+                            "type": {}
+                          }
+                        },
+                        "required": [
+                          "command",
+                          "extensionToLanguage"
+                        ],
+                        "type": "object"
+                      },
+                      "propertyNames": {
+                        "type": {}
+                      },
+                      "type": "object"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "mcpServers": {
+            "anyOf": [
+              {
+                "allOf": {},
+                "type": {}
+              },
+              {
+                "anyOf": {}
+              },
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "args": {
+                          "items": {},
+                          "type": {}
+                        },
+                        "command": {
+                          "minLength": {},
+                          "type": {}
+                        },
+                        "env": {
+                          "additionalProperties": {},
+                          "propertyNames": {},
+                          "type": {}
+                        },
+                        "type": {
+                          "const": "stdio",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "command"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "headers": {
+                          "additionalProperties": {},
+                          "propertyNames": {},
+                          "type": {}
+                        },
+                        "headersHelper": {
+                          "type": {}
+                        },
+                        "oauth": {
+                          "properties": {},
+                          "type": {}
+                        },
+                        "type": {
+                          "const": "sse",
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": {}
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "url"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "headers": {
+                          "additionalProperties": {},
+                          "propertyNames": {},
+                          "type": {}
+                        },
+                        "headersHelper": {
+                          "type": {}
+                        },
+                        "oauth": {
+                          "properties": {},
+                          "type": {}
+                        },
+                        "type": {
+                          "const": "http",
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": {}
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "url"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "headers": {
+                          "additionalProperties": {},
+                          "propertyNames": {},
+                          "type": {}
+                        },
+                        "headersHelper": {
+                          "type": {}
+                        },
+                        "type": {
+                          "const": "ws",
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": {}
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "url"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                "propertyNames": {
+                  "type": {}
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "allOf": {},
+                      "type": {}
+                    },
+                    {
+                      "anyOf": {}
+                    },
+                    {
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "args": {
+                                "items": {},
+                                "type": {}
+                              },
+                              "command": {
+                                "minLength": {},
+                                "type": {}
+                              },
+                              "env": {
+                                "additionalProperties": {},
+                                "propertyNames": {},
+                                "type": {}
+                              },
+                              "type": {
+                                "const": "stdio",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "command"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "headers": {
+                                "additionalProperties": {},
+                                "propertyNames": {},
+                                "type": {}
+                              },
+                              "headersHelper": {
+                                "type": {}
+                              },
+                              "oauth": {
+                                "properties": {},
+                                "type": {}
+                              },
+                              "type": {
+                                "const": "sse",
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": {}
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "url"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "headers": {
+                                "additionalProperties": {},
+                                "propertyNames": {},
+                                "type": {}
+                              },
+                              "headersHelper": {
+                                "type": {}
+                              },
+                              "oauth": {
+                                "properties": {},
+                                "type": {}
+                              },
+                              "type": {
+                                "const": "http",
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": {}
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "url"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "headers": {
+                                "additionalProperties": {},
+                                "propertyNames": {},
+                                "type": {}
+                              },
+                              "headersHelper": {
+                                "type": {}
+                              },
+                              "type": {
+                                "const": "ws",
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": {}
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "url"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      "propertyNames": {
+                        "type": {}
+                      },
+                      "type": "object"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "monitors": {
+            "anyOf": [
+              {
+                "allOf": {},
+                "type": {}
+              },
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "command": {
+                      "minLength": {},
+                      "type": {}
+                    },
+                    "description": {
+                      "minLength": {},
+                      "type": {}
+                    },
+                    "name": {
+                      "minLength": {},
+                      "type": {}
+                    },
+                    "when": {
+                      "anyOf": [
+                        {
+                          "const": "always",
+                          "type": "string"
+                        },
+                        {
+                          "pattern": {},
+                          "type": {}
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "command",
+                    "description"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "name": {
+            "minLength": {},
+            "type": {}
+          },
+          "outputStyles": {
+            "anyOf": {}
+          },
+          "repository": {
+            "type": {}
+          },
+          "settings": {
+            "additionalProperties": {},
+            "propertyNames": {},
+            "type": {}
+          },
+          "skills": {
+            "anyOf": {}
+          },
+          "source": {
+            "anyOf": [
+              {
+                "pattern": {},
+                "type": {}
+              },
+              {
+                "properties": {
+                  "package": {
+                    "anyOf": {}
+                  },
+                  "registry": {
+                    "format": {},
+                    "type": {}
+                  },
+                  "source": {
+                    "const": "npm",
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": {}
+                  }
+                },
+                "required": [
+                  "source",
+                  "package"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ref": {
+                    "type": {}
+                  },
+                  "sha": {
+                    "maxLength": {},
+                    "minLength": {},
+                    "pattern": {},
+                    "type": {}
+                  },
+                  "source": {
+                    "const": "url",
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": {}
+                  }
+                },
+                "required": [
+                  "source",
+                  "url"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ref": {
+                    "type": {}
+                  },
+                  "repo": {
+                    "type": {}
+                  },
+                  "sha": {
+                    "maxLength": {},
+                    "minLength": {},
+                    "pattern": {},
+                    "type": {}
+                  },
+                  "source": {
+                    "const": "github",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "source",
+                  "repo"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "path": {
+                    "minLength": {},
+                    "type": {}
+                  },
+                  "ref": {
+                    "type": {}
+                  },
+                  "sha": {
+                    "maxLength": {},
+                    "minLength": {},
+                    "pattern": {},
+                    "type": {}
+                  },
+                  "source": {
+                    "const": "git-subdir",
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": {}
+                  }
+                },
+                "required": [
+                  "source",
+                  "url",
+                  "path"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "strict": {
+            "type": {}
+          },
+          "tags": {
+            "items": {},
+            "type": {}
+          },
+          "themes": {
+            "anyOf": {}
+          },
+          "userConfig": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "default": {
+                  "anyOf": {}
+                },
+                "description": {
+                  "type": {}
+                },
+                "max": {
+                  "type": {}
+                },
+                "min": {
+                  "type": {}
+                },
+                "multiple": {
+                  "type": {}
+                },
+                "required": {
+                  "type": {}
+                },
+                "sensitive": {
+                  "type": {}
+                },
+                "title": {
+                  "type": {}
+                },
+                "type": {
+                  "enum": [
+                    "string",
+                    "number",
+                    "boolean",
+                    "directory",
+                    "file"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "title",
+                "description"
+              ],
+              "type": "object"
+            },
+            "propertyNames": {
+              "pattern": {},
+              "type": {}
+            },
+            "type": "object"
+          },
+          "version": {
+            "type": {}
+          }
+        },
+        "required": [
+          "name",
+          "source"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "owner",
+    "plugins"
+  ],
+  "type": "object"
+}

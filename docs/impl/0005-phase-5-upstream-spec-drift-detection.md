@@ -132,60 +132,60 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       (`url`, `status`, `sha256`, `etag`, `last_modified`, `bytes`) into
       the work directory. Any Tier A–D source failing after retries is a
       hard error (exit 2).
-- [ ] `internal/upstream/table.go`: line-oriented GFM table scanner
+- [x] `internal/upstream/table.go`: line-oriented GFM table scanner
       (header row, delimiter row, body rows split on unescaped `|`,
       backticks stripped from the first cell) and section scoping: from
       an anchor heading to the next heading of equal or higher level. No
       Markdown dependency added.
-- [ ] `internal/upstream/digest.go`: the `Digest`, `Field`, and section
+- [x] `internal/upstream/digest.go`: the `Digest`, `Field`, and section
       types from DESIGN "Data Model"; a `Marshal` that emits sorted keys,
       sorted arrays, two-space indent, LF, trailing newline;
       `digest_version` pinned at 1.
-- [ ] Extractors, one file per source, each declaring source id, anchor
+- [x] Extractors, one file per source, each declaring source id, anchor
       regex, columns, sanity floor (per OQ8), and implementing the
       `Extractor` interface with hard failure on a missing anchor,
       unexpected headers, or an under-floor row count (DESIGN OQ11):
-  - [ ] `extract_skills.go` — `skills.frontmatter` (`### Frontmatter
+  - [x] `extract_skills.go` — `skills.frontmatter` (`### Frontmatter
         reference`), `skills.portable_fields` (`#### Using skill
         frontmatter outside Claude Code`), `skills.substitutions`
         (`#### Available string substitutions`).
-  - [ ] `extract_agents.go` — `agents.frontmatter` (first table under
+  - [x] `extract_agents.go` — `agents.frontmatter` (first table under
         `### Write subagent files` whose first row is `name`) and
         `agents.enums` from the backticked tokens in the `model`,
         `permissionMode`, `effort`, `memory`, `isolation`, and `color`
         description cells.
-  - [ ] `extract_plugins.go` — `plugins.manifest_fields` (the three
+  - [x] `extract_plugins.go` — `plugins.manifest_fields` (the three
         tables under `## Plugin manifest schema`), `plugins.locations`
         (`### File locations reference`), `plugins.substitution_fields`
         (`### Environment variables`).
-  - [ ] `extract_marketplaces.go` — `marketplace.fields`,
+  - [x] `extract_marketplaces.go` — `marketplace.fields`,
         `marketplace.owner_fields`, `marketplace.plugin_entry_fields`,
         `marketplace.sources` (one table per `###` under `## Plugin
         sources`; `archive` and `command` included), and
         `marketplace.reserved_names` from the `**Reserved names**`
         paragraph.
-  - [ ] `extract_hooks.go` — `hooks.events` (every `###` under `## Hook
+  - [x] `extract_hooks.go` — `hooks.events` (every `###` under `## Hook
         events`), `hooks.types`, `hooks.handler_fields` (per-type tables
         under `### Hook handler fields`), `hooks.timeout_defaults`
         (numbers parsed from the `timeout` row: by type and by event
         override).
-  - [ ] `extract_mcp.go` — `mcp.transports` from the `mcp.md` `type`
+  - [x] `extract_mcp.go` — `mcp.transports` from the `mcp.md` `type`
         enumeration; `mcp.server_fields` from the SchemaStore
         plugin-manifest `mcpServers` definition (DESIGN OQ5),
         cross-checked against the `plugins-reference.md` MCP section.
-  - [ ] `extract_tools.go` — `tools.builtin` from the first table after
+  - [x] `extract_tools.go` — `tools.builtin` from the first table after
         the `tools-reference.md` H1; each row also carries
         `deprecated: true` when its description cell begins with
         "Deprecated" (the docs' own signal, consumed by the Phase 2
         `DeprecatedTools` guardrail row).
-  - [ ] `extract_schemastore.go` — `properties` keys and the hook-event,
+  - [x] `extract_schemastore.go` — `properties` keys and the hook-event,
         hook-type, MCP-type, source-kind, and `defaultMode` enums from
         the three schemas via a small JSON-pointer walk.
-  - [ ] `extract_portable.go` — `portable.*` from the agentskills spec
+  - [x] `extract_portable.go` — `portable.*` from the agentskills spec
         table, the `MAX_*` constants and `ALLOWED_FIELDS` in
         `validator.py`, and the allowlist, name regex, and description
         constraints in `quick_validate.py`.
-  - [ ] `extract_changelog.go` — `meta.claude_code_latest` from the first
+  - [x] `extract_changelog.go` — `meta.claude_code_latest` from the first
         `## X.Y.Z` heading; `meta.docs_max_marker` as the highest
         `v2.N.N` marker across the docs pages (also written per page
         into the lock as `version_marker`).
@@ -208,7 +208,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       artifact upload; `check --update` rewrites the committed digest and
       lock; exit codes 0 / 1 / 2. `cmd/specdrift/main.go` only calls it,
       mirroring `cmd/claudelint`.
-- [ ] Golden snippet fixtures under `internal/upstream/testdata/snippets/`
+- [x] Golden snippet fixtures under `internal/upstream/testdata/snippets/`
       produced per OQ6, one per extractor, plus one SchemaStore excerpt
       per schema and the three Tier C files.
 - [ ] Tests: table scanner (escaped pipes, alignment rows, trailing
