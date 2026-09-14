@@ -550,6 +550,8 @@ it with the constants rules actually use. It is the upstream analogue of
 | `agents.frontmatter[].name` | `artifact.AgentFrontmatterKeys` (new export) | every documented key is parsed or acknowledged |
 | `skills.frontmatter[].name` | `artifact.SkillFrontmatterKeys`, `CommandFrontmatterKeys` (new exports) | same |
 | `plugins.manifest_fields[].name` | `artifact.PluginManifestKeys` (new export) | same |
+| `hooks.handler_fields[].name` | `artifact.HookEntryKeys` (new export) | same |
+| `tools.builtin` | `artifact.DeprecatedTools` | every `removed` or `renamed` entry absent, every `deprecated` entry present |
 | `marketplace.sources` keys | `artifact.SourceKind` values | every documented kind has a `SourceKind` |
 | `marketplace.reserved_names` | the list in `internal/rules/marketplace/reservedname.go` | equal sets |
 | `mcp.transports` | the set used by `mcp/transport-known` | equal sets |
@@ -579,9 +581,23 @@ digest path, the delta, and the two ways to resolve it (update the code,
 or acknowledge with a reason).
 
 Exporting the parser key lists is a small refactor: `ParseSkill`,
-`ParseCommand`, `ParseAgent`, and `ParsePlugin` read keys through the
-exported slice instead of string literals, so the list cannot drift from
-the parser. No behaviour change.
+`ParseCommand`, `ParseAgent`, `ParsePlugin`, and `ParseHook` read keys
+through the exported slice instead of string literals, so the list
+cannot drift from the parser. No behaviour change.
+
+Two rows were added while implementing IMPL-0005 Phase 2.
+
+`hooks.handler_fields` was the one documented table with no Go
+counterpart, so the hook parser's key set became `artifact.HookEntryKeys`
+alongside the other four.
+
+`artifact.DeprecatedTools` is the second row keyed on `tools.builtin`,
+and it reads the relation backwards on purpose. A tool leaving the
+documented list is normally drift to fix; for a tool the table already
+records as removed or renamed, absence is the expected state and
+*presence* is the failure. That is what keeps the deprecated-tools table
+from outliving the facts it records: once upstream restores a name, or
+once a `deprecated` entry finally disappears, the guardrail says so.
 
 ### 8. Runtime validator job
 

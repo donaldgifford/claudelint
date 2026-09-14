@@ -26,6 +26,7 @@ created: 2026-09-13
   - [Phase 2 — Guardrail and catch-up](#phase-2--guardrail-and-catch-up)
     - [Tasks](#tasks-1)
     - [Success Criteria](#success-criteria-1)
+    - [Dogfood results (2026-09-14)](#dogfood-results-2026-09-14)
   - [Phase 3 — Runtime validator and rendered page](#phase-3--runtime-validator-and-rendered-page)
     - [Tasks](#tasks-2)
     - [Success Criteria](#success-criteria-2)
@@ -384,10 +385,10 @@ version per OQ3).
       rows updated. The fingerprint should not move (no rule ids,
       severities, options, or `AppliesTo` change); if it does, ack it
       deliberately.
-- [ ] `just spec-sync` on the branch so the digest and lock reflect
+- [x] `just spec-sync` on the branch so the digest and lock reflect
       upstream on the day the fixes land; guardrail green with every
       acknowledgement reasoned.
-- [ ] Dogfood: `just self-check` and a `donaldgifford/claude-skills`
+- [x] Dogfood: `just self-check` and a `donaldgifford/claude-skills`
       checkout (`cd` into it first — config discovery walks up from
       CWD); triage every new or removed diagnostic. Expect the
       `agents/tools-known` and `commands/allowed-tools-known` warning
@@ -412,6 +413,40 @@ version per OQ3).
 - `claudelint version` shows the bumped ruleset; `just ci` green; minor
   release ships via the label flow.
 - Dogfood clean or fully triaged.
+
+#### Dogfood results (2026-09-14)
+
+`just self-check` on this repo: 0 diagnostics over 3 files, unchanged.
+
+`donaldgifford/claude-skills` at `32d17b4`, 158 files, before and after
+this branch:
+
+| Rule | Severity | Before | After |
+| --- | --- | --- | --- |
+| `agents/name-format` | warning | 7 | 7 |
+| `commands/allowed-tools-known` | error | 0 | 4 |
+
+The expected drop in tools-known findings did not happen because there
+was nothing to drop: claude-skills declared none of the 31
+newly-documented tools, so the catch-up removed no false positives
+there. It added four true positives instead — four
+`infrastructure-as-code` commands declare `Task`, which the tools
+reference dropped when it was renamed to `Agent` in v2.1.63.
+
+Worth knowing before this ships: the runtime still accepts `Task`, so
+those four commands work today, and `commands/allowed-tools-known` is an
+error rule. A repository that is clean on ruleset v1.5.0 and declares
+`Task` will fail on v1.6.0. That is the intended reading of OQ2 — the
+rename is real and silent — but it is a breaking change for a name that
+still functions, and it is the reason this phase ships as a minor bump
+with the deprecated-tools table in `rules.md` rather than as a patch.
+Downstream fix is a one-word rename; `severity = "warning"` on the rule
+is the escape hatch for anyone not ready.
+
+Rules cannot lower the severity of an individual diagnostic: the engine
+assigns severity per rule (`runner.go`), so "renamed tool" cannot be a
+warning inside an error rule without an engine change. Not attempted
+here — it would contradict DESIGN-0001 without an amendment.
 
 ---
 
