@@ -25,6 +25,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 - DESIGN-0006 + IMPL-0005 upstream spec drift detection ([#58](https://github.com/donaldgifford/claudelint/issues/58))
 - *(impl)* Mark IMPL-0005 in progress and DESIGN-0006 approved
+- *(impl)* Record PR #59 against the Phase 1 PR task
 
 ### Testing
 
