@@ -292,6 +292,69 @@ func TestDigestSubcommandRunsOffline(t *testing.T) {
 	}
 }
 
+// TestDigestExitsTwoWhenAnAnchorIsGone is the third Phase 1 success
+// criterion: a page that lost the heading an extractor scopes to makes
+// the tool exit 2, name the source and the anchor, and write nothing.
+// Exiting 0 with a digest missing that section would diff as upstream
+// deleting a feature.
+func TestDigestExitsTwoWhenAnAnchorIsGone(t *testing.T) {
+	t.Parallel()
+
+	env := newCheckEnv(t)
+	work := filepath.Join(t.TempDir(), "work")
+	env.Opts.Work = work
+	env.bootstrap(t)
+
+	gutPage(t, filepath.Join(work, "docs.skills.md"), "### Frontmatter reference")
+
+	digest := filepath.Join(t.TempDir(), "digest.json")
+	lock := filepath.Join(t.TempDir(), "sources.lock.json")
+
+	var stderr bytes.Buffer
+	code := upstream.Execute(
+		[]string{"digest", "--in", work, "--out", digest, "--lock", lock},
+		io.Discard, &stderr,
+	)
+
+	if code != upstream.ExitFailure {
+		t.Fatalf("specdrift digest exited %d, want %d", code, upstream.ExitFailure)
+	}
+	for _, want := range []string{"docs.skills", "Frontmatter reference", "anchor"} {
+		if !strings.Contains(stderr.String(), want) {
+			t.Errorf("stderr does not mention %q:\n%s", want, stderr.String())
+		}
+	}
+	if _, err := os.Stat(digest); !os.IsNotExist(err) {
+		t.Errorf("digest was written despite the failure (stat err = %v)", err)
+	}
+}
+
+// gutPage removes a heading line from a fetched page, simulating an
+// upstream edit that renames or drops a section.
+func gutPage(t *testing.T, path, heading string) {
+	t.Helper()
+
+	lines := strings.Split(string(readFile(t, path)), "\n")
+	kept := make([]string, 0, len(lines))
+	found := false
+
+	for _, ln := range lines {
+		if strings.TrimSpace(ln) == heading {
+			found = true
+
+			continue
+		}
+		kept = append(kept, ln)
+	}
+
+	if !found {
+		t.Fatalf("page %s has no heading %q", path, heading)
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(kept, "\n")), 0o600); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
+}
+
 // TestDiffSubcommandExitCodes pins the mapping the workflow depends on,
 // without any network at all.
 func TestDiffSubcommandExitCodes(t *testing.T) {

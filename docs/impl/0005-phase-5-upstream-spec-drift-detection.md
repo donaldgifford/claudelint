@@ -241,19 +241,32 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       `scripts/labels.sh` and create it with that script.
 - [x] `just lint-actions` and `just lint-config` clean on the new
       workflow.
-- [ ] Validate on the branch before merge: a `workflow_dispatch` run
-      against the committed digest reports no drift and creates no
-      issue; a scratch commit that removes `PreModelSwitch` from the
-      committed digest makes the next dispatch open an issue whose body
-      lists `hooks.events added: PreModelSwitch`; reverting the scratch
-      commit makes the following run close it. Delete the scratch issue
+- [ ] **deferred - human required** — Validate on the branch before
+      merge: a `workflow_dispatch` run against the committed digest
+      reports no drift and creates no issue; a scratch commit that
+      removes `PreModelSwitch` from the committed digest makes the next
+      dispatch open an issue whose body lists
+      `hooks.events added: PreModelSwitch`; reverting the scratch commit
+      makes the following run close it. Delete the scratch issue
       afterwards.
-- [ ] CLAUDE.md: add `just spec-check` / `just spec-sync` to Common
+
+      GitHub only offers `workflow_dispatch` for workflows that exist on
+      the default branch, so this sequence cannot run until the PR
+      merges. What can be checked before merge has been: the
+      pull-request trigger exercises the check step against live pages
+      on this PR; `scripts/spec-drift-issue.sh --dry-run` was run
+      against a real clean report (no-op) and a real drift report
+      (creates the issue, body carries the marker and lists
+      `hooks.events added: PreModelSwitch`); `actionlint` and
+      `shellcheck` are clean; and the `spec-drift` label was created
+      with `scripts/labels.sh`. Run the three dispatches immediately
+      after merge.
+- [x] CLAUDE.md: add `just spec-check` / `just spec-sync` to Common
       commands and a "Upstream spec drift" bullet under Git / PR
       conventions describing the workflow, the label, and the rule that
       the digest is regenerated with `just spec-sync` in the same PR as
       any code that catches up.
-- [ ] Coverage: `internal/upstream` clears the 55% floor
+- [x] Coverage: `internal/upstream` clears the 55% floor
       (`just coverage-gate`).
 - [ ] PR opened with the label from OQ1; `just ci` green.
 
