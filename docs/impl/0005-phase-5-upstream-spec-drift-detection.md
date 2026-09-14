@@ -225,21 +225,21 @@ Branch `chore/spec-drift-tool`; label per OQ1.
 - [x] Run `go run ./cmd/specdrift check --update` on the branch and commit
       the first `digest.json` and `sources.lock.json`; run it twice and
       assert a clean `git diff`.
-- [ ] `justfile`: `spec-check` and `spec-sync` under `[group('spec')]`,
+- [x] `justfile`: `spec-check` and `spec-sync` under `[group('spec')]`,
       documented as network recipes; neither joins `ci` or `check`.
-- [ ] `.github/workflows/spec-drift.yml` per DESIGN §6: weekly Monday
+- [x] `.github/workflows/spec-drift.yml` per DESIGN §6: weekly Monday
       06:00 UTC cron, `workflow_dispatch`, `pull_request` on
       `internal/upstream/**`, `cmd/specdrift/**`, and the workflow file;
       `contents: read` at the top, `issues: write` on the job; steps for
       check, artifact upload (90 days), step summary, PR warning, issue
       script, and fail-on-exit-2.
-- [ ] `scripts/spec-drift-issue.sh`: ensure the `spec-drift` label,
+- [x] `scripts/spec-drift-issue.sh`: ensure the `spec-drift` label,
       locate the single open issue, read the `<!-- specdrift:diff-sha256
       -->` marker, and create / comment / close per DESIGN OQ3; a
       `--dry-run` flag prints the `gh` commands instead of running them.
       Add `spec-drift` to `LABEL_COLORS` and `LABEL_DESCRIPTIONS` in
       `scripts/labels.sh` and create it with that script.
-- [ ] `just lint-actions` and `just lint-config` clean on the new
+- [x] `just lint-actions` and `just lint-config` clean on the new
       workflow.
 - [ ] Validate on the branch before merge: a `workflow_dispatch` run
       against the committed digest reports no drift and creates no

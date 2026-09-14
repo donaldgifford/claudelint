@@ -238,6 +238,24 @@ docs-mkdocs-check:
     @uvx --from mkdocs --with mkdocs-techdocs-core mkdocs build --strict -d {{ build_dir }}/mkdocs
     @echo "✓ mkdocs --strict passed (output discarded in {{ build_dir }}/mkdocs)"
 
+# ─── Upstream spec drift ────────────────────────────────────────────
+#
+# These two recipes reach the network. They are deliberately not part of
+# `check` or `ci`: a linter's test suite must not depend on Anthropic's
+# CDN being up. The weekly spec-drift workflow runs `spec-check` for us.
+
+# Check the committed spec digest against live upstream (network; 0/1/2)
+[group('spec')]
+spec-check *ARGS:
+    @go run ./cmd/specdrift check {{ ARGS }}
+
+# Run this in the same PR as any code that catches up to a change, and
+# commit both internal/upstream/digest.json and sources.lock.json.
+# Regenerate the committed spec digest and source lock (network)
+[group('spec')]
+spec-sync:
+    @go run ./cmd/specdrift check --update
+
 # ─── Composite gates ────────────────────────────────────────────────
 
 # Pre-commit gate: lint + test

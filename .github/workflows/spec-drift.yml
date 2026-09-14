@@ -1,0 +1,105 @@
+---
+# $schema=https://www.schemastore.org/github-action.json
+#
+# Upstream spec drift (DESIGN-0006 §6).
+#
+# The only workflow in this repository that reaches the network for
+# anything other than dependencies. It fetches the published Claude Code
+# and Agent Skills sources, extracts a digest, and diffs it against
+# internal/upstream/digest.json.
+#
+# Exit codes from specdrift: 0 no drift, 1 the committed digest is
+# stale, 2 the tool could not decide (a source would not fetch or an
+# anchor moved). Only exit 2 fails the job. Drift is reported through
+# one tracking issue, never by failing a PR.
+name: Upstream Spec Drift
+on:
+  schedule:
+    # Mondays 06:00 UTC, after the 00:00 CodeQL and govulncheck slot.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - internal/upstream/**
+      - cmd/specdrift/**
+      - .github/workflows/spec-drift.yml
+      - scripts/spec-drift-issue.sh
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Check upstream specs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      # set +e so the exit code becomes data rather than a failure: 1 is
+      # a normal outcome that the issue script has to act on.
+      - name: Check upstream
+        id: check
+        run: |
+          set +e
+          go run ./cmd/specdrift check \
+            --work /tmp/upstream \
+            --format markdown \
+            --out /tmp/report.md \
+            --json /tmp/diff.json
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload fetched sources and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upstream-${{ github.run_id }}
+          path: |
+            /tmp/upstream
+            /tmp/report.md
+            /tmp/diff.json
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Step summary
+        if: always()
+        run: |
+          if [ -f /tmp/report.md ]; then
+            cat /tmp/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "specdrift produced no report; see the check step log." \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # A pull-request run exists so extractor changes are exercised
+      # against live pages before merge. It can only warn.
+      - name: Warn on PR
+        if: >-
+          steps.check.outputs.code == '1' &&
+          github.event_name == 'pull_request'
+        run: |
+          echo "::warning title=Upstream spec drift::see the job summary; \
+          run 'just spec-sync' when ready"
+
+      - name: Open, update, or close the tracking issue
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CODE: ${{ steps.check.outputs.code }}
+        run: ./scripts/spec-drift-issue.sh "$CODE" /tmp/report.md /tmp/diff.json
+
+      # A red scheduled run emails the maintainer. The report names the
+      # extractor that broke.
+      - name: Fail on fetch or extract error
+        if: steps.check.outputs.code == '2'
+        run: |
+          echo "::error::specdrift could not decide; see the uploaded report"
+          exit 1

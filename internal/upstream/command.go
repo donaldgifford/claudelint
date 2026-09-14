@@ -205,6 +205,10 @@ type CheckOptions struct {
 	Update bool
 	// Snippets, when set, is where the golden fixtures are written.
 	Snippets string
+	// JSON, when set, is a file the report is also written to as JSON,
+	// whatever Format is. The workflow needs the Markdown report for the
+	// issue body and the JSON for the change marker, from one fetch.
+	JSON string
 	// Fetch tunes the HTTP client. The zero value is the production
 	// configuration.
 	Fetch FetchOptions
@@ -233,6 +237,7 @@ func newCheckCommand() *cobra.Command {
 	f.BoolVar(&opts.Update, "update", false, "rewrite the committed digest and lock instead of reporting")
 	f.StringVar(&opts.Snippets, "write-snippets", "",
 		"also write the golden test fixtures into this directory")
+	f.StringVar(&opts.JSON, "json", "", "also write the report as JSON to this file")
 
 	return cmd
 }
@@ -341,6 +346,16 @@ func Check(ctx context.Context, stdout io.Writer, opts *CheckOptions) error {
 	report, err := checkReport(head, headLock, opts)
 	if err != nil {
 		return err
+	}
+
+	if opts.JSON != "" {
+		raw, err := report.JSON()
+		if err != nil {
+			return err
+		}
+		if err := writeFile(opts.JSON, raw); err != nil {
+			return err
+		}
 	}
 
 	if err := emit(stdout, report, opts.Format, opts.Out); err != nil {
