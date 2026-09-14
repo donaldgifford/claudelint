@@ -193,7 +193,7 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       for hook events, hook types, MCP transports, marketplace source
       kinds, and plugin manifest properties; write them under
       `digest.disagreements` (informational per DESIGN OQ9).
-- [ ] `lock.go`: `sources.lock.json` with `url`, `sha256`,
+- [x] `lock.go`: `sources.lock.json` with `url`, `sha256`,
       `last_modified`, `version_marker` per source. No timestamps.
 - [ ] `diff.go`: structural diff per DESIGN §5 (`Change{Path, Kind,
       Item, Old, New}`), with `meta.*`, `schemastore.*`, and
