@@ -349,7 +349,7 @@ version per OQ3).
       Guardrail row: every `removed` or `renamed` entry must be absent
       from `tools.builtin` and every `deprecated` entry present with the
       `deprecated` flag; a mismatch means the table is stale.
-- [ ] Marketplace sources (drift found while writing this doc): add
+- [x] Marketplace sources (drift found while writing this doc): add
       `SourceArchive` (`{"source": "archive", "url", "sha256"}`) and
       `SourceCommand` (`{"source": "command", "command", "timeout",
       "mode"}`) to `MarketplaceSourceKind` and the parser;
@@ -358,9 +358,9 @@ version per OQ3).
       command sources; `marketplace/external-source-skipped` gains
       kind-aware wording for both; rules.md per-type table extended.
       Fixture `ok/marketplaces/archive_command/`.
-- [ ] `reservedMarketplaceNames`: add `claude-tag-plugins` (17 documented
+- [x] `reservedMarketplaceNames`: add `claude-tag-plugins` (17 documented
       today); update the count in the comment and in rules.md.
-- [ ] Acknowledgements for everything documented that no rule consumes
+- [x] Acknowledgements for everything documented that no rule consumes
       (per OQ4): the ten unparsed skill fields, the nineteen unparsed
       plugin manifest fields, agent `experimental`, the hook handler
       fields outside `HookEntryKeys` (`if`, `statusMessage`, `once`,
@@ -370,7 +370,7 @@ version per OQ3).
       `headersHelper` / `relevance`, and the per-event timeout overrides
       in `hooks.timeout_defaults.by_event`. Each entry carries a reason
       that names the rule or phase that would consume it.
-- [ ] Verify the remaining rows come out equal with no acknowledgement:
+- [x] Verify the remaining rows come out equal with no acknowledgement:
       model aliases, the four agent enum sets, hook types, MCP
       transports, timeout defaults by type.
 - [ ] Fixtures: a hooks file using the three new events; an agent and a

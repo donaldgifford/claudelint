@@ -481,9 +481,9 @@ listed. **Fix**: point the rename at the current entry name, or use
 
 #### `marketplace/reserved-name`
 
-Sixteen marketplace names are reserved for official Anthropic use
+Seventeen marketplace names are reserved for official Anthropic use
 (e.g. `anthropic-plugins`, `claude-code-marketplace`, `agent-skills`,
-`healthcare`). Claude Code re-checks the list on every load, so a
+`claude-tag-plugins`, `healthcare`). Claude Code re-checks the list on every load, so a
 manifest shipping one stops loading for every user. Exact match only —
 impersonation lookalikes (`official-claude-plugins`) are blocked
 server-side by claude.ai, and this rule deliberately does not attempt
@@ -499,16 +499,32 @@ sources (a `./`-relative path, or legacy `github:`/URL shorthands) must be
 non-empty. Object sources must carry their kind's documented required
 fields:
 
-| `source` | Required fields |
-| --- | --- |
-| `github` | `repo` (`owner/repo`) |
-| `url` | `url` |
-| `git-subdir` | `url` and `path` |
-| `npm` | `package` |
+| `source` | Required fields | Optional fields |
+| --- | --- | --- |
+| `github` | `repo` (`owner/repo`) | `ref`, `sha` |
+| `url` | `url` | `ref`, `sha` |
+| `git-subdir` | `url` and `path` | `ref`, `sha` |
+| `npm` | `package` | `version`, `registry` |
+| `archive` | `url` | `sha256` |
+| `command` | `command` | `timeout`, `mode` |
 
 A `sha` pin, when present on a git-backed source, must be a full
-40-character hex commit. Whether a local path exists on disk is out of
-scope for this rule.
+40-character hex commit.
+
+An `archive` URL must use HTTPS. An archive is unsigned code that Claude
+Code unpacks and runs, so a plain-HTTP fetch hands anyone on the network
+path a plugin install. Its optional `sha256` is the only integrity check
+available, so a malformed one is an error rather than a warning: it
+would otherwise read as a pin while pinning nothing. It must be a
+64-character hex digest.
+
+A `command` source's `timeout`, when present, must be a positive
+integer. The parser keeps the declared value as written, because
+manifests in the wild quote a field the documentation spells as a
+number, and a bad value is more useful reported verbatim than silently
+read as zero.
+
+Whether a local path exists on disk is out of scope for this rule.
 
 #### `marketplace/owner-required` and `marketplace/author-legacy`
 
@@ -530,14 +546,19 @@ releases. A version that **is** declared must be valid semver
 
 #### `marketplace/external-source-skipped`
 
-Info notice on every plugin whose source content lives outside the
-marketplace repo: remote string shorthands (`github:owner/repo`, git
-URLs) and the `github` / `url` / `git-subdir` / `npm` object kinds.
-claudelint validates the source's structure (see
+Info notice on every plugin whose source content cannot be checked in
+place: remote string shorthands (`github:owner/repo`, git URLs) and the
+`github`, `url`, `git-subdir`, `npm`, `archive`, and `command` object
+kinds. claudelint validates the source's structure (see
 `marketplace/plugin-source-valid`) but never fetches remote content, so
 those plugins' files are not linted. Local paths are checked in place
 and produce no notice; absent or malformed sources are
 `plugin-source-valid` errors, not skips.
+
+The wording differs by kind because the reasons differ. An `archive` is
+not downloaded or unpacked. A `command` source is not remote at all —
+its content does not exist until the command runs, which a linter will
+not do — so it is reported as generated rather than as remote.
 
 #### `mcp/command-required` and `mcp/url-required`
 

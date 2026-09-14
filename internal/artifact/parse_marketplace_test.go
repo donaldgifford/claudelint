@@ -366,3 +366,69 @@ func TestParseMarketplaceRenamesAndPluginRoot(t *testing.T) {
 		t.Errorf(`Renames["legacy-linter"] = (%q, %v), want ("", true) for null`, got, ok)
 	}
 }
+
+// TestParseMarketplaceArchiveAndCommandSources covers the two source
+// kinds the marketplace reference gained after DESIGN-0002 was written.
+// The quoted-timeout entry is deliberate: manifests in the wild quote a
+// value the docs spell as a number, and the parser keeps the raw text so
+// the rule can report a bad one verbatim.
+func TestParseMarketplaceArchiveAndCommandSources(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/archive_command/.claude-plugin/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+
+	byName := make(map[string]MarketplacePlugin, len(m.Plugins))
+	for _, p := range m.Plugins {
+		byName[p.Name] = p
+	}
+
+	tests := []struct {
+		name string
+		want MarketplaceSource
+	}{
+		{"archive-plugin", MarketplaceSource{
+			Kind:   SourceArchive,
+			URL:    "https://downloads.example.com/archive-plugin-1.4.0.tar.gz",
+			SHA256: "3b1f2c4d5e6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e",
+		}},
+		{"archive-unpinned", MarketplaceSource{
+			Kind: SourceArchive,
+			URL:  "https://downloads.example.com/nightly.zip",
+		}},
+		{"command-plugin", MarketplaceSource{
+			Kind:    SourceCommand,
+			Command: "internal-plugin-resolver --name command-plugin",
+			Timeout: "30000",
+			Mode:    "json",
+		}},
+		{"command-quoted-timeout", MarketplaceSource{
+			Kind:    SourceCommand,
+			Command: "resolve-plugin",
+			Timeout: "5000",
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, ok := byName[tt.name]
+			if !ok {
+				t.Fatalf("plugin %q not parsed", tt.name)
+			}
+			if p.SourceInfo != tt.want {
+				t.Errorf("SourceInfo = %+v, want %+v", p.SourceInfo, tt.want)
+			}
+			if p.Resolved != "" {
+				t.Errorf("Resolved = %q, want empty for a non-local source", p.Resolved)
+			}
+			if p.SourceRange.IsZero() {
+				t.Error("SourceRange is zero, want the object span")
+			}
+		})
+	}
+}
