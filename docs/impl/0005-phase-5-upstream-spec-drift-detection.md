@@ -308,10 +308,10 @@ version per OQ3).
       the lists cannot drift from the parsers. No behaviour change;
       existing parser tests stay green. (`HookEntryKeys` is one row
       beyond the DESIGN §7 table; note it there.)
-- [ ] `internal/upstream/acknowledged.json` and a loader that rejects
+- [x] `internal/upstream/acknowledged.json` and a loader that rejects
       unknown digest paths and empty reasons; `LoadEmbedded()` for the
       digest and the acknowledgements via `go:embed`.
-- [ ] `internal/upstream/guard_test.go`: one subtest per DESIGN §7 row —
+- [x] `internal/upstream/guard_test.go`: one subtest per DESIGN §7 row —
       hook events, hook types, tools, model aliases, the four agent enum
       sets, the five key lists against their digest sections, marketplace
       source kinds against `MarketplaceSourceKind`, reserved names

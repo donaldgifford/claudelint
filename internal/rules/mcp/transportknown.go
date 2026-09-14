@@ -35,8 +35,10 @@ const (
 	transportSSE   = "sse"
 )
 
-// knownTransports mirrors the documented `type` values (2026-07).
-var knownTransports = map[string]struct{}{
+// KnownTransports mirrors the documented `type` values. Exported so
+// the upstream guardrail test can compare it with mcp.transports in
+// the committed spec digest.
+var KnownTransports = map[string]struct{}{
 	transportStdio: {},
 	"http":         {},
 	transportSSE:   {},
@@ -48,7 +50,7 @@ func (r *transportKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diag
 	if !ok || s.Transport == "" {
 		return nil
 	}
-	if _, known := knownTransports[s.Transport]; known {
+	if _, known := KnownTransports[s.Transport]; known {
 		return nil
 	}
 	return []diag.Diagnostic{{

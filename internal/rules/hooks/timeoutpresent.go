@@ -49,16 +49,17 @@ func (r *timeoutPresent) Check(_ rules.Context, a artifact.Artifact) []diag.Diag
 			Range:  rng,
 			Message: fmt.Sprintf(
 				"hook has no explicit timeout; Claude Code defaults %s hooks to %d s — declare one to fail faster",
-				typ, defaultTimeoutSecs(typ)),
+				typ, DefaultTimeoutSecs(typ)),
 		})
 	}
 	return out
 }
 
-// defaultTimeoutSecs is the documented default timeout for an
+// DefaultTimeoutSecs is the documented default timeout for an
 // effective hook type: 600 s for command/http/mcp_tool, 30 s for
-// prompt, 60 s for agent.
-func defaultTimeoutSecs(hookType string) int {
+// prompt, 60 s for agent. Exported so the upstream guardrail test can
+// compare it with hooks.timeout_defaults in the committed spec digest.
+func DefaultTimeoutSecs(hookType string) int {
 	switch hookType {
 	case "prompt":
 		return 30
