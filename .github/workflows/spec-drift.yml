@@ -12,6 +12,12 @@
 # stale, 2 the tool could not decide (a source would not fetch or an
 # anchor moved). Only exit 2 fails the job. Drift is reported through
 # one tracking issue, never by failing a PR.
+#
+# A second half of the same job asks the Claude Code runtime whether it
+# agrees with the committed fixtures, and appends its report to the same
+# issue. Those steps carry continue-on-error: a runtime that will not
+# install must not swallow the drift report, which is the part that runs
+# every week whether or not npm is having a good day.
 name: Upstream Spec Drift
 on:
   schedule:
@@ -57,6 +63,75 @@ jobs:
             --json /tmp/diff.json
           echo "code=$?" >> "$GITHUB_OUTPUT"
 
+      # The runtime half. Every step here continues on error: the drift
+      # report above is the primary output and must survive an npm
+      # failure, a CLI that will not start, or a validator that changed
+      # its output shape.
+      - name: Set up Node
+        id: node
+        continue-on-error: true
+        uses: jdx/mise-action@v3
+        with:
+          tool_versions: |
+            node 22.23.2
+
+      - name: Install the Claude Code CLI
+        id: install-claude
+        if: steps.node.outcome == 'success'
+        continue-on-error: true
+        run: npm install -g @anthropic-ai/claude-code@latest
+
+      - name: Cross-check fixtures against the runtime validator
+        id: runtime
+        if: steps.install-claude.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set +e
+          go run ./cmd/specdrift validate-fixtures \
+            --format markdown \
+            --out /tmp/runtime.md \
+            --json /tmp/runtime.json
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      # One report, one issue. A runtime section that never ran says so
+      # rather than being silently absent, because "no disagreements"
+      # and "never asked" are different claims.
+      - name: Append the runtime report
+        if: always()
+        env:
+          RUNTIME_CODE: ${{ steps.runtime.outputs.code }}
+        run: |
+          [ -f /tmp/report.md ] || exit 0
+          if [ -f /tmp/runtime.md ]; then
+            printf '\n' >> /tmp/report.md
+            cat /tmp/runtime.md >> /tmp/report.md
+          else
+            {
+              printf '\n## Runtime validator\n\n'
+              printf 'Did not run (exit %s). The drift report above is unaffected.\n' \
+                "${RUNTIME_CODE:-skipped}"
+            } >> /tmp/report.md
+          fi
+
+      - name: Decide what to report
+        id: report
+        if: always()
+        env:
+          DRIFT_CODE: ${{ steps.check.outputs.code }}
+          RUNTIME_CODE: ${{ steps.runtime.outputs.code }}
+        run: |
+          # Exit 2 from the drift check wins: the tool could not decide,
+          # so the issue is left alone and the job fails below. Otherwise
+          # either a digest change or a runtime disagreement is worth an
+          # issue.
+          if [ "${DRIFT_CODE}" = "2" ]; then
+            echo "code=2" >> "$GITHUB_OUTPUT"
+          elif [ "${DRIFT_CODE}" = "1" ] || [ "${RUNTIME_CODE}" = "1" ]; then
+            echo "code=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=0" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload fetched sources and report
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,6 +141,8 @@ jobs:
             /tmp/upstream
             /tmp/report.md
             /tmp/diff.json
+            /tmp/runtime.md
+            /tmp/runtime.json
           retention-days: 90
           if-no-files-found: warn
 
@@ -83,7 +160,7 @@ jobs:
       # against live pages before merge. It can only warn.
       - name: Warn on PR
         if: >-
-          steps.check.outputs.code == '1' &&
+          steps.report.outputs.code == '1' &&
           github.event_name == 'pull_request'
         run: |
           echo "::warning title=Upstream spec drift::see the job summary; \
@@ -93,8 +170,10 @@ jobs:
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-          CODE: ${{ steps.check.outputs.code }}
-        run: ./scripts/spec-drift-issue.sh "$CODE" /tmp/report.md /tmp/diff.json
+          CODE: ${{ steps.report.outputs.code }}
+        run: |
+          ./scripts/spec-drift-issue.sh "$CODE" \
+            /tmp/report.md /tmp/diff.json /tmp/runtime.json
 
       # A red scheduled run emails the maintainer. The report names the
       # extractor that broke.

@@ -68,11 +68,20 @@ check_dependencies() {
 # sources whose bytes moved, and those move on prose edits that change
 # no fact; hashing the whole file would reopen the conversation every
 # week for the same drift.
+# marker_of hashes only what a reader would act on: the digest changes
+# and the runtime disagreements. Prose that moved upstream without
+# changing a fact must not produce a fresh comment every Monday.
 marker_of() {
-  local diff_file="$1"
+  local diff_file="$1" runtime_file="${2:-}"
   local hash
 
-  hash=$(jq -S -c '.changes' "${diff_file}" | sha256sum | cut -d' ' -f1)
+  hash=$({
+    jq -S -c '.changes' "${diff_file}"
+    if [[ -n "${runtime_file}" && -f "${runtime_file}" ]]; then
+      jq -S -c '[.results[] | select(.agrees == false) | {path, success, errors}]' \
+        "${runtime_file}"
+    fi
+  } | sha256sum | cut -d' ' -f1)
   printf '%s%s -->' "${MARKER_PREFIX}" "${hash}"
 }
 
@@ -195,9 +204,10 @@ main() {
     esac
   done
 
-  [[ $# -eq 3 ]] || die "usage: $0 [--dry-run] <exit-code> <report.md> <diff.json>"
+  [[ $# -eq 3 || $# -eq 4 ]] ||
+    die "usage: $0 [--dry-run] <exit-code> <report.md> <diff.json> [runtime.json]"
 
-  local code="$1" report="$2" diff_file="$3"
+  local code="$1" report="$2" diff_file="$3" runtime_file="${4:-}"
 
   check_dependencies
 
@@ -219,7 +229,7 @@ main() {
 
   case "${code}" in
     0) handle_clean "${number}" ;;
-    1) handle_drift "${number}" "$(marker_of "${diff_file}")" "${report}" ;;
+    1) handle_drift "${number}" "$(marker_of "${diff_file}" "${runtime_file}")" "${report}" ;;
     *) die "unexpected specdrift exit code: ${code}" ;;
   esac
 }

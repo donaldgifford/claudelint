@@ -479,7 +479,7 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
       with the runtime's `errors` and `warnings` verbatim (Markdown and
       JSON). Exit 0 / 1 / 2. Tested with a fake `claude` script on
       `PATH` returning canned JSON.
-- [ ] Workflow wiring per OQ10: Node from `mise.toml` via
+- [x] Workflow wiring per OQ10: Node from `mise.toml` via
       `jdx/mise-action`, `npm install -g @anthropic-ai/claude-code@latest`
       (DESIGN OQ8), run `validate-fixtures`, append its report to the
       drift report before the issue script runs. A runtime-step failure

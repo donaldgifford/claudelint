@@ -37,6 +37,12 @@ jobs:
         with:
           version: v2.12.2
 
+      # The spec page is generated from the committed digest. A digest
+      # change with no re-render would leave the published page
+      # describing a revision nobody shipped.
+      - name: Check the rendered spec page is current
+        run: go run ./cmd/specdrift render --check
+
   test-go:
     name: Test Go
     runs-on: ubuntu-latest
