@@ -369,9 +369,8 @@ func TestParseMarketplaceRenamesAndPluginRoot(t *testing.T) {
 
 // TestParseMarketplaceArchiveAndCommandSources covers the two source
 // kinds the marketplace reference gained after DESIGN-0002 was written.
-// The quoted-timeout entry is deliberate: manifests in the wild quote a
-// value the docs spell as a number, and the parser keeps the raw text so
-// the rule can report a bad one verbatim.
+// The fixture is validated by the Claude Code runtime too (see
+// runtime_fixtures.json), so it carries only values both accept.
 func TestParseMarketplaceArchiveAndCommandSources(t *testing.T) {
 	src, err := os.ReadFile("testdata/ok/marketplaces/archive_command/.claude-plugin/marketplace.json")
 	if err != nil {
@@ -404,13 +403,12 @@ func TestParseMarketplaceArchiveAndCommandSources(t *testing.T) {
 		{"command-plugin", MarketplaceSource{
 			Kind:    SourceCommand,
 			Command: "internal-plugin-resolver --name command-plugin",
-			Timeout: "30000",
-			Mode:    "json",
+			Timeout: "60",
 		}},
 		{"command-quoted-timeout", MarketplaceSource{
 			Kind:    SourceCommand,
 			Command: "resolve-plugin",
-			Timeout: "5000",
+			Timeout: "120",
 		}},
 	}
 
@@ -430,5 +428,32 @@ func TestParseMarketplaceArchiveAndCommandSources(t *testing.T) {
 				t.Error("SourceRange is zero, want the object span")
 			}
 		})
+	}
+}
+
+// TestParseMarketplaceQuotedNumbers keeps the raw-text timeout in a unit
+// test rather than in the shared fixture. Manifests in the wild quote a
+// field the documentation spells as a number, and the parser hands the
+// text to the rule so a bad value is reported verbatim instead of
+// silently read as zero. The Claude Code runtime rejects the quoted form
+// outright, which is why the fixture on disk does not use it.
+func TestParseMarketplaceQuotedNumbers(t *testing.T) {
+	src := []byte(`{"name":"m","version":"1.0.0","plugins":[
+		{"name":"quoted","source":{"source":"command","command":"resolve","timeout":"5000","mode":"json"}}
+	]}`)
+
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+
+	want := MarketplaceSource{
+		Kind:    SourceCommand,
+		Command: "resolve",
+		Timeout: "5000",
+		Mode:    "json",
+	}
+	if got := m.Plugins[0].SourceInfo; got != want {
+		t.Errorf("SourceInfo = %+v, want %+v", got, want)
 	}
 }

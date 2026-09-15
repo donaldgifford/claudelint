@@ -466,13 +466,13 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
 
 #### Tasks
 
-- [ ] `internal/upstream/runtime_fixtures.json` with entries
+- [x] `internal/upstream/runtime_fixtures.json` with entries
       `{path, kind, expect}` per OQ5, covering at least: the two existing
       `.claude-plugin` fixtures as `pass`, one plugin manifest missing
       `name` as `fail`, one marketplace with duplicate plugin names as
       `fail`, one `agents/` directory as `pass`, and one `skills/`
       directory as the probe that asserts `contents` is still empty.
-- [ ] `specdrift validate-fixtures --claude <bin>`: runs
+- [x] `specdrift validate-fixtures --claude <bin>`: runs
       `claude plugin validate --strict --json <path>` per entry with an
       empty `CLAUDE_CONFIG_DIR`, parses the JSON, compares `success` to
       `expect`, records `claude --version`, and reports disagreements
@@ -484,8 +484,8 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
       (DESIGN OQ8), run `validate-fixtures`, append its report to the
       drift report before the issue script runs. A runtime-step failure
       must not suppress the drift report.
-- [ ] `just spec-validate-fixtures` recipe (requires a local `claude`).
-- [ ] `specdrift render --digest FILE --out docs/rules/upstream-spec.md`:
+- [x] `just spec-validate-fixtures` recipe (requires a local `claude`).
+- [x] `specdrift render --digest FILE --out docs/rules/upstream-spec.md`:
       `title: Upstream spec` frontmatter; one section per artifact kind
       listing documented fields and enums, whether claudelint parses
       each, and the acknowledgement reason where present; a "verified
@@ -494,7 +494,7 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
       lands in the Starlight `Rules` sidebar group automatically and
       links to the deprecated-and-removed tools table in rules.md rather
       than duplicating it.
-- [ ] `render --check` (exit 1 when the committed page differs from a
+- [x] `render --check` (exit 1 when the committed page differs from a
       fresh render) wired per OQ9; commit the first rendered page.
 - [ ] `claudelint version` third line per OQ7 and `rules --json`
       `upstream_version` (additive); `docs/rules-json-schema.md` updated;

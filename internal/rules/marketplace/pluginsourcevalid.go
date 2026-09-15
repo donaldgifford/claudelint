@@ -145,6 +145,11 @@ func archiveProblems(src *artifact.MarketplaceSource) []string {
 // commandProblems checks a command source. The command itself is
 // required; a declared timeout must be a positive integer, and is
 // reported verbatim rather than silently read as zero.
+//
+// The documented table gives no unit or bound for timeout, so neither
+// does this check. The Claude Code runtime reads it as seconds and caps
+// it at 600, but a limit claudelint cannot cite to the documentation is
+// a limit the upstream guardrail cannot keep honest.
 func commandProblems(src *artifact.MarketplaceSource) []string {
 	out := requireNonEmpty(strings.TrimSpace(src.Command), `command source requires a non-empty "command"`)
 	if src.Timeout != "" {

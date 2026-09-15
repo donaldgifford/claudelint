@@ -10,36 +10,6 @@ import (
 
 func init() { rules.Register(&reservedName{}) }
 
-// ReservedMarketplaceNames mirrors the 17 names the plugin-marketplaces
-// reference reserves for official Anthropic use (as of Claude Code
-// v2.1.265). Claude Code re-checks the list every time it loads a
-// marketplace, so a manifest shipping one of these stops loading for
-// every user. Exact match only — impersonation heuristics
-// ("official-claude-plugins") are deliberately not attempted here;
-// claude.ai enforces those server-side.
-//
-// Exported so the upstream guardrail test can compare it with the
-// documented list in the committed spec digest.
-var ReservedMarketplaceNames = map[string]struct{}{
-	"claude-code-marketplace":       {},
-	"claude-code-plugins":           {},
-	"claude-plugins-official":       {},
-	"claude-plugins-community":      {},
-	"claude-community":              {},
-	"anthropic-marketplace":         {},
-	"anthropic-plugins":             {},
-	"agent-skills":                  {},
-	"anthropic-agent-skills":        {},
-	"knowledge-work-plugins":        {},
-	"life-sciences":                 {},
-	"claude-for-legal":              {},
-	"claude-for-financial-services": {},
-	"financial-services-plugins":    {},
-	"first-party-plugins":           {},
-	"healthcare":                    {},
-	"claude-tag-plugins":            {},
-}
-
 // reservedName errors when a marketplace uses one of the documented
 // reserved names.
 type reservedName struct{}
@@ -59,7 +29,7 @@ func (r *reservedName) Check(_ rules.Context, a artifact.Artifact) []diag.Diagno
 	if !ok {
 		return nil
 	}
-	if _, reserved := ReservedMarketplaceNames[m.Name]; !reserved {
+	if _, reserved := artifact.ReservedMarketplaceNames[m.Name]; !reserved {
 		return nil
 	}
 	return []diag.Diagnostic{{

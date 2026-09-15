@@ -1,6 +1,7 @@
 {
   "name": "archive-and-command",
   "version": "1.0.0",
+  "description": "Marketplace exercising the archive and command plugin source kinds.",
   "owner": {
     "name": "Donald Gifford",
     "email": "donald@example.com"
@@ -26,8 +27,7 @@
       "source": {
         "source": "command",
         "command": "internal-plugin-resolver --name command-plugin",
-        "timeout": 30000,
-        "mode": "json"
+        "timeout": 60
       }
     },
     {
@@ -35,7 +35,7 @@
       "source": {
         "source": "command",
         "command": "resolve-plugin",
-        "timeout": "5000"
+        "timeout": 120
       }
     }
   ]

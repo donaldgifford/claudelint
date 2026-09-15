@@ -321,6 +321,19 @@ const (
 	SourceInvalid MarketplaceSourceKind = "invalid"
 )
 
+// MarketplaceSourceKinds lists the object-form kinds the plugin
+// marketplace reference documents, sorted. The non-documented sentinels
+// (absent, local, external-string, invalid) are how the parser reports
+// the string forms and are deliberately not in this list.
+var MarketplaceSourceKinds = []MarketplaceSourceKind{
+	SourceArchive,
+	SourceCommand,
+	SourceGitSubdir,
+	SourceGitHub,
+	SourceNPM,
+	SourceURL,
+}
+
 // MarketplaceSource is the typed view of a plugins[].source value.
 // Kind tells which shape was used; only that shape's fields are set.
 type MarketplaceSource struct {

@@ -9,8 +9,6 @@ import (
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
 	"github.com/donaldgifford/claudelint/internal/rules/hooks"
-	"github.com/donaldgifford/claudelint/internal/rules/marketplace"
-	"github.com/donaldgifford/claudelint/internal/rules/mcp"
 	"github.com/donaldgifford/claudelint/internal/upstream"
 )
 
@@ -350,29 +348,25 @@ func (g *guard) frontmatterKeys(t *testing.T) {
 // constant is a source shape claudelint classifies as invalid, which
 // turns a valid manifest into an error.
 func (g *guard) marketplaceSources(t *testing.T) {
-	encoded := []string{
-		string(artifact.SourceArchive),
-		string(artifact.SourceCommand),
-		string(artifact.SourceGitHub),
-		string(artifact.SourceGitSubdir),
-		string(artifact.SourceNPM),
-		string(artifact.SourceURL),
+	encoded := make([]string, 0, len(artifact.MarketplaceSourceKinds))
+	for _, k := range artifact.MarketplaceSourceKinds {
+		encoded = append(encoded, string(k))
 	}
 
-	g.equalSets(t, "marketplace.sources", "artifact.MarketplaceSourceKind",
+	g.equalSets(t, "marketplace.sources", "artifact.MarketplaceSourceKinds",
 		slices.Sorted(maps.Keys(g.digest.Marketplace.Sources)), encoded)
 }
 
 func (g *guard) reservedNames(t *testing.T) {
 	g.equalSets(t, "marketplace.reserved_names",
-		"the list in internal/rules/marketplace/reservedname.go",
+		"artifact.ReservedMarketplaceNames",
 		g.digest.Marketplace.ReservedNames,
-		setKeys(marketplace.ReservedMarketplaceNames))
+		setKeys(artifact.ReservedMarketplaceNames))
 }
 
 func (g *guard) mcpTransports(t *testing.T) {
-	g.equalSets(t, "mcp.transports", "the set mcp/transport-known uses",
-		g.digest.MCP.Transports, setKeys(mcp.KnownTransports))
+	g.equalSets(t, "mcp.transports", "artifact.KnownTransports",
+		g.digest.MCP.Transports, setKeys(artifact.KnownTransports))
 }
 
 // acknowledgementsAreLive is what stops the file becoming a graveyard:

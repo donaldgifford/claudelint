@@ -416,7 +416,7 @@ func TestRootCommandHasEverySubcommand(t *testing.T) {
 	}
 	slices.Sort(names)
 
-	want := []string{"check", "diff", "digest", "pull"}
+	want := []string{"check", "diff", "digest", "pull", "render", "validate-fixtures"}
 	if !slices.Equal(names, want) {
 		t.Errorf("subcommands = %v, want %v", names, want)
 	}

@@ -290,11 +290,11 @@ func TestReservedName(t *testing.T) {
 // published list in step. The upstream guardrail already compares the
 // two as sets; this proves each one actually produces a diagnostic.
 func TestReservedNameCoversEveryDocumentedName(t *testing.T) {
-	if got := len(ReservedMarketplaceNames); got != 17 {
-		t.Fatalf("len(ReservedMarketplaceNames) = %d, want 17", got)
+	if got := len(artifact.ReservedMarketplaceNames); got != 17 {
+		t.Fatalf("len(artifact.ReservedMarketplaceNames) = %d, want 17", got)
 	}
 
-	for reserved := range ReservedMarketplaceNames {
+	for reserved := range artifact.ReservedMarketplaceNames {
 		m := newMarketplace(t,
 			`{"name":"`+reserved+`","owner":{"name":"acme"},"plugins":[]}`)
 		if d := (&reservedName{}).Check(nil, m); len(d) != 1 {

@@ -1,6 +1,7 @@
 package upstream
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -58,7 +59,7 @@ func ExitCode(err error) int {
 	switch {
 	case err == nil:
 		return ExitClean
-	case errors.Is(err, ErrDrift):
+	case errors.Is(err, ErrDrift), errors.Is(err, ErrDisagreement), errors.Is(err, ErrStale):
 		return ExitDrift
 	default:
 		return ExitFailure
@@ -100,7 +101,14 @@ func NewRootCommand() *cobra.Command {
 		SilenceErrors: true,
 	}
 
-	root.AddCommand(newPullCommand(), newDigestCommand(), newDiffCommand(), newCheckCommand())
+	root.AddCommand(
+		newPullCommand(),
+		newDigestCommand(),
+		newDiffCommand(),
+		newCheckCommand(),
+		newValidateFixturesCommand(),
+		newRenderCommand(),
+	)
 
 	return root
 }
@@ -183,6 +191,151 @@ func newDiffCommand() *cobra.Command {
 	must(cmd.MarkFlagRequired("head"))
 
 	return cmd
+}
+
+// newRenderCommand writes the human-facing spec page, or checks that
+// the committed one is still current.
+func newRenderCommand() *cobra.Command {
+	var digestPath, out string
+	var check bool
+
+	cmd := &cobra.Command{
+		Use:   "render",
+		Short: "Render the human-facing upstream spec page from the digest",
+		Long: "render writes " + SpecPagePath + " from the committed digest, the acknowledgement " +
+			"file, and the coverage table. With --check it writes nothing and exits 1 when the " +
+			"committed page differs from a fresh render, which is how the page cannot drift from " +
+			"the digest it describes.",
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rendered, err := renderSpecFile(digestPath)
+			if err != nil {
+				return err
+			}
+
+			if check {
+				return checkSpecPage(cmd.OutOrStdout(), out, rendered)
+			}
+
+			if err := writeFile(out, rendered); err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "wrote %s\n", out)
+
+			return err
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVar(&digestPath, "digest", DigestPath, "digest to render")
+	f.StringVar(&out, "out", SpecPagePath, "page to write")
+	f.BoolVar(&check, "check", false, "compare the committed page with a fresh render and write nothing")
+
+	return cmd
+}
+
+// renderSpecFile renders the page from a digest on disk. The
+// acknowledgement file is the embedded one, because it is the same
+// file the guardrail reads and having two would let them disagree.
+func renderSpecFile(digestPath string) ([]byte, error) {
+	digest, err := LoadDigest(digestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	ack, err := DecodeAcknowledged(embeddedAcknowledged)
+	if err != nil {
+		return nil, err
+	}
+
+	return RenderSpec(digest, ack, DefaultCoverage())
+}
+
+// checkSpecPage compares the committed page with a fresh render and
+// says how to fix it rather than printing a diff nobody asked for.
+func checkSpecPage(stdout io.Writer, path string, rendered []byte) error {
+	committed, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read %s: %w", path, err)
+	}
+
+	if !bytes.Equal(committed, rendered) {
+		_, werr := fmt.Fprintf(stdout,
+			"%s is out of date.\nRegenerate it with:\n\n    just spec-render\n\n", path)
+		if werr != nil {
+			return werr
+		}
+
+		return ErrStale
+	}
+
+	_, err = fmt.Fprintf(stdout, "%s is current\n", path)
+
+	return err
+}
+
+// newValidateFixturesCommand asks the Claude Code runtime whether it
+// agrees with claudelint's committed fixtures.
+func newValidateFixturesCommand() *cobra.Command {
+	var (
+		opts        ValidateOptions
+		format, out string
+		jsonOut     string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "validate-fixtures",
+		Short: "Cross-check claudelint's fixtures against the Claude Code runtime validator",
+		Long: "validate-fixtures runs `claude plugin validate --strict --json` over every entry " +
+			"in " + RuntimeFixturesPath + " with an empty config directory, and reports where the " +
+			"runtime and the committed expectation disagree. Exit 0 means they agree, 1 means at " +
+			"least one disagreement, and 2 means the validator could not be run or did not " +
+			"produce its documented JSON.",
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			report, err := ValidateFixtures(cmd.Context(), &opts)
+			if err != nil {
+				return err
+			}
+
+			if err := emit(cmd.OutOrStdout(), report, format, out); err != nil {
+				return err
+			}
+			if jsonOut != "" {
+				if err := writeReportJSON(report, jsonOut); err != nil {
+					return err
+				}
+			}
+
+			if report.HasDisagreement() {
+				return ErrDisagreement
+			}
+
+			return nil
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVar(&opts.Claude, "claude", "", "path to the claude binary (default: look it up on PATH)")
+	f.StringVar(&opts.Root, "root", ".", "directory the fixture paths resolve against")
+	f.DurationVar(&opts.Timeout, "timeout", 0, "per-fixture timeout")
+	f.StringVar(&format, "format", formatText, "text, json, or markdown")
+	f.StringVar(&out, "out", "", "write the report to this file instead of stdout")
+	f.StringVar(&jsonOut, "json", "", "also write the report as JSON to this file")
+
+	return cmd
+}
+
+// writeReportJSON writes a report as JSON regardless of --format, so
+// one run can produce both the Markdown a human reads and the JSON a
+// script consumes.
+func writeReportJSON(report reporter, path string) error {
+	raw, err := report.JSON()
+	if err != nil {
+		return err
+	}
+
+	return writeFile(path, raw)
 }
 
 // CheckOptions configures a Check run. The cobra command fills it from
@@ -474,8 +627,23 @@ func writeArtifacts(digest *Digest, lock Lock, digestPath, lockPath string) erro
 	return writeFile(lockPath, rawLock)
 }
 
+// reporter is what emit needs from a report. Both the drift report and
+// the runtime-validation report satisfy it, so the --format / --out
+// handling is written once.
+type reporter interface {
+	// Text is the terse form, for a human reading a terminal.
+	Text() string
+	// JSON is the machine form, canonically encoded.
+	JSON() ([]byte, error)
+	// Markdown is the form the issue script pastes into a comment.
+	Markdown() string
+	// Summary is the one line printed when the report itself went to
+	// a file, so the terminal still says what happened.
+	Summary() string
+}
+
 // emit renders a report to a file or to stdout.
-func emit(stdout io.Writer, report *Report, format, out string) error {
+func emit(stdout io.Writer, report reporter, format, out string) error {
 	rendered, err := render(report, format)
 	if err != nil {
 		return err
@@ -491,13 +659,13 @@ func emit(stdout io.Writer, report *Report, format, out string) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(stdout, "%s\nreport written to %s\n", summary(report), out)
+	_, err = fmt.Fprintf(stdout, "%s\nreport written to %s\n", report.Summary(), out)
 
 	return err
 }
 
 // render turns a report into bytes in the requested format.
-func render(report *Report, format string) ([]byte, error) {
+func render(report reporter, format string) ([]byte, error) {
 	switch format {
 	case formatText:
 		return []byte(report.Text()), nil
@@ -509,16 +677,6 @@ func render(report *Report, format string) ([]byte, error) {
 		return nil, fmt.Errorf("unknown format %q: want %s, %s, or %s",
 			format, formatText, formatJSON, formatMarkdown)
 	}
-}
-
-// summary is the one-line outcome printed when the report itself went
-// to a file.
-func summary(report *Report) string {
-	if !report.HasDrift() {
-		return "no drift"
-	}
-
-	return fmt.Sprintf("drift: %d changes", len(report.Changes))
 }
 
 // writeFile writes b to path, creating the parent directory.

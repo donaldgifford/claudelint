@@ -73,6 +73,16 @@ type Report struct {
 	SourcesChanged []string `json:"sources_changed,omitempty"`
 }
 
+// Summary is the one-line outcome printed when the report itself went
+// to a file.
+func (r *Report) Summary() string {
+	if !r.HasDrift() {
+		return "no drift"
+	}
+
+	return fmt.Sprintf("drift: %d changes", len(r.Changes))
+}
+
 // HasDrift reports whether anything outside the informational sections
 // changed.
 func (r *Report) HasDrift() bool { return len(r.Changes) > 0 }

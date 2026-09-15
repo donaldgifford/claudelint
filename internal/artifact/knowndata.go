@@ -250,3 +250,45 @@ func IsKnownHookType(name string) bool {
 	_, ok := KnownHookTypes[name]
 	return ok
 }
+
+// ReservedMarketplaceNames mirrors the 17 names the plugin-marketplaces
+// reference reserves for official Anthropic use (as of Claude Code
+// v2.1.265). Claude Code re-checks the list every time it loads a
+// marketplace, so a manifest shipping one of these stops loading for
+// every user. Exact match only — impersonation heuristics
+// ("official-claude-plugins") are deliberately not attempted here;
+// claude.ai enforces those server-side.
+//
+// It lives here rather than beside the rule because this is canonical
+// upstream data, which the upstream guardrail and the rendered spec
+// page both read.
+var ReservedMarketplaceNames = map[string]struct{}{
+	"claude-code-marketplace":       {},
+	"claude-code-plugins":           {},
+	"claude-plugins-official":       {},
+	"claude-plugins-community":      {},
+	"claude-community":              {},
+	"anthropic-marketplace":         {},
+	"anthropic-plugins":             {},
+	"agent-skills":                  {},
+	"anthropic-agent-skills":        {},
+	"knowledge-work-plugins":        {},
+	"life-sciences":                 {},
+	"claude-for-legal":              {},
+	"claude-for-financial-services": {},
+	"financial-services-plugins":    {},
+	"first-party-plugins":           {},
+	"healthcare":                    {},
+	"claude-tag-plugins":            {},
+}
+
+// KnownTransports mirrors the documented MCP server `type` values.
+// It lives here rather than beside the rule because this is canonical
+// upstream data, which the upstream guardrail and the rendered spec
+// page both read.
+var KnownTransports = map[string]struct{}{
+	"stdio": {},
+	"http":  {},
+	"sse":   {},
+	"ws":    {},
+}

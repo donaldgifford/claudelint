@@ -222,6 +222,7 @@ docs-build:
 # Run astro check (type + content collection diagnostics) on site/
 [group('docs')]
 docs-check:
+    @go run ./cmd/specdrift render --check
     @cd site && npm run check
 
 # Install Node deps in site/ (idempotent — run after pulling)
@@ -255,6 +256,21 @@ spec-check *ARGS:
 [group('spec')]
 spec-sync:
     @go run ./cmd/specdrift check --update
+
+# Rewrite docs/rules/upstream-spec.md from the committed digest. No
+# network: it reads internal/upstream/digest.json.
+# Regenerate the rendered upstream spec page
+[group('spec')]
+spec-render:
+    @go run ./cmd/specdrift render
+
+# Cross-check the committed fixtures against the Claude Code runtime's
+# own validator. Needs a local `claude` on PATH, which is why it joins
+# neither `check` nor `ci`.
+# Ask the Claude Code runtime whether it agrees with our fixtures
+[group('spec')]
+spec-validate-fixtures *ARGS:
+    @go run ./cmd/specdrift validate-fixtures {{ ARGS }}
 
 # ─── Composite gates ────────────────────────────────────────────────
 
