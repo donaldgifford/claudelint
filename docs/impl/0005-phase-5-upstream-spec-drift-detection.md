@@ -496,7 +496,7 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
       than duplicating it.
 - [x] `render --check` (exit 1 when the committed page differs from a
       fresh render) wired per OQ9; commit the first rendered page.
-- [ ] `claudelint version` third line per OQ7 and `rules --json`
+- [x] `claudelint version` third line per OQ7 and `rules --json`
       `upstream_version` (additive); `docs/rules-json-schema.md` updated;
       `internal/cli` reads `upstream.LoadEmbedded()` (import direction
       `cli → upstream`; `upstream` imports nothing from `cli`, `engine`,

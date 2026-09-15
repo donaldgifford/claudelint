@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+
+	"github.com/donaldgifford/claudelint/internal/upstream/spec"
 )
 
 // The specdrift command tree lives beside the library rather than in
@@ -35,7 +37,7 @@ const (
 // (DESIGN-0006 OQ2).
 const (
 	// DigestPath is the committed digest.
-	DigestPath = "internal/upstream/digest.json"
+	DigestPath = spec.DigestFile
 	// LockPath is the committed source lock.
 	LockPath = "internal/upstream/sources.lock.json"
 	// DefaultWorkDir is where a pull lands when no directory is given.

@@ -12,6 +12,7 @@ import (
 
 	"github.com/donaldgifford/claudelint/internal/artifact"
 	"github.com/donaldgifford/claudelint/internal/rules"
+	"github.com/donaldgifford/claudelint/internal/upstream/spec"
 )
 
 // rulesJSONSchemaVersion is the schema version of the `claudelint
@@ -122,10 +123,33 @@ type ruleDoc struct {
 // rulesDoc is the envelope for `rules --json`. Same stability rules as
 // ruleDoc.
 type rulesDoc struct {
-	SchemaVersion  string    `json:"schema_version"`
-	RulesetVersion string    `json:"ruleset_version"`
-	Fingerprint    string    `json:"fingerprint"`
-	Rules          []ruleDoc `json:"rules"`
+	SchemaVersion   string    `json:"schema_version"`
+	RulesetVersion  string    `json:"ruleset_version"`
+	Fingerprint     string    `json:"fingerprint"`
+	UpstreamVersion string    `json:"upstream_version,omitempty"`
+	Rules           []ruleDoc `json:"rules"`
+}
+
+// envelope fills the fields every rules --json response carries.
+//
+// upstream_version is the documentation revision the canonical tool
+// and event lists were extracted from. A consumer diffing two catalogs
+// needs it: a rule can start rejecting a name with no change to the
+// ruleset version, because what moved was the data, not the rule.
+// It is omitted rather than guessed when the embedded digest cannot be
+// read, so a broken build does not publish a wrong provenance claim.
+func envelope(docs []ruleDoc) rulesDoc {
+	doc := rulesDoc{
+		SchemaVersion:  rulesJSONSchemaVersion,
+		RulesetVersion: rules.RulesetVersion,
+		Fingerprint:    rules.RulesetFingerprint(),
+		Rules:          docs,
+	}
+	if v, err := spec.Current(); err == nil {
+		doc.UpstreamVersion = v.Marker
+	}
+
+	return doc
 }
 
 func listRulesJSON(out io.Writer) error {
@@ -134,12 +158,7 @@ func listRulesJSON(out io.Writer) error {
 	for _, r := range all {
 		docs = append(docs, toRuleDoc(r))
 	}
-	return writeRulesJSON(out, rulesDoc{
-		SchemaVersion:  rulesJSONSchemaVersion,
-		RulesetVersion: rules.RulesetVersion,
-		Fingerprint:    rules.RulesetFingerprint(),
-		Rules:          docs,
-	})
+	return writeRulesJSON(out, envelope(docs))
 }
 
 func describeRuleJSON(out io.Writer, id string) error {
@@ -147,12 +166,7 @@ func describeRuleJSON(out io.Writer, id string) error {
 	if r == nil {
 		return fmt.Errorf("unknown rule %q", id)
 	}
-	return writeRulesJSON(out, rulesDoc{
-		SchemaVersion:  rulesJSONSchemaVersion,
-		RulesetVersion: rules.RulesetVersion,
-		Fingerprint:    rules.RulesetFingerprint(),
-		Rules:          []ruleDoc{toRuleDoc(r)},
-	})
+	return writeRulesJSON(out, envelope([]ruleDoc{toRuleDoc(r)}))
 }
 
 func toRuleDoc(r rules.Rule) ruleDoc {

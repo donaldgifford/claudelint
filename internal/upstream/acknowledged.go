@@ -8,6 +8,8 @@ import (
 	"maps"
 	"slices"
 	"strings"
+
+	"github.com/donaldgifford/claudelint/internal/upstream/spec"
 )
 
 // AcknowledgedFile is the committed record of deliberate deviations.
@@ -31,9 +33,6 @@ const AcknowledgedFile = "acknowledged.json"
 // item is no longer a difference, which is what stops the list becoming
 // a graveyard.
 
-//go:embed digest.json
-var embeddedDigest []byte
-
 //go:embed acknowledged.json
 var embeddedAcknowledged []byte
 
@@ -54,7 +53,7 @@ var ErrEmptyReason = errors.New("acknowledgement has no reason")
 // the binary, validated against each other. No filesystem is touched,
 // so the guardrail test runs anywhere.
 func LoadEmbedded() (*Digest, Acknowledged, error) {
-	digest, err := Decode(embeddedDigest)
+	digest, err := Decode(spec.Bytes())
 	if err != nil {
 		return nil, nil, fmt.Errorf("embedded digest: %w", err)
 	}
@@ -74,7 +73,7 @@ func LoadEmbedded() (*Digest, Acknowledged, error) {
 // EmbeddedDigestBytes returns the committed digest exactly as it is
 // compiled in. A release can print a hash of it, and a test can compare
 // it with the file on disk.
-func EmbeddedDigestBytes() []byte { return slices.Clone(embeddedDigest) }
+func EmbeddedDigestBytes() []byte { return spec.Bytes() }
 
 // DecodeAcknowledged parses an acknowledgement file.
 func DecodeAcknowledged(data []byte) (Acknowledged, error) {

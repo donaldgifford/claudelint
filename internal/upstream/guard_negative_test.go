@@ -2,6 +2,7 @@ package upstream_test
 
 import (
 	"bytes"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -174,7 +175,7 @@ func TestAcknowledgedValidate(t *testing.T) {
 func TestEmbeddedDigestMatchesTheFile(t *testing.T) {
 	t.Parallel()
 
-	onDisk := readFile(t, "digest.json")
+	onDisk := readFile(t, filepath.Join("spec", "digest.json"))
 
 	if !bytes.Equal(upstream.EmbeddedDigestBytes(), onDisk) {
 		t.Error("the embedded digest differs from internal/upstream/digest.json")
