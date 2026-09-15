@@ -138,8 +138,8 @@ type rulesDoc struct {
 // ruleset version, because what moved was the data, not the rule.
 // It is omitted rather than guessed when the embedded digest cannot be
 // read, so a broken build does not publish a wrong provenance claim.
-func envelope(docs []ruleDoc) rulesDoc {
-	doc := rulesDoc{
+func envelope(docs []ruleDoc) *rulesDoc {
+	doc := &rulesDoc{
 		SchemaVersion:  rulesJSONSchemaVersion,
 		RulesetVersion: rules.RulesetVersion,
 		Fingerprint:    rules.RulesetFingerprint(),
@@ -190,9 +190,10 @@ func toRuleDoc(r rules.Rule) ruleDoc {
 	}
 }
 
-func writeRulesJSON(out io.Writer, doc rulesDoc) error {
+func writeRulesJSON(out io.Writer, doc *rulesDoc) error {
 	enc := json.NewEncoder(out)
 	enc.SetIndent("", "  ")
+
 	return enc.Encode(doc)
 }
 
