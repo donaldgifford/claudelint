@@ -366,3 +366,94 @@ func TestParseMarketplaceRenamesAndPluginRoot(t *testing.T) {
 		t.Errorf(`Renames["legacy-linter"] = (%q, %v), want ("", true) for null`, got, ok)
 	}
 }
+
+// TestParseMarketplaceArchiveAndCommandSources covers the two source
+// kinds the marketplace reference gained after DESIGN-0002 was written.
+// The fixture is validated by the Claude Code runtime too (see
+// runtime_fixtures.json), so it carries only values both accept.
+func TestParseMarketplaceArchiveAndCommandSources(t *testing.T) {
+	src, err := os.ReadFile("testdata/ok/marketplaces/archive_command/.claude-plugin/marketplace.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+
+	byName := make(map[string]MarketplacePlugin, len(m.Plugins))
+	for _, p := range m.Plugins {
+		byName[p.Name] = p
+	}
+
+	tests := []struct {
+		name string
+		want MarketplaceSource
+	}{
+		{"archive-plugin", MarketplaceSource{
+			Kind:   SourceArchive,
+			URL:    "https://downloads.example.com/archive-plugin-1.4.0.tar.gz",
+			SHA256: "3b1f2c4d5e6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e",
+		}},
+		{"archive-unpinned", MarketplaceSource{
+			Kind: SourceArchive,
+			URL:  "https://downloads.example.com/nightly.zip",
+		}},
+		{"command-plugin", MarketplaceSource{
+			Kind:    SourceCommand,
+			Command: "internal-plugin-resolver --name command-plugin",
+			Timeout: "60",
+		}},
+		{"command-quoted-timeout", MarketplaceSource{
+			Kind:    SourceCommand,
+			Command: "resolve-plugin",
+			Timeout: "120",
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, ok := byName[tt.name]
+			if !ok {
+				t.Fatalf("plugin %q not parsed", tt.name)
+			}
+			if p.SourceInfo != tt.want {
+				t.Errorf("SourceInfo = %+v, want %+v", p.SourceInfo, tt.want)
+			}
+			if p.Resolved != "" {
+				t.Errorf("Resolved = %q, want empty for a non-local source", p.Resolved)
+			}
+			if p.SourceRange.IsZero() {
+				t.Error("SourceRange is zero, want the object span")
+			}
+		})
+	}
+}
+
+// TestParseMarketplaceQuotedNumbers keeps the raw-text timeout in a unit
+// test rather than in the shared fixture. Manifests in the wild quote a
+// field the documentation spells as a number, and the parser hands the
+// text to the rule so a bad value is reported verbatim instead of
+// silently read as zero. The Claude Code runtime rejects the quoted form
+// outright, which is why the fixture on disk does not use it.
+func TestParseMarketplaceQuotedNumbers(t *testing.T) {
+	src := []byte(`{"name":"m","version":"1.0.0","plugins":[
+		{"name":"quoted","source":{"source":"command","command":"resolve","timeout":"5000","mode":"json"}}
+	]}`)
+
+	m, perr := ParseMarketplace(".claude-plugin/marketplace.json", src)
+	if perr != nil {
+		t.Fatalf("ParseMarketplace error: %v", perr)
+	}
+
+	want := MarketplaceSource{
+		Kind:    SourceCommand,
+		Command: "resolve",
+		Timeout: "5000",
+		Mode:    "json",
+	}
+	if got := m.Plugins[0].SourceInfo; got != want {
+		t.Errorf("SourceInfo = %+v, want %+v", got, want)
+	}
+}

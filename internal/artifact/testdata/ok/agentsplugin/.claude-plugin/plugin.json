@@ -1,0 +1,9 @@
+{
+  "name": "agents-only",
+  "description": "Plugin whose only component is an agents directory.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Donald Gifford",
+    "email": "donald@example.com"
+  }
+}

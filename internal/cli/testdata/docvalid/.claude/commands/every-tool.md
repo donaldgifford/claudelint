@@ -1,0 +1,51 @@
+---
+description: Use when checking that allowed-tools accepts every documented tool name.
+allowed-tools:
+  - Agent
+  - Artifact
+  - AskUserQuestion
+  - Bash
+  - CronCreate
+  - CronDelete
+  - CronList
+  - Edit
+  - EndConversation
+  - EnterPlanMode
+  - EnterWorktree
+  - ExitPlanMode
+  - ExitWorktree
+  - Glob
+  - Grep
+  - LSP
+  - ListAgents
+  - ListMcpResourcesTool
+  - Monitor
+  - NotebookEdit
+  - PowerShell
+  - PushNotification
+  - Read
+  - ReadMcpResourceTool
+  - RemoteTrigger
+  - ReportFindings
+  - ScheduleWakeup
+  - SendFeedback
+  - SendMessage
+  - SendUserFile
+  - ShareOnboardingGuide
+  - Skill
+  - TaskCreate
+  - TaskGet
+  - TaskList
+  - TaskOutput
+  - TaskStop
+  - TaskUpdate
+  - TodoWrite
+  - ToolSearch
+  - WaitForMcpServers
+  - WebFetch
+  - WebSearch
+  - Workflow
+  - Write
+---
+
+Fixture command. The frontmatter above is the point; the body is not.

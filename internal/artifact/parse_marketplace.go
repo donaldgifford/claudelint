@@ -225,6 +225,23 @@ func classifyStringSource(source string) MarketplaceSource {
 	return MarketplaceSource{Kind: SourceLocal}
 }
 
+// numberOrString reads a key that the documentation spells as a number
+// but that manifests in the wild sometimes quote. Returning the raw
+// text lets the validating rule report the bad value verbatim instead
+// of silently seeing zero.
+func numberOrString(raw []byte, key string) string {
+	value, dt, _, err := jsonparser.Get(raw, key)
+	if err != nil {
+		return ""
+	}
+	switch dt {
+	case jsonparser.String, jsonparser.Number:
+		return string(value)
+	default:
+		return ""
+	}
+}
+
 // parseSourceObject types an object-form source by its "source"
 // discriminator and extracts that kind's documented fields. Unknown
 // or missing discriminators yield SourceInvalid so the source-valid
@@ -270,6 +287,19 @@ func parseSourceObject(raw []byte) MarketplaceSource {
 			Package:  get("package"),
 			Version:  get("version"),
 			Registry: get("registry"),
+		}
+	case SourceArchive:
+		return MarketplaceSource{
+			Kind:   SourceArchive,
+			URL:    get("url"),
+			SHA256: get("sha256"),
+		}
+	case SourceCommand:
+		return MarketplaceSource{
+			Kind:    SourceCommand,
+			Command: get("command"),
+			Timeout: numberOrString(raw, "timeout"),
+			Mode:    get("mode"),
 		}
 	default:
 		return MarketplaceSource{Kind: SourceInvalid}

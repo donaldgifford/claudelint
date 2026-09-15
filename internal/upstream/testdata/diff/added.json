@@ -1,0 +1,20 @@
+{
+  "changes": [
+    {
+      "path": "hooks.events",
+      "kind": "added",
+      "item": "PostModelSwitch"
+    },
+    {
+      "path": "hooks.events",
+      "kind": "added",
+      "item": "PreModelSwitch"
+    },
+    {
+      "path": "tools.builtin",
+      "kind": "added",
+      "item": "Task"
+    }
+  ],
+  "informational": []
+}

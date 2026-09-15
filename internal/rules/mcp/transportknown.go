@@ -35,20 +35,12 @@ const (
 	transportSSE   = "sse"
 )
 
-// knownTransports mirrors the documented `type` values (2026-07).
-var knownTransports = map[string]struct{}{
-	transportStdio: {},
-	"http":         {},
-	transportSSE:   {},
-	"ws":           {},
-}
-
 func (r *transportKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnostic {
 	s, ok := a.(*artifact.MCPServer)
 	if !ok || s.Transport == "" {
 		return nil
 	}
-	if _, known := knownTransports[s.Transport]; known {
+	if _, known := artifact.KnownTransports[s.Transport]; known {
 		return nil
 	}
 	return []diag.Diagnostic{{

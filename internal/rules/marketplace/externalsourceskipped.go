@@ -12,13 +12,18 @@ func init() { rules.Register(&externalSourceSkipped{}) }
 
 // externalSourceSkipped emits an info diagnostic for each plugins[]
 // entry whose source content genuinely cannot be checked locally:
-// remote string shorthands and the github/url/git-subdir/npm object
-// kinds. claudelint validates the source's structure (see
-// marketplace/plugin-source-valid) but does not fetch remote content —
-// this rule surfaces the entry so users know it was noticed and
-// skipped, not silently ignored. Local paths are checked in place;
-// absent or invalid sources are plugin-source-valid findings, not
-// skips, and are not double-reported here.
+// remote string shorthands and the github, url, git-subdir, npm,
+// archive, and command object kinds. claudelint validates the source's
+// structure (see marketplace/plugin-source-valid) but does not fetch
+// remote content — this rule surfaces the entry so users know it was
+// noticed and skipped, not silently ignored. Local paths are checked in
+// place; absent or invalid sources are plugin-source-valid findings,
+// not skips, and are not double-reported here.
+//
+// The wording is kind-aware because the reasons differ. Most kinds are
+// unlintable because the bytes live somewhere else. A command source is
+// unlintable because the bytes do not exist yet: they are whatever the
+// command prints when Claude Code runs it, which a linter will not do.
 type externalSourceSkipped struct{}
 
 func (*externalSourceSkipped) ID() string                     { return "marketplace/external-source-skipped" }
@@ -41,8 +46,8 @@ func (r *externalSourceSkipped) Check(_ rules.Context, a artifact.Artifact) []di
 	var out []diag.Diagnostic
 	for i := range m.Plugins {
 		p := &m.Plugins[i]
-		locator, remote := remoteLocator(p)
-		if !remote {
+		note, skipped := skipNote(p)
+		if !skipped {
 			continue
 		}
 		rng := p.SourceRange
@@ -53,35 +58,51 @@ func (r *externalSourceSkipped) Check(_ rules.Context, a artifact.Artifact) []di
 			RuleID:  r.ID(),
 			Path:    m.Path(),
 			Range:   rng,
-			Message: fmt.Sprintf("plugins[%d] source %s is remote — content not fetched or linted by claudelint", i, locator),
+			Message: fmt.Sprintf("plugins[%d] %s", i, note),
 		})
 	}
 	return out
 }
 
-// remoteLocator renders a remote source for the skip notice. remote
-// is false for local paths and for absent/invalid sources. The
-// legacy-string fallback covers hand-built artifacts that carry a
+// skipNote renders the whole notice for one source, because the reason
+// a source is unlintable is part of what the reader needs to hear.
+// skipped is false for local paths and for absent or invalid sources.
+// The legacy-string fallback covers hand-built artifacts that carry a
 // remote shorthand in Source without a parsed SourceInfo.
-func remoteLocator(p *artifact.MarketplacePlugin) (locator string, remote bool) {
+func skipNote(p *artifact.MarketplacePlugin) (note string, skipped bool) {
 	src := p.SourceInfo
 	switch src.Kind {
 	case artifact.SourceExternalString:
-		return fmt.Sprintf("%q", p.Source), true
+		return remoteNote(fmt.Sprintf("%q", p.Source)), true
 	case artifact.SourceGitHub:
-		return fmt.Sprintf("github %q", src.Repo), true
+		return remoteNote(fmt.Sprintf("github %q", src.Repo)), true
 	case artifact.SourceURL:
-		return fmt.Sprintf("url %q", src.URL), true
+		return remoteNote(fmt.Sprintf("url %q", src.URL)), true
 	case artifact.SourceGitSubdir:
-		return fmt.Sprintf("git-subdir %q path %q", src.URL, src.Path), true
+		return remoteNote(fmt.Sprintf("git-subdir %q path %q", src.URL, src.Path)), true
 	case artifact.SourceNPM:
-		return fmt.Sprintf("npm %q", src.Package), true
+		return remoteNote(fmt.Sprintf("npm %q", src.Package)), true
+	case artifact.SourceArchive:
+		return fmt.Sprintf(
+			"source archive %q is remote — the archive is not downloaded, unpacked, or linted by claudelint",
+			src.URL), true
+	case artifact.SourceCommand:
+		return fmt.Sprintf(
+			"source command %q is generated — claudelint does not run it, so the plugin it produces is not linted",
+			src.Command), true
 	case artifact.SourceAbsent:
 		if p.Source != "" && p.Resolved == "" {
-			return fmt.Sprintf("%q", p.Source), true
+			return remoteNote(fmt.Sprintf("%q", p.Source)), true
 		}
+
 		return "", false
 	default:
 		return "", false
 	}
+}
+
+// remoteNote is the wording shared by every kind whose content lives on
+// another machine.
+func remoteNote(locator string) string {
+	return "source " + locator + " is remote — content not fetched or linted by claudelint"
 }

@@ -261,7 +261,9 @@ func TestReservedName(t *testing.T) {
 		t.Errorf("ordinary name flagged: %v", d)
 	}
 
-	for _, bad := range []string{"anthropic-plugins", "healthcare", "claude-code-marketplace"} {
+	for _, bad := range []string{
+		"anthropic-plugins", "healthcare", "claude-code-marketplace", "claude-tag-plugins",
+	} {
 		m := newMarketplace(t,
 			`{"name":"`+bad+`","owner":{"name":"acme"},"plugins":[]}`)
 		d := (&reservedName{}).Check(nil, m)
@@ -281,6 +283,23 @@ func TestReservedName(t *testing.T) {
 		`{"name":"official-claude-plugins","owner":{"name":"acme"},"plugins":[]}`)
 	if d := (&reservedName{}).Check(nil, near); len(d) != 0 {
 		t.Errorf("impersonation heuristics should not fire locally: %v", d)
+	}
+}
+
+// TestReservedNameCoversEveryDocumentedName keeps the rule and the
+// published list in step. The upstream guardrail already compares the
+// two as sets; this proves each one actually produces a diagnostic.
+func TestReservedNameCoversEveryDocumentedName(t *testing.T) {
+	if got := len(artifact.ReservedMarketplaceNames); got != 17 {
+		t.Fatalf("len(artifact.ReservedMarketplaceNames) = %d, want 17", got)
+	}
+
+	for reserved := range artifact.ReservedMarketplaceNames {
+		m := newMarketplace(t,
+			`{"name":"`+reserved+`","owner":{"name":"acme"},"plugins":[]}`)
+		if d := (&reservedName{}).Check(nil, m); len(d) != 1 {
+			t.Errorf("%s: got %d diagnostics, want 1 (%v)", reserved, len(d), d)
+		}
 	}
 }
 
@@ -435,5 +454,121 @@ func TestRenamesValid(t *testing.T) {
 				t.Errorf("message = %q, want substring %q", d[0].Message, tc.wantSub)
 			}
 		})
+	}
+}
+
+func TestPluginSourceValidArchiveAndCommand(t *testing.T) {
+	const goodDigest = "3b1f2c4d5e6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
+
+	cases := []struct {
+		name   string
+		source string
+		wantN  int
+		want   string
+	}{
+		{
+			name:   "archive ok",
+			source: `{"source":"archive","url":"https://d.example.com/p.tar.gz","sha256":"` + goodDigest + `"}`,
+		},
+		{
+			name:   "archive without a digest is allowed",
+			source: `{"source":"archive","url":"https://d.example.com/p.tar.gz"}`,
+		},
+		{
+			name:   "archive missing url",
+			source: `{"source":"archive"}`,
+			wantN:  1,
+			want:   `requires a non-empty "url"`,
+		},
+		{
+			name:   "archive over plain http",
+			source: `{"source":"archive","url":"http://d.example.com/p.tar.gz"}`,
+			wantN:  1,
+			want:   "must use https",
+		},
+		{
+			name:   "archive with a short digest",
+			source: `{"source":"archive","url":"https://d.example.com/p.tar.gz","sha256":"abc123"}`,
+			wantN:  1,
+			want:   "64-character hex digest",
+		},
+		{
+			name:   "archive with a non-hex digest",
+			source: `{"source":"archive","url":"https://d.example.com/p.tar.gz","sha256":"` + strings.Repeat("z", 64) + `"}`,
+			wantN:  1,
+			want:   "64-character hex digest",
+		},
+		{
+			name:   "command ok",
+			source: `{"source":"command","command":"resolve","timeout":30000,"mode":"json"}`,
+		},
+		{
+			name:   "command missing command",
+			source: `{"source":"command"}`,
+			wantN:  1,
+			want:   `requires a non-empty "command"`,
+		},
+		{
+			name:   "command with blank command",
+			source: `{"source":"command","command":"   "}`,
+			wantN:  1,
+			want:   `requires a non-empty "command"`,
+		},
+		{
+			name:   "command with a quoted timeout",
+			source: `{"source":"command","command":"resolve","timeout":"5000"}`,
+		},
+		{
+			name:   "command with a non-numeric timeout",
+			source: `{"source":"command","command":"resolve","timeout":"soon"}`,
+			wantN:  1,
+			want:   "not a positive integer",
+		},
+		{
+			name:   "command with a zero timeout",
+			source: `{"source":"command","command":"resolve","timeout":0}`,
+			wantN:  1,
+			want:   "not a positive integer",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMarketplace(t,
+				`{"name":"m","version":"1.0.0","plugins":[{"name":"p","source":`+tc.source+`}]}`)
+
+			d := (&pluginSourceValid{}).Check(nil, m)
+			if len(d) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(d), tc.wantN, d)
+			}
+			if tc.want != "" && !strings.Contains(d[0].Message, tc.want) {
+				t.Errorf("message %q does not mention %q", d[0].Message, tc.want)
+			}
+		})
+	}
+}
+
+// TestExternalSourceSkippedWordsEachKind is why the notice is built per
+// kind: an archive is somewhere else, a command source is nowhere yet,
+// and telling a reader the second is "remote" would be a lie.
+func TestExternalSourceSkippedWordsEachKind(t *testing.T) {
+	m := newMarketplace(t, `{"name":"m","version":"1.0.0","plugins":[
+		{"name":"arc","source":{"source":"archive","url":"https://d.example.com/p.tar.gz"}},
+		{"name":"cmd","source":{"source":"command","command":"resolve"}}
+	]}`)
+
+	d := (&externalSourceSkipped{}).Check(nil, m)
+	if len(d) != 2 {
+		t.Fatalf("want 2 info diagnostics, got %d (%v)", len(d), d)
+	}
+
+	if !strings.Contains(d[0].Message, "archive") || !strings.Contains(d[0].Message, "not downloaded") {
+		t.Errorf("archive notice = %q", d[0].Message)
+	}
+	if !strings.Contains(d[1].Message, "generated") || !strings.Contains(d[1].Message, "does not run it") {
+		t.Errorf("command notice = %q", d[1].Message)
+	}
+	if strings.Contains(d[1].Message, "remote") {
+		t.Errorf("a command source is not remote: %q", d[1].Message)
 	}
 }

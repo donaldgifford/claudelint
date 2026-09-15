@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "path": "hooks.events",
+      "kind": "removed",
+      "item": "SessionStart"
+    },
+    {
+      "path": "hooks.timeout_defaults.by_type",
+      "kind": "removed",
+      "item": "prompt",
+      "old": 30
+    }
+  ],
+  "informational": []
+}

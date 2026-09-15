@@ -1,0 +1,20 @@
+{
+  "changes": [],
+  "informational": [
+    {
+      "path": "meta",
+      "kind": "changed",
+      "item": "claude_code_latest",
+      "old": "2.1.270",
+      "new": "2.1.271"
+    },
+    {
+      "path": "schemastore.plugin_manifest.hook_events",
+      "kind": "added",
+      "item": "Notification"
+    }
+  ],
+  "sources_changed": [
+    "claudecode.changelog"
+  ]
+}
