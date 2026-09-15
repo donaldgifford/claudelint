@@ -501,10 +501,10 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
       `internal/cli` reads `upstream.LoadEmbedded()` (import direction
       `cli → upstream`; `upstream` imports nothing from `cli`, `engine`,
       or `rules`).
-- [ ] CLAUDE.md "Project status" paragraph and the `version` output shape
+- [x] CLAUDE.md "Project status" paragraph and the `version` output shape
       note in `internal/cli/version.go` updated; DESIGN-0006 gains an
       "Implemented by IMPL-0005" note and moves to Implemented.
-- [ ] Dogfood: `just self-check`; confirm `claudelint version` on the
+- [x] Dogfood: `just self-check`; confirm `claudelint version` on the
       release binary prints the spec line.
 - [ ] Flip this doc to Completed; PR labelled `minor`; `just ci` green.
 

@@ -4,13 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Phase 1 MVP shipped as v0.0.1. Phase 2 shipped as **v0.1.0** (PR [#9](https://github.com/donaldgifford/claudelint/pull/9) merged 2026-04-25 → release published the same day). Patch **v0.1.1** shipped via PR [#18](https://github.com/donaldgifford/claudelint/pull/18) — fixed the `hooks/timeout-present` false-positive on plugin `hooks/hooks.json` (issue #14). PR [#19](https://github.com/donaldgifford/claudelint/pull/19) is queued as **v0.2.0** with three more `claude-skills` migration items (issues #15/#16/#17).
+Latest release is **v0.3.1** (2026-09-11). Ruleset is **v1.6.0**, fingerprint `3247787b`, spec digest `v2.1.269`. Releases are label-driven — see Git / PR conventions below.
 
-After PR #19 merges, ruleset will be `v1.2.0`, fingerprint `e7f26796`, with the catalog covering: 8 marketplace rules, 7 MCP rules (added `mcp/server-allowlist`), 4 hook rules, 3 skill rules (added `skills/no-version-field`), plus the original schema/security/style/claude_md/commands/plugin rules. (IMPL-0002 calls Phase 2 "v0.2.0" throughout — that was the planning name; semver math from `v0.0.1 + minor` actually produces `v0.1.0`. The `v0.2.0` queued via PR #19 is a coincidence with that name.)
+Shipped so far, by planning phase (the release numbers do not line up with the phase numbers; IMPL-0002 calls Phase 2 "v0.2.0", but semver from `v0.0.1 + minor` produced `v0.1.0`):
 
-Phase 2 delivered: two new artifact kinds (`KindMarketplace`, `KindMCPServer`), the marketplace + MCP rule packages, `Rule.HelpURI()`, `claudelint rules --json`, `--format=sarif` with vendored SARIF 2.1.0 schema validation, a multi-arch `ghcr.io/donaldgifford/claudelint` image via goreleaser (tags: `0.1.0`, `v0`, `v0.1`, `latest`), and companion-action scaffolding at `companion/claudelint-action/` ready to push to `donaldgifford/claudelint-action`. INV-0005 captures the `donaldgifford/claude-skills` dogfood pass; two false positives (nested marketplace shape, missing `AskUserQuestion`) were fixed in-flight.
+- **Phase 1** (v0.0.1) — parsers, engine, rules, CLI. Dogfooding in INV-0003.
+- **Phase 2** (v0.1.0) — `KindMarketplace` and `KindMCPServer`, the marketplace + MCP rule packages, `Rule.HelpURI()`, `rules --json`, `--format=sarif` with vendored schema validation, the multi-arch `ghcr.io/donaldgifford/claudelint` image, and companion-action scaffolding under `companion/claudelint-action/`. Dogfooding in INV-0005.
+- **IMPL-0003** (v0.3.0) — the dual-output docs site; `https://claudelint.dev` is live.
+- **IMPL-0004** — ruleset alignment and the agent rules (ruleset v1.5.0).
+- **IMPL-0005** — the `specdrift` dev tool, the upstream guardrail, and the rendered spec page. See the Upstream spec drift bullet under Git / PR conventions.
 
-`run` supports `--format=text|json|github|sarif`, `--sarif-file=<path>`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `just self-check`, `just coverage-gate`, `just bench`, and `just profile` are all wired. Phase 1 dogfooding captured in INV-0003.
+`run` supports `--format=text|json|github|sarif`, `--sarif-file=<path>`, `--quiet`, `--verbose`, `--max-warnings=N`, `--no-color`, `--profile=<dir>` (pprof), and exit codes (0/1/2). `just self-check`, `just coverage-gate`, `just bench`, and `just profile` are all wired.
 
 The architecture and phased rollout are specified in `docs/` — **read the docs before writing code**:
 
@@ -20,8 +24,9 @@ The architecture and phased rollout are specified in `docs/` — **read the docs
 - `docs/design/0002-*.md` — Phase 2 architecture: marketplaces, MCP rules, GitHub Action, SARIF
 - `docs/impl/0001-*.md` — Phase 1 task breakdown
 - `docs/impl/0002-*.md` — Phase 2 task breakdown with success criteria per sub-phase
+- `docs/design/0006-*.md` + `docs/impl/0005-*.md` — upstream spec drift detection: the digest, the guardrail, the runtime validator, and the rendered spec page
 
-Phase 2 is shipped. The next outstanding work is bootstrapping the `donaldgifford/claudelint-action` repo from `companion/claudelint-action/` (instructions in `companion/README.md`) and tagging it `v1.0.0` once its own test workflow is green. After that, Phase 3 (`convert` subcommand, gated on INV-0001) is the next planned phase. When extending an existing phase or planning a new one, follow the corresponding IMPL doc in order; do not improvise architecture that contradicts the matching DESIGN doc without updating it first.
+Outstanding work: bootstrap the `donaldgifford/claudelint-action` repo from `companion/claudelint-action/` (instructions in `companion/README.md`) and tag it `v1.0.0` once its own test workflow is green. The `convert` subcommand (gated on INV-0001) is the next planned feature. When extending an existing phase or planning a new one, follow the corresponding IMPL doc in order; do not improvise architecture that contradicts the matching DESIGN doc without updating it first.
 
 ## Architecture (target)
 
@@ -55,6 +60,8 @@ Key decisions already locked in (see IMPL-0001 "Resolved Decisions"):
 - **Hook parser accepts one canonical nested shape only** — see DESIGN-0001 §Hook shape. Settings files, plugin `hooks/hooks.json`, and `.claude/hooks/*.json` all use `{"hooks": {"<EventName>": [{"matcher", "hooks": [...]}]}}`. A dedicated hook file missing the `hooks` key fails parsing loudly. The pre-#14 flat `{event, matcher, command, timeout}` shape was a parser-author assumption and is no longer accepted.
 - **Range emission helpers for new rules:** for rules that walk `Source()` bytes (regex matches, etc.), use `artifact.ResolveOffsetRange(src, start, end)` to convert byte offsets to a `diag.Range`. For rules that target a frontmatter key, use `s.Frontmatter.KeyRange("<key>")`. Pre-parsed fields already carry their own ranges (e.g. `MCPServer.NameRange`, `Skill.Body`). File-level `(0,0)` ranges break per-line suppression markers — never emit them for content rules.
 - **Canonical data lives in `internal/artifact` and is guarded by a test, not by review.** `KnownTools` (46 names), `KnownHookEvents` (33), `ReservedMarketplaceNames` (17), the transport set, the timeout defaults, and the five exported frontmatter key slices (`SkillFrontmatterKeys`, `CommandFrontmatterKeys`, `AgentFrontmatterKeys`, `PluginManifestKeys`, `HookEntryKeys`) are compared against `internal/upstream/digest.json` by `TestGuardrail` in `internal/upstream/guard_test.go`, offline, on every `just test`. Parsers read keys through those slices so a list cannot drift from the parser that uses it. **A deliberate deviation goes in `internal/upstream/acknowledged.json` with a reason naming the rule or phase that would resolve it** — an acknowledgement whose item is no longer a difference fails the test, so the file self-cleans. Growing a canonical list is a ruleset **version** bump even though it leaves the fingerprint untouched; see the `RulesetVersion` doc comment.
+- **`claudelint version` prints three lines, not two.** `claudelint <v> (<commit>)`, `ruleset <v> (<fingerprint>)`, `spec <docs-marker> (<digest-fingerprint>)`. The spec line answers the question a bug report cannot otherwise: which documentation revision the binary's canonical lists came from. `rules --json` carries the same value as `upstream_version` (additive; `schema_version` stays `"1"`). Both read `internal/upstream/spec`, a **leaf package holding only the embedded digest** — importing the parent `internal/upstream` from the CLI pulls `net/http` and every extractor onto the release binary and costs 1.3 MB. Keep that import direction: `cli → upstream/spec`, never `cli → upstream`.
+- **`docs/rules/upstream-spec.md` is generated, never edited.** `just spec-render` writes it from the digest, the acknowledgement file, and `upstream.DefaultCoverage()`. `render --check` runs in `ci.yml`'s lint job and in `just docs-check`, and a Go test compares the committed page with a fresh render, so a digest change with no re-render fails three ways. The coverage column has three states: `yes` (claudelint reads it), `no` (documented, nothing reads it yet — the reason names the rule that would), and `—` (claudelint has no opinion about the section).
 - **A renamed or removed tool is not an unknown tool.** `artifact.DeprecatedTools` maps a tool name to `{Status, Since, ReplacedBy, Source}`; both tools-known rules consult it first, so `BashOutput` reports "removed in v2.0.64; use TaskOutput" rather than "unknown tool". `deprecated` entries are still documented and produce no diagnostic. The table is rendered in `docs/rules/rules.md` under `agents/tools-known` and guarded row-for-row. Note the blast radius: `commands/allowed-tools-known` is an **error** rule, so a repo declaring the still-working `Task` alias goes from clean to failing on ruleset v1.6.0.
 - **Opt-in rules use the engine-level mechanism from DESIGN-0005** (supersedes the old "inside the rule" pattern — the revisit condition was met when `agents/model-policy` became the second opt-in rule). A rule implements the `rules.OptIn` interface; the engine skips it entirely unless `.claudelint.hcl` carries a `rule "<id>"` block (empty block enables; `enabled = false` inside still disables). `claudelint rules` shows `(opt-in)`; `rules --json` carries `opt_in`. `mcp/server-allowlist` migrates to this in IMPL-0004 Phase 4, keeping its loud config-error only for explicit enables without an `allowlist`.
 
@@ -78,9 +85,11 @@ Everything funnels through `just` (see `justfile` + `docker.just`). The CLI is i
 - `just docs-check` — `astro check` (type + content collection diagnostics) on `site/`
 - `just docs-install` — install Node deps in `site/` (idempotent; run after pulling)
 - `just spec-check` — diff the committed upstream spec digest against live upstream (**network**; exits 0 clean / 1 drift / 2 could-not-decide)
-- `just spec-sync` — regenerate `internal/upstream/digest.json` + `sources.lock.json` from live upstream (**network**)
+- `just spec-sync` — regenerate `internal/upstream/spec/digest.json` + `sources.lock.json` from live upstream (**network**)
+- `just spec-render` — regenerate `docs/rules/upstream-spec.md` from the committed digest (offline; also wired into `just docs-check` as `render --check`)
+- `just spec-validate-fixtures` — ask the Claude Code runtime whether it agrees with the committed fixtures (**needs a local `claude`**)
 
-The two `spec-*` recipes deliberately join neither `check` nor `ci` — a linter's test suite must not depend on Anthropic's CDN being up.
+`spec-check`, `spec-sync`, and `spec-validate-fixtures` deliberately join neither `check` nor `ci` — a linter's test suite must not depend on Anthropic's CDN being up, or on a Node CLI being installed. `spec-render` is offline and its `--check` form runs in CI.
 
 Running a single Go test: `go test -run TestFoo ./internal/rules/skills` (or use `just test-pkg`).
 
