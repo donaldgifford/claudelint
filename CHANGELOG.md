@@ -46,6 +46,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - Mark DESIGN-0006 implemented and refresh the project status
 - *(impl)* Close out IMPL-0005
 - *(impl)* Record the CI runtime validation result
+- *(impl)* Mark IMPL-0005 completed in the body status block
 
 ### Styling
 
