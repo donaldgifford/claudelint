@@ -10,9 +10,14 @@ created: 2026-09-13
 
 # IMPL-0005: Phase 5 — Upstream spec drift detection
 
-**Status:** In Progress
+**Status:** Completed
 **Author:** Donald Gifford
 **Date:** 2026-09-13
+
+All three phases landed on `feat/impl-0005-spec-drift-tool` (PR #59).
+One Phase 1 task is **deferred - human required**: the three-dispatch
+issue-lifecycle sequence needs the workflow on the default branch, so it
+cannot run from a working copy. Everything else is done and verified.
 
 <!--toc:start-->
 - [Objective](#objective)
