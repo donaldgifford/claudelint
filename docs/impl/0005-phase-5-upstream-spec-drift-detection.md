@@ -265,9 +265,11 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       with `scripts/labels.sh`. Run the three dispatches immediately
       after merge.
 
-      Phase 3 added a second half to the same job, so the post-merge
-      dispatch now also proves the runtime steps: the first run should
-      report six agreeing fixtures and a `contents`-empty probe. The
+      Phase 3 added a second half to the same job. Its steps have
+      already been exercised by the pull-request trigger (run
+      34997855440: Node installed, CLI installed, six fixtures agreed
+      against v2.1.272), so what the post-merge dispatch adds is only
+      the issue lifecycle. The
       runtime half carries `continue-on-error` at every step, so a
       failure there shows up as a "did not run" section in the report
       rather than as a red job — check the report, not just the job
@@ -533,10 +535,15 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
 
 #### Phase 3 results (2026-09-15)
 
-`validate-fixtures` against the locally installed CLI, v2.1.259: all six
-fixtures agree, and the `skills/` probe confirms `contents` is still
-empty, so the coverage claim holds. CI runs it against `@latest`, which
-may differ on merge day; that is what the tracking issue is for.
+`validate-fixtures` agrees on all six fixtures against two runtimes: the
+locally installed CLI at v2.1.259, and `@latest` at v2.1.272 in the PR
+run of `spec-drift.yml` (run 34997855440). The `skills/` probe confirms
+`contents` is still empty in both, so the coverage claim holds.
+
+That PR run also proves the Phase 3 workflow wiring end to end without
+waiting for merge: mise installed the pinned Node, npm installed the
+CLI, `validate-fixtures` produced its report, and the append and decide
+steps folded it into the drift report.
 
 Probing the real validator turned up three things the published tables
 do not say, all on `command` marketplace sources:
