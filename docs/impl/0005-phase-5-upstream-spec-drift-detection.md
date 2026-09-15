@@ -1,7 +1,7 @@
 ---
 id: IMPL-0005
 title: "Phase 5 — Upstream spec drift detection"
-status: In Progress
+status: Completed
 author: Donald Gifford
 created: 2026-09-13
 ---
@@ -30,6 +30,7 @@ created: 2026-09-13
   - [Phase 3 — Runtime validator and rendered page](#phase-3--runtime-validator-and-rendered-page)
     - [Tasks](#tasks-2)
     - [Success Criteria](#success-criteria-2)
+    - [Phase 3 results (2026-09-15)](#phase-3-results-2026-09-15)
 - [File Changes](#file-changes)
 - [Testing Plan](#testing-plan)
 - [Dependencies](#dependencies)
@@ -263,6 +264,15 @@ Branch `chore/spec-drift-tool`; label per OQ1.
       `shellcheck` are clean; and the `spec-drift` label was created
       with `scripts/labels.sh`. Run the three dispatches immediately
       after merge.
+
+      Phase 3 added a second half to the same job, so the post-merge
+      dispatch now also proves the runtime steps: the first run should
+      report six agreeing fixtures and a `contents`-empty probe. The
+      runtime half carries `continue-on-error` at every step, so a
+      failure there shows up as a "did not run" section in the report
+      rather than as a red job — check the report, not just the job
+      colour. This is the only item in IMPL-0005 that cannot be
+      completed from a working copy.
 - [x] CLAUDE.md: add `just spec-check` / `just spec-sync` to Common
       commands and a "Upstream spec drift" bullet under Git / PR
       conventions describing the workflow, the label, and the rule that
@@ -506,7 +516,7 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
       "Implemented by IMPL-0005" note and moves to Implemented.
 - [x] Dogfood: `just self-check`; confirm `claudelint version` on the
       release binary prints the spec line.
-- [ ] Flip this doc to Completed; PR labelled `minor`; `just ci` green.
+- [x] Flip this doc to Completed; PR labelled `minor`; `just ci` green.
 
 #### Success Criteria
 
@@ -520,6 +530,39 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
   `upstream_version` and still matches `docs/rules-json-schema.md`.
 - `just ci` green; minor release ships; DESIGN-0006 Implemented;
   IMPL-0005 Completed.
+
+#### Phase 3 results (2026-09-15)
+
+`validate-fixtures` against the locally installed CLI, v2.1.259: all six
+fixtures agree, and the `skills/` probe confirms `contents` is still
+empty, so the coverage claim holds. CI runs it against `@latest`, which
+may differ on merge day; that is what the tracking issue is for.
+
+Probing the real validator turned up three things the published tables
+do not say, all on `command` marketplace sources:
+
+| Finding | Detail |
+| --- | --- |
+| `timeout` unit and bound | Seconds, capped at 600. The docs give neither. |
+| `timeout` type | Must be a number; the quoted form the parser tolerates is rejected. |
+| `mode` | Documented as optional, rejected by v2.1.259. |
+
+`marketplace/plugin-source-valid` deliberately does **not** enforce the
+600-second cap. A limit claudelint cannot cite to the documentation is a
+limit the guardrail cannot keep honest, and the rule would then be
+asserting a fact no committed artifact records. The `mode` rejection is
+a docs-versus-runtime disagreement rather than a claudelint bug, and it
+is the exact class of finding the runtime job exists to surface.
+
+The rendered page builds in both pipelines: Starlight (`just docs-build`,
+37 pages) and MkDocs (`just docs-mkdocs-check`, strict). `render --check`
+was verified in both directions by removing one tool from the digest and
+restoring it.
+
+`render --check` now guards the page three ways: the `ci.yml` lint job,
+`just docs-check`, and a Go test comparing the committed page with a
+fresh render. That last one is the only guard that runs without anyone
+remembering to.
 
 ---
 
@@ -535,7 +578,9 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
 | `internal/upstream/command.go` | Create | cobra wiring for `pull`, `digest`, `diff`, `check`, `render`, `validate-fixtures` |
 | `internal/upstream/render.go`, `validate.go` | Create | Phase 3: docs page renderer, runtime-validator driver |
 | `internal/upstream/guard_test.go` | Create | Phase 2 guardrail |
-| `internal/upstream/digest.json`, `sources.lock.json` | Create | Committed last-known digest and lock (embedded) |
+| `internal/upstream/spec/spec.go`, `spec/digest.json` | Create | Leaf package holding the embedded digest and its version line, so the release binary does not import the fetcher (Phase 3) |
+| `internal/upstream/sources.lock.json` | Create | Committed source lock |
+| `internal/upstream/coverage.go` | Create | The one file importing `internal/artifact`; what the renderer means by "claudelint reads this" (Phase 3) |
 | `internal/upstream/acknowledged.json`, `runtime_fixtures.json` | Create | Deliberate deviations; runtime fixture manifest |
 | `internal/upstream/testdata/snippets/**` | Create | Golden section snippets per extractor |
 | `cmd/specdrift/main.go` | Create | Thin main |
@@ -544,6 +589,7 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
 | `internal/rules/marketplace/reservedname.go`, `pluginsourcevalid.go`, `externalsourceskipped.go` | Modify | `claude-tag-plugins`; archive and command handling |
 | `internal/rules/version.go` | Modify | Ruleset bump; doc comment covers known-data changes |
 | `internal/cli/version.go`, `rules.go` | Modify | Spec line; `upstream_version` |
+| `internal/rules/mcp/transportknown.go` | Modify | `KnownTransports` moved to `internal/artifact` with the rest of the canonical data |
 | `internal/artifact/testdata/ok/**`, `bad/**` | Create | New-event hooks file, new-tool agent and skill, archive-and-command marketplace, runtime fixtures |
 | `.github/workflows/spec-drift.yml` | Create | Weekly drift workflow |
 | `scripts/spec-drift-issue.sh`, `scripts/labels.sh` | Create / Modify | Issue lifecycle; `spec-drift` label |
@@ -551,7 +597,8 @@ Branch `chore/spec-drift-runtime`; label `minor` (the `version` and
 | `.github/workflows/ci.yml` | Modify | `render --check` step (Phase 3, per OQ9) |
 | `docs/rules/upstream-spec.md` | Create | Rendered digest page |
 | `docs/rules/rules.md`, `README.md`, `docs/rules-json-schema.md`, `CLAUDE.md` | Modify | Event and tool tables, reserved names, source kinds, JSON field, commands and conventions |
-| `docs/design/0006-*.md` | Modify | §7 row for `HookEntryKeys`; implemented-by note |
+| `docs/design/0006-*.md` | Modify | §7 rows for `HookEntryKeys` and `DeprecatedTools`; implemented-by note; status Implemented |
+| `mkdocs.yml` | Modify | Nav entry for the rendered spec page (the Starlight sidebar picks it up automatically) |
 
 ## Testing Plan
 
