@@ -27,6 +27,10 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - *(specdrift)* Add the runtime validator and the rendered spec page
 - *(cli)* Print the spec version and carry it in rules --json
 
+### Bug Fixes
+
+- Stop gitignore swallowing internal/upstream/coverage.go
+
 ### Refactor
 
 - *(artifact)* Name the keys the parsers read
