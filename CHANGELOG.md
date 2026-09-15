@@ -56,6 +56,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 - *(upstream)* Assert exit 2 when an anchor is gone
 - *(cli)* Lint a doc-valid fixture tree and require it clean
+- *(artifact)* Check the deprecated-tools doc table against the map
 
 ### Miscellaneous Tasks
 
