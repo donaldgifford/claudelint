@@ -45,6 +45,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - Record the Phase 2 guardrail contract in CLAUDE.md
 - Mark DESIGN-0006 implemented and refresh the project status
 - *(impl)* Close out IMPL-0005
+- *(impl)* Record the CI runtime validation result
 
 ### Styling
 
