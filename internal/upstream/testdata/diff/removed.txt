@@ -1,0 +1,2 @@
+- hooks.events: SessionStart
+- hooks.timeout_defaults.by_type: prompt

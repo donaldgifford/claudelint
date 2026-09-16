@@ -1,0 +1,10 @@
+{
+  "name": "skills-only",
+  "description": "Plugin whose only component is a skills directory.",
+  "version": "1.0.0",
+  "skills": "./skills/",
+  "author": {
+    "name": "Donald Gifford",
+    "email": "donald@example.com"
+  }
+}

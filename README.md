@@ -164,7 +164,7 @@ A typo in a `rule "<id>"` block does *not* silently disable the real
 rule. `claudelint` emits a `meta/unknown-rule` warning pointing at the
 offending config so the typo is visible.
 
-## Rules (ruleset v1.5)
+## Rules (ruleset v1.6)
 
 Every rule is built into the binary. The fingerprint under
 `claudelint version` changes whenever rules are added, removed, or
@@ -327,6 +327,11 @@ comma/space-separated string forms are understood.
 **Bad**: `allowed-tools: [WriteFil]` (typo)
 **Fix**: `allowed-tools: [Write]`.
 
+A tool upstream renamed or removed is reported with its replacement
+("`BashOutput` was removed in v2.0.64; use `TaskOutput`") rather than as
+a typo. The table lives in
+[docs/rules/rules.md](docs/rules/rules.md).
+
 #### `hooks/event-name-known`
 
 Each top-level key under `"hooks"` is the event name. It must match
@@ -336,10 +341,11 @@ one of the known Claude Code hook events (`PreToolUse`, `PostToolUse`,
 **Bad**: `"PretoolUse": [...]` (wrong case / typo)
 **Fix**: `"PreToolUse": [...]`.
 
-The canonical list mirrors the 30 events in the
+The canonical list mirrors the 33 events in the
 [hooks reference](https://code.claude.com/docs/en/hooks); when a name
 matches a known event apart from casing, the diagnostic suggests the
-exact spelling.
+exact spelling. The full lifecycle table lives in
+[docs/rules/rules.md](docs/rules/rules.md).
 
 #### `hooks/timeout-present`
 

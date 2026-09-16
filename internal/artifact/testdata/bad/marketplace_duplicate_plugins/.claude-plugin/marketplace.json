@@ -1,0 +1,18 @@
+{
+  "name": "duplicate-plugins",
+  "version": "1.0.0",
+  "owner": {
+    "name": "Donald Gifford",
+    "email": "donald@example.com"
+  },
+  "plugins": [
+    {
+      "name": "formatter",
+      "source": "./plugins/formatter"
+    },
+    {
+      "name": "formatter",
+      "source": "./plugins/formatter-two"
+    }
+  ]
+}

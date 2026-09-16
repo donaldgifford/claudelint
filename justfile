@@ -222,6 +222,7 @@ docs-build:
 # Run astro check (type + content collection diagnostics) on site/
 [group('docs')]
 docs-check:
+    @go run ./cmd/specdrift render --check
     @cd site && npm run check
 
 # Install Node deps in site/ (idempotent — run after pulling)
@@ -237,6 +238,39 @@ docs-install:
 docs-mkdocs-check:
     @uvx --from mkdocs --with mkdocs-techdocs-core mkdocs build --strict -d {{ build_dir }}/mkdocs
     @echo "✓ mkdocs --strict passed (output discarded in {{ build_dir }}/mkdocs)"
+
+# ─── Upstream spec drift ────────────────────────────────────────────
+#
+# These two recipes reach the network. They are deliberately not part of
+# `check` or `ci`: a linter's test suite must not depend on Anthropic's
+# CDN being up. The weekly spec-drift workflow runs `spec-check` for us.
+
+# Check the committed spec digest against live upstream (network; 0/1/2)
+[group('spec')]
+spec-check *ARGS:
+    @go run ./cmd/specdrift check {{ ARGS }}
+
+# Run this in the same PR as any code that catches up to a change, and
+# commit both internal/upstream/digest.json and sources.lock.json.
+# Regenerate the committed spec digest and source lock (network)
+[group('spec')]
+spec-sync:
+    @go run ./cmd/specdrift check --update
+
+# Rewrite docs/rules/upstream-spec.md from the committed digest. No
+# network: it reads internal/upstream/digest.json.
+# Regenerate the rendered upstream spec page
+[group('spec')]
+spec-render:
+    @go run ./cmd/specdrift render
+
+# Cross-check the committed fixtures against the Claude Code runtime's
+# own validator. Needs a local `claude` on PATH, which is why it joins
+# neither `check` nor `ci`.
+# Ask the Claude Code runtime whether it agrees with our fixtures
+[group('spec')]
+spec-validate-fixtures *ARGS:
+    @go run ./cmd/specdrift validate-fixtures {{ ARGS }}
 
 # ─── Composite gates ────────────────────────────────────────────────
 

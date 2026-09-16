@@ -74,3 +74,50 @@ func TestAllowedToolsKnownRunsOnSkills(t *testing.T) {
 		t.Errorf("valid skill tool list should pass, got %v", d)
 	}
 }
+
+// TestAllowedToolsKnownReportsSupersededTools mirrors the agents-side
+// test: a command declaring a tool the docs dropped is told what
+// replaced it, rather than being told to check its spelling.
+func TestAllowedToolsKnownReportsSupersededTools(t *testing.T) {
+	tests := []struct {
+		name    string
+		tools   string
+		wantN   int
+		wantAll []string
+	}{
+		{
+			name:    "removed tool names its replacement",
+			tools:   "MultiEdit",
+			wantN:   1,
+			wantAll: []string{"MultiEdit", "v2.1.268", "Edit", "allowed-tools"},
+		},
+		{
+			name:    "renamed tool names the new name",
+			tools:   "Task",
+			wantN:   1,
+			wantAll: []string{"Task", "renamed", "Agent"},
+		},
+		{name: "deprecated but documented tool is fine", tools: "TaskOutput"},
+		{name: "newly documented tool is fine", tools: "TaskCreate"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			src := []byte("---\ndescription: x\nallowed-tools: [Read, " + tc.tools + "]\n---\n")
+			c, perr := artifact.ParseCommand("c.md", src)
+			if perr != nil {
+				t.Fatalf("ParseCommand() error = %v", perr)
+			}
+
+			got := (&allowedToolsKnown{}).Check(nil, c)
+			if len(got) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(got), tc.wantN, got)
+			}
+			for _, want := range tc.wantAll {
+				if !strings.Contains(got[0].Message, want) {
+					t.Errorf("message %q does not mention %q", got[0].Message, want)
+				}
+			}
+		})
+	}
+}

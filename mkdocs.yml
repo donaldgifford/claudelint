@@ -46,6 +46,7 @@ nav:
     - Rules:
         - Exit Codes: rules/exit-codes.md
         - Rules: rules/rules.md
+        - Upstream Spec: rules/upstream-spec.md
 plugins:
     - techdocs-core
 site_description: Documentation for claudelint

@@ -1,0 +1,39 @@
+[
+  {
+    "expect": "pass",
+    "kind": "plugin",
+    "note": "the plugin-root detection fixture; the baseline manifest shape",
+    "path": "internal/artifact/testdata/ok/pluginroot"
+  },
+  {
+    "expect": "pass",
+    "kind": "plugin",
+    "note": "agents/ directory picked up by convention; an explicit agents string must end in .md",
+    "path": "internal/artifact/testdata/ok/agentsplugin"
+  },
+  {
+    "expect": "pass",
+    "kind": "plugin",
+    "note": "the skills/ probe: contents must stay empty, which is what bounds claudelint's coverage claim",
+    "path": "internal/artifact/testdata/ok/skillsplugin",
+    "probe": "contents-empty"
+  },
+  {
+    "expect": "pass",
+    "kind": "marketplace",
+    "note": "archive and command source kinds, at values the docs and the runtime both accept",
+    "path": "internal/artifact/testdata/ok/marketplaces/archive_command"
+  },
+  {
+    "expect": "fail",
+    "kind": "plugin",
+    "note": "manifest with no name",
+    "path": "internal/artifact/testdata/bad/pluginroot_missing_name"
+  },
+  {
+    "expect": "fail",
+    "kind": "marketplace",
+    "note": "two plugins sharing one name",
+    "path": "internal/artifact/testdata/bad/marketplace_duplicate_plugins"
+  }
+]

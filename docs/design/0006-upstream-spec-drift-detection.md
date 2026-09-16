@@ -1,7 +1,7 @@
 ---
 id: DESIGN-0006
 title: "Upstream spec drift detection"
-status: Draft
+status: Implemented
 author: Donald Gifford
 created: 2026-09-12
 ---
@@ -10,9 +10,15 @@ created: 2026-09-12
 
 # DESIGN-0006: Upstream spec drift detection
 
-**Status:** Draft
+**Status:** Implemented
 **Author:** Donald Gifford
 **Date:** 2026-09-12
+
+**Implemented by** [IMPL-0005](../impl/0005-phase-5-upstream-spec-drift-detection.md),
+across three phases landed on `feat/impl-0005-spec-drift-tool`. Places
+where the shipped design differs are marked in-place; the two largest
+are the lock's fields (§4) and the guardrail table's two extra rows
+(§7).
 
 <!--toc:start-->
 - [Overview](#overview)
@@ -309,7 +315,8 @@ Rules every extractor follows:
     "docs_max_marker": "v2.1.268"
   },
   "tools": {
-    "builtin": ["Agent", "Artifact", "AskUserQuestion", "Bash", "..."]
+    "builtin": ["Agent", "Artifact", "AskUserQuestion", "Bash", "..."],
+    "deprecated": []
   },
   "hooks": {
     "events": ["ConfigChange", "CwdChanged", "DirectoryAdded", "..."],
@@ -371,7 +378,7 @@ Rules every extractor follows:
     "settings": {"default_modes": ["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"], "hook_events": ["..."]}
   },
   "disagreements": [
-    {"topic": "hooks.events", "docs_only": ["MessageDisplay", "PostModelSwitch", "PreModelSwitch"], "schemastore_plugin_only": []}
+    {"docs_only": ["DirectoryAdded", "MessageDisplay", "PostModelSwitch", "PreModelSwitch"], "source": "schemastore.plugin", "source_only": [], "topic": "hooks.events"}
   ]
 }
 ```
@@ -382,16 +389,31 @@ so it changes when upstream changes and at no other time:
 ```json
 {
   "docs.hooks": {
+    "sha256": "a6f4f8...",
     "url": "https://code.claude.com/docs/en/hooks.md",
-    "sha256": "3f1c...",
-    "last_modified": "Fri, 11 Sep 2026 13:04:33 GMT",
-    "version_marker": "v2.1.265"
+    "version_marker": "v2.1.267"
   }
 }
 ```
 
 A lock change without a digest change means a prose-only edit; the report
 lists it under "sources changed without affecting the digest".
+
+**Amended during IMPL-0005 Phase 1.** Two fields this section originally
+specified were removed after measuring them against the live sources,
+because both break the invariant the lock exists for:
+
+- `last_modified`. On `code.claude.com` the header carries the time of
+  the request, not of the content: two fetches five seconds apart report
+  timestamps five seconds apart for byte-identical pages. Committing it
+  would make every `just spec-sync` a diff. The header is still recorded
+  in the work-directory `manifest.json`, where a clock reading is
+  diagnostic rather than committed.
+- Optional probe entries. The two `code.claude.com/schemas` URLs do not
+  exist yet, and the site answers them with its product page, whose body
+  carries a per-request nonce. A probe answers a yes-or-no question about
+  a URL; its body is not a specification until an extractor reads it, so
+  it stays out of the committed record.
 
 **Why the digest is embedded.** The CI comparison in §5 is always file
 against file: the digest freshly generated from the live docs against the
@@ -534,6 +556,8 @@ it with the constants rules actually use. It is the upstream analogue of
 | `agents.frontmatter[].name` | `artifact.AgentFrontmatterKeys` (new export) | every documented key is parsed or acknowledged |
 | `skills.frontmatter[].name` | `artifact.SkillFrontmatterKeys`, `CommandFrontmatterKeys` (new exports) | same |
 | `plugins.manifest_fields[].name` | `artifact.PluginManifestKeys` (new export) | same |
+| `hooks.handler_fields[].name` | `artifact.HookEntryKeys` (new export) | same |
+| `tools.builtin` | `artifact.DeprecatedTools` | every `removed` or `renamed` entry absent, every `deprecated` entry present |
 | `marketplace.sources` keys | `artifact.SourceKind` values | every documented kind has a `SourceKind` |
 | `marketplace.reserved_names` | the list in `internal/rules/marketplace/reservedname.go` | equal sets |
 | `mcp.transports` | the set used by `mcp/transport-known` | equal sets |
@@ -563,9 +587,23 @@ digest path, the delta, and the two ways to resolve it (update the code,
 or acknowledge with a reason).
 
 Exporting the parser key lists is a small refactor: `ParseSkill`,
-`ParseCommand`, `ParseAgent`, and `ParsePlugin` read keys through the
-exported slice instead of string literals, so the list cannot drift from
-the parser. No behaviour change.
+`ParseCommand`, `ParseAgent`, `ParsePlugin`, and `ParseHook` read keys
+through the exported slice instead of string literals, so the list
+cannot drift from the parser. No behaviour change.
+
+Two rows were added while implementing IMPL-0005 Phase 2.
+
+`hooks.handler_fields` was the one documented table with no Go
+counterpart, so the hook parser's key set became `artifact.HookEntryKeys`
+alongside the other four.
+
+`artifact.DeprecatedTools` is the second row keyed on `tools.builtin`,
+and it reads the relation backwards on purpose. A tool leaving the
+documented list is normally drift to fix; for a tool the table already
+records as removed or renamed, absence is the expected state and
+*presence* is the failure. That is what keeps the deprecated-tools table
+from outliving the facts it records: once upstream restores a name, or
+once a `deprecated` entry finally disappears, the guardrail says so.
 
 ### 8. Runtime validator job
 
@@ -606,7 +644,7 @@ visible in the same issue:
   `specdrift render` from the digest and the acknowledgement file: one
   section per artifact kind listing documented fields and enums, whether
   claudelint parses each, and the acknowledgement reason where relevant,
-  with a "verified against Claude Code vX.Y.Z on <lock date>" line. It
+  with a "verified against Claude Code vX.Y.Z" line. It
   lives under `docs/rules/` so the Starlight sidebar picks it up, needs
   `title:` frontmatter, and is checked for staleness by `just docs-check`
   through a `render --check` mode (OQ2).
@@ -618,20 +656,42 @@ visible in the same issue:
 - New `cmd/specdrift` (dev tool; not a release artifact; added to the
   goreleaser ignore list alongside `genfp`).
 - New `internal/upstream` package. Exported: `Digest`, `LoadEmbedded()`,
-  `Fetch`, `Extract`, `Diff`, `Render`. Extractors are unexported.
+  `Fetch`, `Extract`, `Diff`, `RenderSpec`, `ValidateFixtures`,
+  `Coverage`. Extractors are unexported. (`RenderSpec`, not `Render`:
+  the package already had an unexported `render` for report formats.)
+- New `internal/upstream/spec` leaf package holding the embedded digest
+  and the two facts the linter needs from it. Added during Phase 3:
+  importing the parent package from `internal/cli` to print one version
+  line put `net/http` and every extractor on the release binary's import
+  graph and cost 1.3 MB. The leaf costs 16 KB, which is the digest
+  itself. Import direction is `cli → upstream/spec`, never
+  `cli → upstream`.
+- `internal/upstream` imports `internal/artifact` from exactly one file,
+  `coverage.go`, so the rendered page can say which documented fields
+  claudelint actually reads. `artifact` imports only `internal/diag` and
+  will never need spec data, so no cycle is possible.
 - `internal/artifact`: new exported key lists `SkillFrontmatterKeys`,
-  `CommandFrontmatterKeys`, `AgentFrontmatterKeys`, `PluginManifestKeys`.
-  Parsers read through them. No behaviour change.
+  `CommandFrontmatterKeys`, `AgentFrontmatterKeys`, `PluginManifestKeys`,
+  and `HookEntryKeys`. Parsers read through them. No behaviour change.
+  Phase 2 also moved `ReservedMarketplaceNames` and `KnownTransports`
+  here from their rule packages, and added `MarketplaceSourceKinds` and
+  `DeprecatedTools`: canonical upstream data belongs in one package, and
+  the coverage table cannot import a rule package.
 - `justfile`: `spec-check` (network; pull → digest → diff, prints the
   report), `spec-sync` (network; rewrite digest and lock), and
-  `spec-validate-fixtures` (requires a local `claude`). None join `ci` or
-  `check`.
+  `spec-validate-fixtures` (requires a local `claude`), and
+  `spec-render` (offline). Only `spec-render --check` joins a gate, via
+  `just docs-check` and `ci.yml`'s lint job; the network and
+  runtime-dependent recipes join neither `ci` nor `check`.
 - `.github/workflows/spec-drift.yml`, `scripts/spec-drift-issue.sh`, and
   the `spec-drift` label in `scripts/labels.sh`.
 - Phase 3 only: `docs/rules/upstream-spec.md` and a `render --check` step
-  in `just docs-check`.
-- No claudelint CLI flags, config schema, or ruleset fingerprint changes.
-  The digest is not a rule.
+  in `just docs-check` and in `ci.yml`.
+- `claudelint version` gains a third line and `rules --json` an additive
+  `upstream_version` field (OQ7, OQ12). No CLI flags or config schema
+  change, and the ruleset fingerprint does not move: the digest is not a
+  rule. The ruleset *version* does move when the canonical data does —
+  see `rules.RulesetVersion`.
 
 ## Data Model
 
@@ -666,10 +726,12 @@ type Source struct {
     URL  string
 }
 
+// Fields are declared in alphabetical order of their json tag, because
+// encoding/json emits struct fields in declaration order and sorts only
+// map keys. LastModified was dropped; see the amendment in section 4.
 type LockEntry struct {
-    URL           string `json:"url"`
     SHA256        string `json:"sha256"`
-    LastModified  string `json:"last_modified,omitempty"`
+    URL           string `json:"url"`
     VersionMarker string `json:"version_marker,omitempty"`
 }
 

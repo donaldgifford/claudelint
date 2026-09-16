@@ -15,6 +15,9 @@ func init() { rules.Register(&toolsKnown{}) }
 // pattern (mcp__* references, permission-rule forms). Claude Code
 // silently ignores unknown names, so a typo widens or narrows the
 // agent's tool access without any runtime signal.
+//
+// A tool that upstream renamed or removed is reported with its
+// replacement rather than as unknown; see artifact.DeprecatedTools.
 type toolsKnown struct{}
 
 func (*toolsKnown) ID() string                     { return "agents/tools-known" }
@@ -42,6 +45,17 @@ func (r *toolsKnown) Check(_ rules.Context, a artifact.Artifact) []diag.Diagnost
 func (r *toolsKnown) checkList(ag *artifact.Agent, key string, tools []string) []diag.Diagnostic {
 	var out []diag.Diagnostic
 	for _, tool := range tools {
+		// A tool that used to exist gets told what replaced it. Reading
+		// "unknown tool: BashOutput" sends the author looking for a typo.
+		if advice, superseded := artifact.SupersededToolAdvice(tool); superseded {
+			out = append(out, diag.Diagnostic{
+				RuleID:  r.ID(),
+				Path:    ag.Path(),
+				Range:   ag.Frontmatter.KeyRange(key),
+				Message: fmt.Sprintf("%s (in %s)", advice, key),
+			})
+			continue
+		}
 		if artifact.IsKnownTool(tool) || artifact.IsToolPattern(tool) {
 			continue
 		}

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -48,13 +49,54 @@ func TestVersionCmdOutput(t *testing.T) {
 	}
 
 	got := stdout.String()
-	// RulesetVersion and fingerprint change over time; assert the
-	// shape but not the exact values.
-	if !strings.HasPrefix(got, "claudelint v1.2.3 (abc1234)\nruleset    v") {
-		t.Errorf("version output = %q, want prefix claudelint v1.2.3 ...", got)
+	// The three versions all move over time; assert the shape, not the
+	// values. The spec line is what tells a bug report which
+	// documentation revision the binary was built against.
+	lines := strings.Split(strings.TrimSuffix(got, "\n"), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("version output = %q, want three lines", got)
 	}
-	if !strings.HasSuffix(got, ")\n") {
-		t.Errorf("version output = %q, want trailing fingerprint paren", got)
+	for i, prefix := range []string{"claudelint v1.2.3 (abc1234)", "ruleset    v", "spec       v"} {
+		if !strings.HasPrefix(lines[i], prefix) {
+			t.Errorf("line %d = %q, want prefix %q", i+1, lines[i], prefix)
+		}
+	}
+	for i, line := range lines {
+		if !strings.HasSuffix(line, ")") {
+			t.Errorf("line %d = %q, want a trailing parenthesised value", i+1, line)
+		}
+	}
+}
+
+// TestRulesJSONCarriesUpstreamVersion pins the additive envelope field.
+// A consumer diffing two catalogs needs it: a rule can start rejecting
+// a name with no change to the ruleset version, because what moved was
+// the data rather than the rule.
+func TestRulesJSONCarriesUpstreamVersion(t *testing.T) {
+	root := newRootCmd(BuildInfo{Version: "v0", Commit: "c"})
+
+	var stdout bytes.Buffer
+	root.SetOut(&stdout)
+	root.SetErr(&stdout)
+	root.SetArgs([]string{"rules", "--json"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("Execute() = %v, want nil", err)
+	}
+
+	var doc struct {
+		SchemaVersion   string `json:"schema_version"`
+		UpstreamVersion string `json:"upstream_version"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &doc); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	if doc.SchemaVersion != "1" {
+		t.Errorf("schema_version = %q; an additive field must not bump it", doc.SchemaVersion)
+	}
+	if !strings.HasPrefix(doc.UpstreamVersion, "v2.") {
+		t.Errorf("upstream_version = %q, want a documentation marker", doc.UpstreamVersion)
 	}
 }
 

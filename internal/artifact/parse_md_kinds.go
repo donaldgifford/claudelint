@@ -28,16 +28,16 @@ func ParseSkill(path string, src []byte) (*Skill, *ParseError) {
 		Frontmatter: doc.Frontmatter,
 		Body:        doc.Body,
 	}
-	s.Name = doc.asString("name")
-	s.Description = doc.asString("description")
-	s.Model = doc.asString("model")
-	s.WhenToUse = doc.asString("when_to_use")
-	s.Context = doc.asString("context")
-	s.Agent = doc.asString("agent")
-	s.AllowedTools = doc.asToolList("allowed-tools")
-	s.DisallowedTools = doc.asToolList("disallowed-tools")
-	s.DisableModelInvocation, _ = doc.asBool("disable-model-invocation")
-	if v, ok := doc.asBool("user-invocable"); ok {
+	s.Name = doc.asString(keyName)
+	s.Description = doc.asString(keyDescription)
+	s.Model = doc.asString(keyModel)
+	s.WhenToUse = doc.asString(keyWhenToUse)
+	s.Context = doc.asString(keyContext)
+	s.Agent = doc.asString(keyAgent)
+	s.AllowedTools = doc.asToolList(keyAllowedTools)
+	s.DisallowedTools = doc.asToolList(keyDisallowedTools)
+	s.DisableModelInvocation, _ = doc.asBool(keyDisableModelInvocation)
+	if v, ok := doc.asBool(keyUserInvocable); ok {
 		s.UserInvocable = &v
 	}
 	return s, nil
@@ -54,16 +54,16 @@ func ParseCommand(path string, src []byte) (*Command, *ParseError) {
 		Frontmatter: doc.Frontmatter,
 		Body:        doc.Body,
 	}
-	c.Description = doc.asString("description")
-	c.ArgumentHint = doc.asString("argument-hint")
-	c.Model = doc.asString("model")
-	c.WhenToUse = doc.asString("when_to_use")
-	c.Context = doc.asString("context")
-	c.Agent = doc.asString("agent")
-	c.AllowedTools = doc.asToolList("allowed-tools")
-	c.DisallowedTools = doc.asToolList("disallowed-tools")
-	c.DisableModelInvocation, _ = doc.asBool("disable-model-invocation")
-	if v, ok := doc.asBool("user-invocable"); ok {
+	c.Description = doc.asString(keyDescription)
+	c.ArgumentHint = doc.asString(keyArgumentHint)
+	c.Model = doc.asString(keyModel)
+	c.WhenToUse = doc.asString(keyWhenToUse)
+	c.Context = doc.asString(keyContext)
+	c.Agent = doc.asString(keyAgent)
+	c.AllowedTools = doc.asToolList(keyAllowedTools)
+	c.DisallowedTools = doc.asToolList(keyDisallowedTools)
+	c.DisableModelInvocation, _ = doc.asBool(keyDisableModelInvocation)
+	if v, ok := doc.asBool(keyUserInvocable); ok {
 		c.UserInvocable = &v
 	}
 	return c, nil
@@ -80,21 +80,21 @@ func ParseAgent(path string, src []byte) (*Agent, *ParseError) {
 		Frontmatter: doc.Frontmatter,
 		Body:        doc.Body,
 	}
-	a.Name = doc.asString("name")
-	a.Description = doc.asString("description")
-	a.Tools = doc.asToolList("tools")
-	a.DisallowedTools = doc.asToolList("disallowedTools")
-	a.Model = doc.asString("model")
-	a.PermissionMode = doc.asString("permissionMode")
-	a.MaxTurns = doc.asInt64("maxTurns")
-	a.Skills = doc.asStringList("skills")
-	a.HasMCPServers = doc.has("mcpServers")
-	a.HasHooks = doc.has("hooks")
-	a.Memory = doc.asString("memory")
-	a.Background, _ = doc.asBool("background")
-	a.Effort = doc.asString("effort")
-	a.Isolation = doc.asString("isolation")
-	a.Color = doc.asString("color")
-	a.InitialPrompt = doc.asString("initialPrompt")
+	a.Name = doc.asString(keyName)
+	a.Description = doc.asString(keyDescription)
+	a.Tools = doc.asToolList(keyTools)
+	a.DisallowedTools = doc.asToolList(keyDisallowedToolsCamel)
+	a.Model = doc.asString(keyModel)
+	a.PermissionMode = doc.asString(keyPermissionMode)
+	a.MaxTurns = doc.asInt64(keyMaxTurns)
+	a.Skills = doc.asStringList(keySkills)
+	a.HasMCPServers = doc.has(keyMCPServers)
+	a.HasHooks = doc.has(keyHooks)
+	a.Memory = doc.asString(keyMemory)
+	a.Background, _ = doc.asBool(keyBackground)
+	a.Effort = doc.asString(keyEffort)
+	a.Isolation = doc.asString(keyIsolation)
+	a.Color = doc.asString(keyColor)
+	a.InitialPrompt = doc.asString(keyInitialPrompt)
 	return a, nil
 }

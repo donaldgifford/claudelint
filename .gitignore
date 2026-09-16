@@ -11,9 +11,14 @@
 # Test binary, built with `go test -c`
 *.test
 
-# Code coverage profiles and other test artifacts
+# Code coverage profiles and other test artifacts.
+#
+# The coverage patterns are anchored to the repository root on purpose.
+# An unanchored `coverage.*` matches any directory, and it silently
+# swallowed internal/upstream/coverage.go — the file compiled locally
+# and the CI build failed on an undefined symbol.
 *.out
-coverage.*
+/coverage.*
 *.coverprofile
 profile.cov
 

@@ -56,6 +56,17 @@ func (r *allowedToolsKnown) checkList(
 ) []diag.Diagnostic {
 	var out []diag.Diagnostic
 	for _, tool := range tools {
+		// See agents/tools-known: a renamed or removed tool is reported
+		// with its replacement, not as a possible typo.
+		if advice, superseded := artifact.SupersededToolAdvice(tool); superseded {
+			out = append(out, diag.Diagnostic{
+				RuleID:  r.ID(),
+				Path:    path,
+				Range:   fm.KeyRange(key),
+				Message: fmt.Sprintf("%s (in %s)", advice, key),
+			})
+			continue
+		}
 		if artifact.IsKnownTool(tool) || artifact.IsToolPattern(tool) {
 			continue
 		}

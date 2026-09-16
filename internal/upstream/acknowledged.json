@@ -1,0 +1,63 @@
+{
+  "agents.enums.isolation": {
+    "HEAD": "not a value: the docs describe worktree isolation in prose that mentions the HEAD commit, and the extractor takes every code span in the cell. agents/field-enums checks isolation directly against \"worktree\"."
+  },
+  "agents.enums.model": {
+    "claude-opus-5": "an example full model ID in the description cell, not an alias. artifact.IsValidModelRef already accepts any claude-* ID, so agents/field-enums passes it."
+  },
+  "agents.frontmatter": {
+    "experimental": "documented as experimental; DESIGN-0006 records field names only for experimental surfaces. Parse it when a rule needs it (IMPL-0005 OQ4)."
+  },
+  "hooks.handler_fields": {
+    "allowedEnvVars": "http handler field; no rule reads it. A hooks/http-env-allowlist rule would, and gets its own IMPL (OQ4).",
+    "asyncRewake": "command handler field paired with async; hooks/async-rewake has no rule yet (OQ4).",
+    "headers": "http handler field; the secret-in-header check that would read it is security rule territory, not yet written (OQ4).",
+    "if": "common conditional field; no rule evaluates hook conditions (OQ4).",
+    "input": "mcp_tool handler field; no rule validates the tool input shape (OQ4).",
+    "model": "prompt and agent handler field; agents/model-policy covers agent frontmatter, not hook handlers (OQ4).",
+    "once": "common field; no rule reads it (OQ4).",
+    "statusMessage": "common presentation field; no rule reads it (OQ4)."
+  },
+  "hooks.timeout_defaults.by_event": {
+    "MessageDisplay": "per-event override; hooks/timeout-present cites the per-type default only. Reading overrides needs the event in scope at the message site (OQ4).",
+    "PostModelSwitch": "per-event override; see MessageDisplay.",
+    "PreModelSwitch": "per-event override; see MessageDisplay.",
+    "UserPromptSubmit": "per-event override; see MessageDisplay."
+  },
+  "plugins.manifest_fields": {
+    "$schema": "editor metadata, not a plugin property; plugin/manifest-fields has nothing to check on it.",
+    "author": "metadata field; no rule consumes it (OQ4). plugin/manifest-fields would parse it when one does.",
+    "channels": "experimental surface; field name recorded only, per DESIGN-0006 non-goals.",
+    "defaultEnabled": "metadata field; no rule consumes it (OQ4).",
+    "dependencies": "component field; a plugin/dependencies-resolvable rule would read it and gets its own IMPL (OQ4).",
+    "displayName": "metadata field; no rule consumes it (OQ4).",
+    "experimental.evals": "experimental surface; field name recorded only, per DESIGN-0006 non-goals.",
+    "experimental.monitors": "experimental surface; field name recorded only, per DESIGN-0006 non-goals.",
+    "experimental.themes": "experimental surface; field name recorded only, per DESIGN-0006 non-goals.",
+    "homepage": "metadata field; no rule consumes it (OQ4).",
+    "hooks": "component path field; the hook rules lint hooks/hooks.json directly, so the manifest pointer needs no parse (OQ4).",
+    "keywords": "metadata field; no rule consumes it (OQ4).",
+    "license": "metadata field; no rule consumes it (OQ4).",
+    "lspServers": "experimental surface; field name recorded only, per DESIGN-0006 non-goals.",
+    "mcpServers": "component path field; the mcp rules lint .mcp.json and plugin-embedded servers directly (OQ4).",
+    "metadata": "free-form metadata; nothing to validate (OQ4).",
+    "outputStyles": "component path field; no rule consumes it (OQ4).",
+    "repository": "metadata field; no rule consumes it (OQ4).",
+    "userConfig": "component field; a plugin/user-config-valid rule would read it and gets its own IMPL (OQ4).",
+    "workflows": "component path field; no rule consumes it (OQ4)."
+  },
+  "skills.frontmatter": {
+    "arguments": "not parsed; no rule consumes it. A skills/arguments-valid rule would, and gets its own IMPL (OQ4).",
+    "background": "not parsed; no rule consumes it (OQ4).",
+    "compatibility": "not parsed; portable.limits records its 500-character cap for a future skills/portable-fields rule (OQ4).",
+    "effort": "not parsed on skills; agents/field-enums covers the agent spelling. Parse it when a skill rule needs it (OQ4).",
+    "hooks": "not parsed on skills; hook contents are the hook rule package's job (DESIGN-0005 non-goal).",
+    "license": "not parsed; portable.allowed_fields records it for a future skills/portable-fields rule (OQ4).",
+    "metadata": "free-form metadata; nothing to validate (OQ4).",
+    "paths": "not parsed; no rule consumes it (IMPL-0004 out of scope, OQ4).",
+    "shell": "not parsed; no rule consumes it (OQ4)."
+  },
+  "tools.builtin": {
+    "Task": "renamed to Agent in v2.1.63 and dropped from the tools reference, but the runtime still accepts it. Kept known so an existing artifact does not read as broken; artifact.DeprecatedTools makes the rules say so."
+  }
+}

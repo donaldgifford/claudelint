@@ -1,0 +1,1140 @@
+{
+  "agents": {
+    "enums": {
+      "color": [
+        "blue",
+        "cyan",
+        "green",
+        "orange",
+        "pink",
+        "purple",
+        "red",
+        "yellow"
+      ],
+      "effort": [
+        "high",
+        "low",
+        "max",
+        "medium",
+        "xhigh"
+      ],
+      "isolation": [
+        "HEAD",
+        "worktree"
+      ],
+      "memory": [
+        "local",
+        "project",
+        "user"
+      ],
+      "model": [
+        "claude-opus-5",
+        "fable",
+        "haiku",
+        "inherit",
+        "opus",
+        "sonnet"
+      ],
+      "permissionMode": [
+        "acceptEdits",
+        "auto",
+        "bypassPermissions",
+        "default",
+        "dontAsk",
+        "manual",
+        "plan"
+      ]
+    },
+    "frontmatter": [
+      {
+        "name": "background",
+        "required": "no"
+      },
+      {
+        "name": "color",
+        "required": "no"
+      },
+      {
+        "name": "description",
+        "required": "yes"
+      },
+      {
+        "name": "disallowedTools",
+        "required": "no"
+      },
+      {
+        "name": "effort",
+        "required": "no"
+      },
+      {
+        "name": "experimental",
+        "required": "no"
+      },
+      {
+        "name": "hooks",
+        "required": "no"
+      },
+      {
+        "name": "initialPrompt",
+        "required": "no"
+      },
+      {
+        "name": "isolation",
+        "required": "no"
+      },
+      {
+        "name": "maxTurns",
+        "required": "no"
+      },
+      {
+        "name": "mcpServers",
+        "required": "no"
+      },
+      {
+        "name": "memory",
+        "required": "no"
+      },
+      {
+        "name": "model",
+        "required": "no"
+      },
+      {
+        "name": "name",
+        "required": "yes"
+      },
+      {
+        "name": "permissionMode",
+        "required": "no"
+      },
+      {
+        "name": "skills",
+        "required": "no"
+      },
+      {
+        "name": "tools",
+        "required": "no"
+      }
+    ]
+  },
+  "digest_version": 1,
+  "disagreements": [
+    {
+      "docs_only": [
+        "DirectoryAdded",
+        "MessageDisplay",
+        "PostModelSwitch",
+        "PreModelSwitch"
+      ],
+      "source": "schemastore.plugin",
+      "source_only": [],
+      "topic": "hooks.events"
+    },
+    {
+      "docs_only": [
+        "PostModelSwitch",
+        "PreModelSwitch"
+      ],
+      "source": "schemastore.settings",
+      "source_only": [],
+      "topic": "hooks.events"
+    },
+    {
+      "docs_only": [
+        "archive",
+        "command"
+      ],
+      "source": "schemastore.marketplace",
+      "source_only": [],
+      "topic": "marketplace.sources"
+    },
+    {
+      "docs_only": [
+        "defaultEnabled",
+        "displayName",
+        "experimental.evals",
+        "experimental.monitors",
+        "experimental.themes",
+        "metadata",
+        "workflows"
+      ],
+      "source": "schemastore.plugin",
+      "source_only": [
+        "monitors",
+        "settings",
+        "themes"
+      ],
+      "topic": "plugins.manifest_fields"
+    }
+  ],
+  "hooks": {
+    "events": [
+      "ConfigChange",
+      "CwdChanged",
+      "DirectoryAdded",
+      "Elicitation",
+      "ElicitationResult",
+      "FileChanged",
+      "InstructionsLoaded",
+      "MessageDisplay",
+      "Notification",
+      "PermissionDenied",
+      "PermissionRequest",
+      "PostCompact",
+      "PostModelSwitch",
+      "PostToolBatch",
+      "PostToolUse",
+      "PostToolUseFailure",
+      "PreCompact",
+      "PreModelSwitch",
+      "PreToolUse",
+      "SessionEnd",
+      "SessionStart",
+      "Setup",
+      "Stop",
+      "StopFailure",
+      "SubagentStart",
+      "SubagentStop",
+      "TaskCompleted",
+      "TaskCreated",
+      "TeammateIdle",
+      "UserPromptExpansion",
+      "UserPromptSubmit",
+      "WorktreeCreate",
+      "WorktreeRemove"
+    ],
+    "handler_fields": {
+      "agent": [
+        {
+          "name": "model",
+          "required": "no"
+        },
+        {
+          "name": "prompt",
+          "required": "yes"
+        }
+      ],
+      "command": [
+        {
+          "name": "args",
+          "required": "no"
+        },
+        {
+          "name": "async",
+          "required": "no"
+        },
+        {
+          "name": "asyncRewake",
+          "required": "no"
+        },
+        {
+          "name": "command",
+          "required": "yes"
+        },
+        {
+          "name": "shell",
+          "required": "no"
+        }
+      ],
+      "common": [
+        {
+          "name": "if",
+          "required": "no"
+        },
+        {
+          "name": "once",
+          "required": "no"
+        },
+        {
+          "name": "statusMessage",
+          "required": "no"
+        },
+        {
+          "name": "timeout",
+          "required": "no"
+        },
+        {
+          "name": "type",
+          "required": "yes"
+        }
+      ],
+      "http": [
+        {
+          "name": "allowedEnvVars",
+          "required": "no"
+        },
+        {
+          "name": "headers",
+          "required": "no"
+        },
+        {
+          "name": "url",
+          "required": "yes"
+        }
+      ],
+      "mcp_tool": [
+        {
+          "name": "input",
+          "required": "no"
+        },
+        {
+          "name": "server",
+          "required": "yes"
+        },
+        {
+          "name": "tool",
+          "required": "yes"
+        }
+      ],
+      "prompt": [
+        {
+          "name": "model",
+          "required": "no"
+        },
+        {
+          "name": "prompt",
+          "required": "yes"
+        }
+      ]
+    },
+    "timeout_defaults": {
+      "by_event": {
+        "MessageDisplay": 10,
+        "PostModelSwitch": 30,
+        "PreModelSwitch": 30,
+        "UserPromptSubmit": 30
+      },
+      "by_type": {
+        "agent": 60,
+        "command": 600,
+        "http": 600,
+        "mcp_tool": 600,
+        "prompt": 30
+      }
+    },
+    "types": [
+      "agent",
+      "command",
+      "http",
+      "mcp_tool",
+      "prompt"
+    ]
+  },
+  "marketplace": {
+    "fields": [
+      {
+        "name": "$schema",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "allowCrossMarketplaceDependenciesOn",
+        "required": "no",
+        "type": "array"
+      },
+      {
+        "name": "description",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "metadata.pluginRoot",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "name",
+        "required": "yes",
+        "type": "string"
+      },
+      {
+        "name": "owner",
+        "required": "yes",
+        "type": "object"
+      },
+      {
+        "name": "plugins",
+        "required": "yes",
+        "type": "array"
+      },
+      {
+        "name": "renames",
+        "required": "no",
+        "type": "object"
+      },
+      {
+        "name": "version",
+        "required": "no",
+        "type": "string"
+      }
+    ],
+    "owner_fields": [
+      {
+        "name": "email",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "name",
+        "required": "yes",
+        "type": "string"
+      },
+      {
+        "name": "url",
+        "required": "no",
+        "type": "string"
+      }
+    ],
+    "plugin_entry_fields": [
+      {
+        "name": "author",
+        "required": "no",
+        "type": "object"
+      },
+      {
+        "name": "category",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "defaultEnabled",
+        "required": "no",
+        "type": "boolean"
+      },
+      {
+        "name": "description",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "displayName",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "homepage",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "keywords",
+        "required": "no",
+        "type": "array"
+      },
+      {
+        "name": "license",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "metadata",
+        "required": "no",
+        "type": "object"
+      },
+      {
+        "name": "name",
+        "required": "yes",
+        "type": "string"
+      },
+      {
+        "name": "relevance",
+        "required": "no",
+        "type": "object"
+      },
+      {
+        "name": "repository",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "name": "source",
+        "required": "yes",
+        "type": "string|object"
+      },
+      {
+        "name": "strict",
+        "required": "no",
+        "type": "boolean"
+      },
+      {
+        "name": "tags",
+        "required": "no",
+        "type": "array"
+      },
+      {
+        "name": "version",
+        "required": "no",
+        "type": "string"
+      }
+    ],
+    "reserved_names": [
+      "agent-skills",
+      "anthropic-agent-skills",
+      "anthropic-marketplace",
+      "anthropic-plugins",
+      "claude-code-marketplace",
+      "claude-code-plugins",
+      "claude-community",
+      "claude-for-financial-services",
+      "claude-for-legal",
+      "claude-plugins-community",
+      "claude-plugins-official",
+      "claude-tag-plugins",
+      "financial-services-plugins",
+      "first-party-plugins",
+      "healthcare",
+      "knowledge-work-plugins",
+      "life-sciences"
+    ],
+    "sources": {
+      "archive": {
+        "optional": [
+          "sha256"
+        ],
+        "required": [
+          "url"
+        ]
+      },
+      "command": {
+        "optional": [
+          "mode",
+          "timeout"
+        ],
+        "required": [
+          "command"
+        ]
+      },
+      "git-subdir": {
+        "optional": [
+          "ref",
+          "sha"
+        ],
+        "required": [
+          "path",
+          "url"
+        ]
+      },
+      "github": {
+        "optional": [
+          "ref",
+          "sha"
+        ],
+        "required": [
+          "repo"
+        ]
+      },
+      "npm": {
+        "optional": [
+          "registry",
+          "version"
+        ],
+        "required": [
+          "package"
+        ]
+      },
+      "url": {
+        "optional": [
+          "ref",
+          "sha"
+        ],
+        "required": [
+          "url"
+        ]
+      }
+    }
+  },
+  "mcp": {
+    "server_fields": [
+      {
+        "name": "args"
+      },
+      {
+        "name": "authServerMetadataUrl"
+      },
+      {
+        "name": "callbackPort"
+      },
+      {
+        "name": "clientId"
+      },
+      {
+        "name": "command"
+      },
+      {
+        "name": "env"
+      },
+      {
+        "name": "headers"
+      },
+      {
+        "name": "headersHelper"
+      },
+      {
+        "name": "oauth"
+      },
+      {
+        "name": "scopes"
+      },
+      {
+        "name": "type"
+      },
+      {
+        "name": "url"
+      },
+      {
+        "name": "xaa"
+      }
+    ],
+    "transports": [
+      "http",
+      "sse",
+      "stdio",
+      "ws"
+    ]
+  },
+  "meta": {
+    "claude_code_latest": "2.1.270",
+    "docs_max_marker": "v2.1.269"
+  },
+  "plugins": {
+    "locations": {
+      "agents": "agents/",
+      "commands": "commands/",
+      "executables": "bin/",
+      "hooks": "hooks/hooks.json",
+      "lsp servers": ".lsp.json",
+      "manifest": ".claude-plugin/plugin.json",
+      "mcp servers": ".mcp.json",
+      "monitors": "monitors/monitors.json",
+      "output styles": "output-styles/",
+      "settings": "settings.json",
+      "skills": "skills/",
+      "themes": "themes/",
+      "workflows": "workflows/"
+    },
+    "manifest_fields": [
+      {
+        "group": "metadata",
+        "name": "$schema",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "group": "component",
+        "name": "agents",
+        "required": "no",
+        "type": "string|array"
+      },
+      {
+        "group": "metadata",
+        "name": "author",
+        "required": "no",
+        "type": "object"
+      },
+      {
+        "group": "component",
+        "name": "channels",
+        "required": "no",
+        "type": "array"
+      },
+      {
+        "group": "component",
+        "name": "commands",
+        "required": "no",
+        "type": "string|array"
+      },
+      {
+        "group": "metadata",
+        "name": "defaultEnabled",
+        "required": "no",
+        "type": "boolean"
+      },
+      {
+        "group": "component",
+        "name": "dependencies",
+        "required": "no",
+        "type": "array"
+      },
+      {
+        "group": "metadata",
+        "name": "description",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "group": "metadata",
+        "name": "displayName",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "group": "component",
+        "name": "experimental.evals",
+        "required": "no",
+        "type": "string|array"
+      },
+      {
+        "group": "component",
+        "name": "experimental.monitors",
+        "required": "no",
+        "type": "string|array"
+      },
+      {
+        "group": "component",
+        "name": "experimental.themes",
+        "required": "no",
+        "type": "string|array"
+      },
+      {
+        "group": "metadata",
+        "name": "homepage",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "group": "component",
+        "name": "hooks",
+        "required": "no",
+        "type": "string|array|object"
+      },
+      {
+        "group": "metadata",
+        "name": "keywords",
+        "required": "no",
+        "type": "array"
+      },
+      {
+        "group": "metadata",
+        "name": "license",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "group": "component",
+        "name": "lspServers",
+        "required": "no",
+        "type": "string|array|object"
+      },
+      {
+        "group": "component",
+        "name": "mcpServers",
+        "required": "no",
+        "type": "string|array|object"
+      },
+      {
+        "group": "metadata",
+        "name": "metadata",
+        "required": "no",
+        "type": "object"
+      },
+      {
+        "group": "required",
+        "name": "name",
+        "required": "yes",
+        "type": "string"
+      },
+      {
+        "group": "component",
+        "name": "outputStyles",
+        "required": "no",
+        "type": "string|array"
+      },
+      {
+        "group": "metadata",
+        "name": "repository",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "group": "component",
+        "name": "skills",
+        "required": "no",
+        "type": "string|array"
+      },
+      {
+        "group": "component",
+        "name": "userConfig",
+        "required": "no",
+        "type": "object"
+      },
+      {
+        "group": "metadata",
+        "name": "version",
+        "required": "no",
+        "type": "string"
+      },
+      {
+        "group": "component",
+        "name": "workflows",
+        "required": "no",
+        "type": "string|array"
+      }
+    ],
+    "substitution_fields": {
+      "hook and monitor commands": [],
+      "lsp servers": [
+        "args",
+        "command",
+        "env",
+        "workspaceFolder"
+      ],
+      "mcp http, sse, ws servers": [
+        "headers",
+        "headersHelper",
+        "url"
+      ],
+      "mcp stdio servers": [
+        "args",
+        "command",
+        "env"
+      ],
+      "skill and agent content": []
+    }
+  },
+  "portable": {
+    "allowed_fields": [
+      "allowed-tools",
+      "compatibility",
+      "description",
+      "license",
+      "metadata",
+      "name"
+    ],
+    "anthropic_allowed_fields": [
+      "allowed-tools",
+      "compatibility",
+      "description",
+      "license",
+      "metadata",
+      "name"
+    ],
+    "description_constraints": [
+      "Description cannot contain angle brackets (< or >)",
+      "Description is too long ({len(description)} characters). Maximum is 1024 characters.",
+      "Description must be a string, got {type(description).__name__}"
+    ],
+    "limits": {
+      "compatibility": 500,
+      "description": 1024,
+      "name": 64
+    },
+    "name_pattern": "^[a-z0-9-]+$"
+  },
+  "schemastore": {
+    "marketplace": {
+      "plugin_entry_properties": [
+        "$schema",
+        "agents",
+        "author",
+        "category",
+        "channels",
+        "commands",
+        "dependencies",
+        "description",
+        "homepage",
+        "hooks",
+        "keywords",
+        "license",
+        "lspServers",
+        "mcpServers",
+        "monitors",
+        "name",
+        "outputStyles",
+        "repository",
+        "settings",
+        "skills",
+        "source",
+        "strict",
+        "tags",
+        "themes",
+        "userConfig",
+        "version"
+      ],
+      "properties": [
+        "$schema",
+        "allowCrossMarketplaceDependenciesOn",
+        "description",
+        "forceRemoveDeletedPlugins",
+        "metadata",
+        "name",
+        "owner",
+        "plugins",
+        "version"
+      ],
+      "source_kinds": [
+        "git-subdir",
+        "github",
+        "npm",
+        "url"
+      ]
+    },
+    "plugin_manifest": {
+      "hook_events": [
+        "ConfigChange",
+        "CwdChanged",
+        "Elicitation",
+        "ElicitationResult",
+        "FileChanged",
+        "InstructionsLoaded",
+        "Notification",
+        "PermissionDenied",
+        "PermissionRequest",
+        "PostCompact",
+        "PostToolBatch",
+        "PostToolUse",
+        "PostToolUseFailure",
+        "PreCompact",
+        "PreToolUse",
+        "SessionEnd",
+        "SessionStart",
+        "Setup",
+        "Stop",
+        "StopFailure",
+        "SubagentStart",
+        "SubagentStop",
+        "TaskCompleted",
+        "TaskCreated",
+        "TeammateIdle",
+        "UserPromptExpansion",
+        "UserPromptSubmit",
+        "WorktreeCreate",
+        "WorktreeRemove"
+      ],
+      "hook_types": [
+        "agent",
+        "command",
+        "http",
+        "mcp_tool",
+        "prompt"
+      ],
+      "mcp_types": [
+        "http",
+        "sse",
+        "stdio",
+        "ws"
+      ],
+      "properties": [
+        "$schema",
+        "agents",
+        "author",
+        "channels",
+        "commands",
+        "dependencies",
+        "description",
+        "homepage",
+        "hooks",
+        "keywords",
+        "license",
+        "lspServers",
+        "mcpServers",
+        "monitors",
+        "name",
+        "outputStyles",
+        "repository",
+        "settings",
+        "skills",
+        "themes",
+        "userConfig",
+        "version"
+      ]
+    },
+    "settings": {
+      "default_modes": [
+        "acceptEdits",
+        "auto",
+        "bypassPermissions",
+        "default",
+        "delegate",
+        "dontAsk",
+        "manual",
+        "plan"
+      ],
+      "hook_events": [
+        "ConfigChange",
+        "CwdChanged",
+        "DirectoryAdded",
+        "Elicitation",
+        "ElicitationResult",
+        "FileChanged",
+        "InstructionsLoaded",
+        "MessageDisplay",
+        "Notification",
+        "PermissionDenied",
+        "PermissionRequest",
+        "PostCompact",
+        "PostToolBatch",
+        "PostToolUse",
+        "PostToolUseFailure",
+        "PreCompact",
+        "PreToolUse",
+        "SessionEnd",
+        "SessionStart",
+        "Setup",
+        "Stop",
+        "StopFailure",
+        "SubagentStart",
+        "SubagentStop",
+        "TaskCompleted",
+        "TaskCreated",
+        "TeammateIdle",
+        "UserPromptExpansion",
+        "UserPromptSubmit",
+        "WorktreeCreate",
+        "WorktreeRemove"
+      ]
+    }
+  },
+  "skills": {
+    "frontmatter": [
+      {
+        "name": "agent",
+        "required": "no"
+      },
+      {
+        "name": "allowed-tools",
+        "required": "no"
+      },
+      {
+        "name": "argument-hint",
+        "required": "no"
+      },
+      {
+        "name": "arguments",
+        "required": "no"
+      },
+      {
+        "name": "background",
+        "required": "no"
+      },
+      {
+        "name": "compatibility",
+        "required": "no"
+      },
+      {
+        "name": "context",
+        "required": "no"
+      },
+      {
+        "name": "description",
+        "required": "recommended"
+      },
+      {
+        "name": "disable-model-invocation",
+        "required": "no"
+      },
+      {
+        "name": "disallowed-tools",
+        "required": "no"
+      },
+      {
+        "name": "effort",
+        "required": "no"
+      },
+      {
+        "name": "hooks",
+        "required": "no"
+      },
+      {
+        "name": "license",
+        "required": "no"
+      },
+      {
+        "name": "metadata",
+        "required": "no"
+      },
+      {
+        "name": "model",
+        "required": "no"
+      },
+      {
+        "name": "name",
+        "required": "no"
+      },
+      {
+        "name": "paths",
+        "required": "no"
+      },
+      {
+        "name": "shell",
+        "required": "no"
+      },
+      {
+        "name": "user-invocable",
+        "required": "no"
+      },
+      {
+        "name": "when_to_use",
+        "required": "no"
+      }
+    ],
+    "portable_fields": [
+      "allowed-tools",
+      "compatibility",
+      "description",
+      "license",
+      "metadata",
+      "name"
+    ],
+    "substitutions": [
+      "$ARGUMENTS",
+      "$ARGUMENTS[N]",
+      "$N",
+      "$name",
+      "${CLAUDE_EFFORT}",
+      "${CLAUDE_PLUGIN_DATA}",
+      "${CLAUDE_PLUGIN_ROOT}",
+      "${CLAUDE_PROJECT_DIR}",
+      "${CLAUDE_SESSION_ID}",
+      "${CLAUDE_SKILL_DIR}"
+    ]
+  },
+  "tools": {
+    "builtin": [
+      "Agent",
+      "Artifact",
+      "AskUserQuestion",
+      "Bash",
+      "CronCreate",
+      "CronDelete",
+      "CronList",
+      "Edit",
+      "EndConversation",
+      "EnterPlanMode",
+      "EnterWorktree",
+      "ExitPlanMode",
+      "ExitWorktree",
+      "Glob",
+      "Grep",
+      "LSP",
+      "ListAgents",
+      "ListMcpResourcesTool",
+      "Monitor",
+      "NotebookEdit",
+      "PowerShell",
+      "PushNotification",
+      "Read",
+      "ReadMcpResourceTool",
+      "RemoteTrigger",
+      "ReportFindings",
+      "ScheduleWakeup",
+      "SendFeedback",
+      "SendMessage",
+      "SendUserFile",
+      "ShareOnboardingGuide",
+      "Skill",
+      "TaskCreate",
+      "TaskGet",
+      "TaskList",
+      "TaskOutput",
+      "TaskStop",
+      "TaskUpdate",
+      "TodoWrite",
+      "ToolSearch",
+      "WaitForMcpServers",
+      "WebFetch",
+      "WebSearch",
+      "Workflow",
+      "Write"
+    ],
+    "deprecated": []
+  }
+}

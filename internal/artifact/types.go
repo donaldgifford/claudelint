@@ -288,7 +288,7 @@ func (*Marketplace) Kind() ArtifactKind { return KindMarketplace }
 
 // MarketplaceSourceKind names the shape a plugins[].source value took.
 // The docs define one string form (a ./-relative path inside the
-// marketplace repo) and four object forms.
+// marketplace repo) and six object forms.
 type MarketplaceSourceKind string
 
 const (
@@ -309,10 +309,30 @@ const (
 	SourceGitSubdir MarketplaceSourceKind = "git-subdir"
 	// SourceNPM is {"source": "npm", "package": "@scope/name", ...}.
 	SourceNPM MarketplaceSourceKind = "npm"
+	// SourceArchive is {"source": "archive", "url": "https://...",
+	// "sha256": "..."}: a downloadable tarball or zip.
+	SourceArchive MarketplaceSourceKind = "archive"
+	// SourceCommand is {"source": "command", "command": "...",
+	// "timeout": <s>, "mode": "..."}: a command the client runs to
+	// produce the plugin.
+	SourceCommand MarketplaceSourceKind = "command"
 	// SourceInvalid is an object whose source discriminator is missing
 	// or not one of the documented kinds.
 	SourceInvalid MarketplaceSourceKind = "invalid"
 )
+
+// MarketplaceSourceKinds lists the object-form kinds the plugin
+// marketplace reference documents, sorted. The non-documented sentinels
+// (absent, local, external-string, invalid) are how the parser reports
+// the string forms and are deliberately not in this list.
+var MarketplaceSourceKinds = []MarketplaceSourceKind{
+	SourceArchive,
+	SourceCommand,
+	SourceGitSubdir,
+	SourceGitHub,
+	SourceNPM,
+	SourceURL,
+}
 
 // MarketplaceSource is the typed view of a plugins[].source value.
 // Kind tells which shape was used; only that shape's fields are set.
@@ -333,6 +353,15 @@ type MarketplaceSource struct {
 	Package  string
 	Version  string
 	Registry string
+	// SHA256 is the archive kind's optional content hash, 64 hex
+	// characters when present.
+	SHA256 string
+	// Command, Timeout, and Mode describe the command kind. Timeout is
+	// the raw string so a non-numeric value survives to the rule that
+	// reports it.
+	Command string
+	Timeout string
+	Mode    string
 }
 
 // MarketplacePlugin is one entry in a marketplace manifest's plugins[]

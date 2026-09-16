@@ -1,0 +1,4 @@
+{
+  "description": "A plugin manifest with no name. The runtime validator and claudelint should both reject it.",
+  "version": "0.1.0"
+}

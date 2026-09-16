@@ -15,24 +15,52 @@ import (
 // hooks/event-name-known, etc.) read from this package rather than
 // defining their own lists, so there is one source of truth.
 var KnownTools = map[string]struct{}{
-	"Agent":           {}, // renamed from Task in v2.1.63; both remain valid
-	"AskUserQuestion": {},
-	"Bash":            {},
-	"BashOutput":      {},
-	"Edit":            {},
-	"ExitPlanMode":    {},
-	"Glob":            {},
-	"Grep":            {},
-	"KillShell":       {},
-	"MultiEdit":       {},
-	"NotebookEdit":    {},
-	"Read":            {},
-	"Skill":           {},
-	"Task":            {},
-	"TodoWrite":       {},
-	"WebFetch":        {},
-	"WebSearch":       {},
-	"Write":           {},
+	"Agent":                {}, // renamed from Task in v2.1.63
+	"Artifact":             {},
+	"AskUserQuestion":      {},
+	"Bash":                 {},
+	"CronCreate":           {},
+	"CronDelete":           {},
+	"CronList":             {},
+	"Edit":                 {},
+	"EndConversation":      {},
+	"EnterPlanMode":        {},
+	"EnterWorktree":        {},
+	"ExitPlanMode":         {},
+	"ExitWorktree":         {},
+	"Glob":                 {},
+	"Grep":                 {},
+	"LSP":                  {},
+	"ListAgents":           {},
+	"ListMcpResourcesTool": {},
+	"Monitor":              {},
+	"NotebookEdit":         {},
+	"PowerShell":           {},
+	"PushNotification":     {},
+	"Read":                 {},
+	"ReadMcpResourceTool":  {},
+	"RemoteTrigger":        {},
+	"ReportFindings":       {},
+	"ScheduleWakeup":       {},
+	"SendFeedback":         {},
+	"SendMessage":          {},
+	"SendUserFile":         {},
+	"ShareOnboardingGuide": {},
+	"Skill":                {},
+	"Task":                 {}, // undocumented since the v2.1.63 rename; see DeprecatedTools
+	"TaskCreate":           {},
+	"TaskGet":              {},
+	"TaskList":             {},
+	toolTaskOutput:         {},
+	"TaskStop":             {},
+	"TaskUpdate":           {},
+	"TodoWrite":            {},
+	"ToolSearch":           {},
+	"WaitForMcpServers":    {},
+	"WebFetch":             {},
+	"WebSearch":            {},
+	"Workflow":             {},
+	"Write":                {},
 }
 
 // IsKnownTool reports whether name is in the canonical tool list.
@@ -146,13 +174,14 @@ var (
 
 // KnownHookEvents is the canonical list of Claude Code hook event
 // names, mirroring the hooks reference
-// (https://code.claude.com/docs/en/hooks) — 30 events as of 2026-07.
+// (https://code.claude.com/docs/en/hooks) — 33 events as of 2026-09.
 // As with KnownTools, adding an event here changes the ruleset
 // fingerprint. The full table with lifecycle groupings lives in the
 // rules doc alongside hooks/event-name-known.
 var KnownHookEvents = map[string]struct{}{
 	"ConfigChange":        {},
 	"CwdChanged":          {},
+	"DirectoryAdded":      {},
 	"Elicitation":         {},
 	"ElicitationResult":   {},
 	"FileChanged":         {},
@@ -162,10 +191,12 @@ var KnownHookEvents = map[string]struct{}{
 	"PermissionDenied":    {},
 	"PermissionRequest":   {},
 	"PostCompact":         {},
+	"PostModelSwitch":     {},
 	"PostToolBatch":       {},
 	"PostToolUse":         {},
 	"PostToolUseFailure":  {},
 	"PreCompact":          {},
+	"PreModelSwitch":      {},
 	"PreToolUse":          {},
 	"SessionEnd":          {},
 	"SessionStart":        {},
@@ -218,4 +249,46 @@ var KnownHookTypes = map[string]struct{}{
 func IsKnownHookType(name string) bool {
 	_, ok := KnownHookTypes[name]
 	return ok
+}
+
+// ReservedMarketplaceNames mirrors the 17 names the plugin-marketplaces
+// reference reserves for official Anthropic use (as of Claude Code
+// v2.1.265). Claude Code re-checks the list every time it loads a
+// marketplace, so a manifest shipping one of these stops loading for
+// every user. Exact match only — impersonation heuristics
+// ("official-claude-plugins") are deliberately not attempted here;
+// claude.ai enforces those server-side.
+//
+// It lives here rather than beside the rule because this is canonical
+// upstream data, which the upstream guardrail and the rendered spec
+// page both read.
+var ReservedMarketplaceNames = map[string]struct{}{
+	"claude-code-marketplace":       {},
+	"claude-code-plugins":           {},
+	"claude-plugins-official":       {},
+	"claude-plugins-community":      {},
+	"claude-community":              {},
+	"anthropic-marketplace":         {},
+	"anthropic-plugins":             {},
+	"agent-skills":                  {},
+	"anthropic-agent-skills":        {},
+	"knowledge-work-plugins":        {},
+	"life-sciences":                 {},
+	"claude-for-legal":              {},
+	"claude-for-financial-services": {},
+	"financial-services-plugins":    {},
+	"first-party-plugins":           {},
+	"healthcare":                    {},
+	"claude-tag-plugins":            {},
+}
+
+// KnownTransports mirrors the documented MCP server `type` values.
+// It lives here rather than beside the rule because this is canonical
+// upstream data, which the upstream guardrail and the rendered spec
+// page both read.
+var KnownTransports = map[string]struct{}{
+	"stdio": {},
+	"http":  {},
+	"sse":   {},
+	"ws":    {},
 }

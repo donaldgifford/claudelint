@@ -51,6 +51,9 @@ declare -A LABEL_COLORS=(
   ["minor"]="0E8A16"        # Green - feature
   ["patch"]="FEF2C0"        # Yellow - fix
   ["dont-release"]="D4C5F9" # Lavender - skip
+
+  # From spec-drift.yml - the upstream drift tracking issue
+  ["spec-drift"]="1D76DB" # Blue - upstream tracking
 )
 
 declare -A LABEL_DESCRIPTIONS=(
@@ -74,6 +77,16 @@ declare -A LABEL_DESCRIPTIONS=(
   ["minor"]="New features - increment minor version (0.x.0)"
   ["patch"]="Bug fixes - increment patch version (0.0.x)"
   ["dont-release"]="No release needed for this PR"
+
+  # From spec-drift.yml
+  ["spec-drift"]="Upstream Claude Code spec drift detected by specdrift"
+)
+
+# Labels no YAML file declares, because nothing labels a PR with them.
+# spec-drift marks the single tracking issue the Upstream Spec Drift
+# workflow maintains, so it has to be listed here to be created.
+EXTRA_LABELS=(
+  "spec-drift"
 )
 
 # Script directory and repo root
@@ -267,9 +280,13 @@ main() {
   pr_labels=$(extract_labels_from_pr_workflow "$PR_LABELS_FILE")
   log_info "Found $(echo "$pr_labels" | wc -l | tr -d ' ') labels in pr-labels.yml"
 
+  local extra_labels
+  extra_labels=$(printf '%s\n' "${EXTRA_LABELS[@]}")
+  log_info "Found ${#EXTRA_LABELS[@]} labels declared for issues only"
+
   # Combine and deduplicate
   local all_labels
-  all_labels=$(echo -e "${labeler_labels}\n${pr_labels}" | sort -u)
+  all_labels=$(echo -e "${labeler_labels}\n${pr_labels}\n${extra_labels}" | sort -u)
   local total_labels
   total_labels=$(echo "$all_labels" | wc -l | tr -d ' ')
 

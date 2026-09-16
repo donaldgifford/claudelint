@@ -1,5 +1,9 @@
 {
   "name": "example-plugin",
   "version": "0.1.0",
-  "description": "Anchors the plugin-root detection fixture."
+  "description": "Anchors the plugin-root detection fixture.",
+  "author": {
+    "name": "Donald Gifford",
+    "email": "donald@example.com"
+  }
 }

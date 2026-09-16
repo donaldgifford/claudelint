@@ -1,0 +1,3 @@
+~ hooks.timeout_defaults.by_type: command: 600 -> 300
+~ plugins.manifest_fields: hooks (metadata).type: boolean -> string
+~ skills.frontmatter: description.required: yes -> recommended

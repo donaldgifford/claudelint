@@ -1,0 +1,73 @@
+{
+  "agentskills.spec": {
+    "sha256": "b9079c0c10b7930e8c6a20ff2bc10cda2a3343c55185120e3f1116a1a529b220",
+    "url": "https://raw.githubusercontent.com/agentskills/agentskills/main/docs/specification.mdx"
+  },
+  "agentskills.validator": {
+    "sha256": "b5ee3d8537c83c959c31c2cb080a5227646ede5aea545f1ac835ed3c4645f6c5",
+    "url": "https://raw.githubusercontent.com/agentskills/agentskills/main/skills-ref/src/skills_ref/validator.py"
+  },
+  "anthropic.quick_validate": {
+    "sha256": "67cf5703402013936c8fb75ad6a1afecd8841d45cc5e606b634eb05825fde365",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/scripts/quick_validate.py"
+  },
+  "claudecode.changelog": {
+    "sha256": "7769d88a26a0ef246562d66517bd3e4e08f2dd13b3042e64e24e9cef5dbc8a62",
+    "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
+    "version_marker": "v2.1.227"
+  },
+  "docs.agents": {
+    "sha256": "18a9a8dd876129b1ea17dad226fa9fb039a31ecb7899a6bb72704ed8980b95f3",
+    "url": "https://code.claude.com/docs/en/sub-agents.md",
+    "version_marker": "v2.1.267"
+  },
+  "docs.hooks": {
+    "sha256": "a6f4f82aca2e63d64ba787c2dc8d735ff95ae86fd3a53471b87eb089133cbdca",
+    "url": "https://code.claude.com/docs/en/hooks.md",
+    "version_marker": "v2.1.267"
+  },
+  "docs.marketplaces": {
+    "sha256": "a3e583bb947febc3c586b49138af534d3915ba29e1bbbb5d66b95b1d1a4fa39c",
+    "url": "https://code.claude.com/docs/en/plugin-marketplaces.md",
+    "version_marker": "v2.1.265"
+  },
+  "docs.mcp": {
+    "sha256": "152e6a2faa4e78c7df25d46df2592949fcf20509bd24f5e6ba494f037a203c38",
+    "url": "https://code.claude.com/docs/en/mcp.md",
+    "version_marker": "v2.1.265"
+  },
+  "docs.memory": {
+    "sha256": "f212449ea6fbdb88bea34ad85c967ae3681470bdbd376ac84bda7f535029e677",
+    "url": "https://code.claude.com/docs/en/memory.md",
+    "version_marker": "v2.1.239"
+  },
+  "docs.plugins": {
+    "sha256": "f2bcba18c364204670b56c44f72fad0e416bb5648bf564b1824cc63dd9800fb3",
+    "url": "https://code.claude.com/docs/en/plugins-reference.md",
+    "version_marker": "v2.1.269"
+  },
+  "docs.skills": {
+    "sha256": "cbf71046b92baef2f08c7847184eac9e15f9c1bd056b9a3cd12b5252fef53e38",
+    "url": "https://code.claude.com/docs/en/skills.md",
+    "version_marker": "v2.1.269"
+  },
+  "docs.tools": {
+    "sha256": "5a796b902f9d94cb4d8d61926cabee757d24deb2c09eaf8bfcae80ba85d3ec57",
+    "url": "https://code.claude.com/docs/en/tools-reference.md",
+    "version_marker": "v2.1.268"
+  },
+  "schemastore.marketplace": {
+    "sha256": "42c3f80413638e93a420256d942f409104b651379b9ac2451cc636f581de2ffc",
+    "url": "https://www.schemastore.org/claude-code-marketplace.json",
+    "version_marker": "v1.0.0"
+  },
+  "schemastore.plugin": {
+    "sha256": "3f69938d71a47a72fa60050b2050dd620054708911defc1c1dcd7188dcb169f5",
+    "url": "https://www.schemastore.org/claude-code-plugin-manifest.json"
+  },
+  "schemastore.settings": {
+    "sha256": "6d4a6e3c7adedffce8079ccaef0a4bab5f5718b054421b4475c788a0ae4bedfe",
+    "url": "https://www.schemastore.org/claude-code-settings.json",
+    "version_marker": "v2.1.219"
+  }
+}

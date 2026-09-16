@@ -5,12 +5,18 @@ tableOfContents:
   maxHeadingLevel: 4
 ---
 
-## Ruleset v1.5
+## Ruleset v1.6
 
 Every rule is built into the binary. The fingerprint under `claudelint version`
 changes whenever rules are added, removed, or have their ID / category /
 severity / options changed — a CI guardrail fails if the drift is not
 acknowledged.
+
+The ruleset version also moves when the canonical data the rules check
+against changes: the tool list, the hook event list, the reserved
+marketplace names, the accepted plugin source kinds. Those changes leave
+the fingerprint alone, because no rule's metadata moved, but they do
+change what claudelint accepts. v1.6.0 is one of them.
 
 | ID                                    | Category | Default | Applies to            |
 | ------------------------------------- | -------- | ------- | --------------------- |
@@ -247,6 +253,36 @@ access with no runtime signal.
 
 **Bad**: `tools: Read, Wrte` **Fix**: `tools: Read, Write`.
 
+The canonical tool list mirrors the
+[tools reference](https://code.claude.com/docs/en/settings) — 45
+documented tools as of September 2026, plus `Task`, which the runtime
+still accepts after its rename. The upstream guardrail keeps the list in
+step with the published table.
+
+##### Deprecated and removed tools
+
+A tool that left the reference table is not the same as a tool that
+never existed, and the two deserve different messages. Before reporting
+an unknown name, both tools-known rules consult the table below and say
+what to write instead.
+
+| Tool | Status | Version | Replacement | Source |
+| --- | --- | --- | --- | --- |
+| `BashOutput` | removed | v2.0.64 | `TaskOutput` | Claude Code changelog, "Unshipped BashOutputTool" |
+| `KillShell` | removed | v2.1.268 | `TaskStop` | no changelog entry; last docs marker carrying it in the tools reference |
+| `MultiEdit` | removed | v2.1.268 | `Edit` | no changelog entry; last docs marker carrying it in the tools reference |
+| `Task` | renamed | v2.1.63 | `Agent` | INV-0006; the runtime still accepts the old name |
+| `TaskOutput` | deprecated | v2.1.83 | `Read` | Claude Code changelog |
+
+A `removed` or `renamed` tool produces a diagnostic naming its
+replacement. A `deprecated` tool is still documented and still works, so
+it produces none — warning about it would be noise on a valid artifact.
+
+This table is the rendering of `artifact.DeprecatedTools`, and the
+guardrail checks the two against each other: every removed or renamed
+entry must be absent from the documented tool list and every deprecated
+entry present.
+
 #### `claude_md/duplicate-directives`
 
 `CLAUDE.md` files sometimes accumulate duplicate rules as teams merge guidance.
@@ -286,6 +322,11 @@ parentheses don't split an entry.
 
 **Bad**: `allowed-tools: [WriteFil]` (typo) **Fix**: `allowed-tools: [Write]`.
 
+Tools that upstream renamed or removed are reported with their
+replacement rather than as typos — see
+[Deprecated and removed tools](#deprecated-and-removed-tools) under
+`agents/tools-known`.
+
 #### `hooks/event-name-known`
 
 Each top-level key under `"hooks"` is the event name. It must match one of the
@@ -298,8 +339,8 @@ When the name matches a known event apart from casing, the diagnostic
 suggests the exact spelling (`did you mean "PreToolUse"?`).
 
 The canonical event list mirrors the
-[hooks reference](https://code.claude.com/docs/en/hooks) (30 events as of
-July 2026). Names are case-sensitive.
+[hooks reference](https://code.claude.com/docs/en/hooks) (33 events as of
+September 2026). Names are case-sensitive.
 
 | Lifecycle stage | Events |
 | --- | --- |
@@ -309,8 +350,13 @@ July 2026). Names are case-sensitive.
 | Permissions | `PermissionRequest`, `PermissionDenied` |
 | Subagents & tasks | `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle` |
 | Context & config | `PreCompact`, `PostCompact`, `InstructionsLoaded`, `ConfigChange` |
-| Environment | `CwdChanged`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove` |
+| Model | `PreModelSwitch`, `PostModelSwitch` |
+| Environment | `CwdChanged`, `DirectoryAdded`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove` |
 | UI & elicitation | `Notification`, `MessageDisplay`, `Elicitation`, `ElicitationResult` |
+
+The upstream guardrail (`go test ./internal/upstream`) compares this set
+with the published reference on every run, so a new event shows up as a
+test failure rather than as a false positive in someone's repository.
 
 #### `hooks/type-known`
 
@@ -441,9 +487,9 @@ listed. **Fix**: point the rename at the current entry name, or use
 
 #### `marketplace/reserved-name`
 
-Sixteen marketplace names are reserved for official Anthropic use
+Seventeen marketplace names are reserved for official Anthropic use
 (e.g. `anthropic-plugins`, `claude-code-marketplace`, `agent-skills`,
-`healthcare`). Claude Code re-checks the list on every load, so a
+`claude-tag-plugins`, `healthcare`). Claude Code re-checks the list on every load, so a
 manifest shipping one stops loading for every user. Exact match only —
 impersonation lookalikes (`official-claude-plugins`) are blocked
 server-side by claude.ai, and this rule deliberately does not attempt
@@ -459,16 +505,32 @@ sources (a `./`-relative path, or legacy `github:`/URL shorthands) must be
 non-empty. Object sources must carry their kind's documented required
 fields:
 
-| `source` | Required fields |
-| --- | --- |
-| `github` | `repo` (`owner/repo`) |
-| `url` | `url` |
-| `git-subdir` | `url` and `path` |
-| `npm` | `package` |
+| `source` | Required fields | Optional fields |
+| --- | --- | --- |
+| `github` | `repo` (`owner/repo`) | `ref`, `sha` |
+| `url` | `url` | `ref`, `sha` |
+| `git-subdir` | `url` and `path` | `ref`, `sha` |
+| `npm` | `package` | `version`, `registry` |
+| `archive` | `url` | `sha256` |
+| `command` | `command` | `timeout`, `mode` |
 
 A `sha` pin, when present on a git-backed source, must be a full
-40-character hex commit. Whether a local path exists on disk is out of
-scope for this rule.
+40-character hex commit.
+
+An `archive` URL must use HTTPS. An archive is unsigned code that Claude
+Code unpacks and runs, so a plain-HTTP fetch hands anyone on the network
+path a plugin install. Its optional `sha256` is the only integrity check
+available, so a malformed one is an error rather than a warning: it
+would otherwise read as a pin while pinning nothing. It must be a
+64-character hex digest.
+
+A `command` source's `timeout`, when present, must be a positive
+integer. The parser keeps the declared value as written, because
+manifests in the wild quote a field the documentation spells as a
+number, and a bad value is more useful reported verbatim than silently
+read as zero.
+
+Whether a local path exists on disk is out of scope for this rule.
 
 #### `marketplace/owner-required` and `marketplace/author-legacy`
 
@@ -490,14 +552,19 @@ releases. A version that **is** declared must be valid semver
 
 #### `marketplace/external-source-skipped`
 
-Info notice on every plugin whose source content lives outside the
-marketplace repo: remote string shorthands (`github:owner/repo`, git
-URLs) and the `github` / `url` / `git-subdir` / `npm` object kinds.
-claudelint validates the source's structure (see
+Info notice on every plugin whose source content cannot be checked in
+place: remote string shorthands (`github:owner/repo`, git URLs) and the
+`github`, `url`, `git-subdir`, `npm`, `archive`, and `command` object
+kinds. claudelint validates the source's structure (see
 `marketplace/plugin-source-valid`) but never fetches remote content, so
 those plugins' files are not linted. Local paths are checked in place
 and produce no notice; absent or malformed sources are
 `plugin-source-valid` errors, not skips.
+
+The wording differs by kind because the reasons differ. An `archive` is
+not downloaded or unpacked. A `command` source is not remote at all —
+its content does not exist until the command runs, which a linter will
+not do — so it is reported as generated rather than as remote.
 
 #### `mcp/command-required` and `mcp/url-required`
 

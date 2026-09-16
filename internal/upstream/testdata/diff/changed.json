@@ -1,0 +1,26 @@
+{
+  "changes": [
+    {
+      "path": "hooks.timeout_defaults.by_type",
+      "kind": "changed",
+      "item": "command",
+      "old": 600,
+      "new": 300
+    },
+    {
+      "path": "plugins.manifest_fields",
+      "kind": "changed",
+      "item": "hooks (metadata).type",
+      "old": "boolean",
+      "new": "string"
+    },
+    {
+      "path": "skills.frontmatter",
+      "kind": "changed",
+      "item": "description.required",
+      "old": "yes",
+      "new": "recommended"
+    }
+  ],
+  "informational": []
+}

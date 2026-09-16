@@ -19,26 +19,37 @@ tools can discover the ruleset without parsing human-targeted text.
 
 ```json
 {
-  "schema_version":  "1",
-  "ruleset_version": "v1.2.0",
-  "fingerprint":     "e7f26796",
+  "schema_version":   "1",
+  "ruleset_version":  "v1.6.0",
+  "fingerprint":      "3247787b",
+  "upstream_version": "v2.1.269",
   "rules": [
     { ... }
   ]
 }
 ```
 
-| Field             | Type    | Description                                                                                      |
-| ----------------- | ------- | ------------------------------------------------------------------------------------------------ |
-| `schema_version`  | string  | Incremented on any breaking change to this output. Currently `"1"`.                              |
-| `ruleset_version` | string  | SemVer of the registered ruleset at binary build time (mirrors `rules.RulesetVersion`).          |
-| `fingerprint`     | string  | Truncated sha256 of the registry. Changes only when rules are added / removed / retyped.         |
-| `rules`           | array   | Rule descriptors, sorted by `id`. Always an array, never `null`. For `rules <id>`, length == 1.  |
+| Field              | Type   | Description                                                                                                                        |
+| ------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `schema_version`   | string | Incremented on any breaking change to this output. Currently `"1"`.                                                                |
+| `ruleset_version`  | string | SemVer of the registered ruleset at binary build time (mirrors `rules.RulesetVersion`).                                            |
+| `fingerprint`      | string | Truncated sha256 of the registry. Changes only when rules are added / removed / retyped.                                           |
+| `upstream_version` | string | Documentation revision the canonical name lists were extracted from (added in ruleset v1.6.0). Absent if the digest is unreadable. |
+| `rules`            | array  | Rule descriptors, sorted by `id`. Always an array, never `null`. For `rules <id>`, length == 1.                                    |
 
 `schema_version`, `ruleset_version`, and `fingerprint` are identical in
 shape and semantics to `claudelint run --format=json`, so a downstream
 tool can cache ruleset metadata by fingerprint without special-casing
 per-command.
+
+`upstream_version` answers a question the other three cannot. A rule can
+start rejecting a name it used to accept with no change to
+`ruleset_version` or `fingerprint`, because what moved was the canonical
+data the rule checks against rather than the rule itself. A consumer
+diffing two catalogs needs to know which documentation revision each one
+was built from. It is the same value `claudelint version` prints on its
+`spec` line, and the page it describes is
+[Upstream spec](rules/upstream-spec.md).
 
 ## Rule shape
 

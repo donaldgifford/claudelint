@@ -371,3 +371,78 @@ func TestModelValidRunsOnSkillsAndCommands(t *testing.T) {
 		t.Errorf("command with valid model: want 0, got %v", d)
 	}
 }
+
+// TestToolsKnownReportsSupersededTools is the Phase 2 success
+// criterion for artifact.DeprecatedTools: a tool the docs dropped is
+// reported with what replaced it, and a merely deprecated one is not
+// reported at all.
+func TestToolsKnownReportsSupersededTools(t *testing.T) {
+	cases := []struct {
+		name    string
+		tools   string
+		wantN   int
+		wantAll []string
+	}{
+		{
+			name:    "removed tool names its replacement",
+			tools:   "[BashOutput]",
+			wantN:   1,
+			wantAll: []string{"BashOutput", "v2.0.64", "TaskOutput", "tools"},
+		},
+		{
+			name:    "renamed tool names the new name",
+			tools:   "[Task]",
+			wantN:   1,
+			wantAll: []string{"Task", "v2.1.63", "Agent"},
+		},
+		{
+			name:  "deprecated but documented tool is fine",
+			tools: "[TaskOutput]",
+			wantN: 0,
+		},
+		{"newly documented tool is fine", "[EnterPlanMode]", 0, nil},
+		{"newly documented tool is fine (SendMessage)", "[SendMessage]", 0, nil},
+		{"newly documented tool is fine (Workflow)", "[Workflow]", 0, nil},
+		{
+			name:    "a tool that never existed is still unknown",
+			tools:   "[Frobnicate]",
+			wantN:   1,
+			wantAll: []string{"unknown tool", "Frobnicate"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			a := newAgent(t, "tools: "+tc.tools+"\n")
+			got := (&toolsKnown{}).Check(nil, a)
+
+			if len(got) != tc.wantN {
+				t.Fatalf("got %d diagnostics, want %d (%v)", len(got), tc.wantN, got)
+			}
+			for _, want := range tc.wantAll {
+				if !strings.Contains(got[0].Message, want) {
+					t.Errorf("message %q does not mention %q", got[0].Message, want)
+				}
+			}
+			if tc.wantN == 1 && got[0].Range.IsZero() {
+				t.Error("diagnostic should anchor at the tools key range")
+			}
+		})
+	}
+}
+
+// TestToolsKnownAcceptsTheDocumentedList guards the catch-up: every
+// tool in the reference table parses clean. A regression here means the
+// two tools-known rules are back to warning on valid input.
+func TestToolsKnownAcceptsTheDocumentedList(t *testing.T) {
+	for tool := range artifact.KnownTools {
+		if _, superseded := artifact.SupersededToolAdvice(tool); superseded {
+			continue
+		}
+
+		a := newAgent(t, "tools: ["+tool+"]\n")
+		if got := (&toolsKnown{}).Check(nil, a); len(got) != 0 {
+			t.Errorf("tool %q produced %v, want no diagnostics", tool, got)
+		}
+	}
+}

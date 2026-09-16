@@ -1,0 +1,400 @@
+{
+  "hooks": {
+    "ConfigChange": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "DirectoryAdded": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "Elicitation": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "ElicitationResult": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "FileChanged": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "MessageDisplay": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostModelSwitch": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PreModelSwitch": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "Setup": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "UserPromptExpansion": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "command": "scripts/noop.sh",
+            "timeout": 60,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ]
+  }
+}

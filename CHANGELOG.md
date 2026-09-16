@@ -8,9 +8,59 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [unreleased]
 
+### Features
+
+- *(upstream)* Add the upstream source table
+- *(upstream)* Add the context-aware source fetcher
+- *(upstream)* Add the GFM table scanner and digest types
+- *(upstream)* Extract the digest from the fetched upstream sources
+- *(upstream)* Record docs-versus-SchemaStore disagreements
+- *(upstream)* Commit the source lock
+- *(upstream)* Diff two digests structurally
+- *(specdrift)* Add the command tree and the cmd entry point
+- *(specdrift)* Commit the first digest and source lock
+- *(ci)* Add the weekly upstream spec drift workflow
+- *(upstream)* Tie the ruleset to the digest with a guardrail
+- *(rules)* Report superseded tools with their replacement
+- *(marketplace)* Validate archive and command plugin sources
+- *(rules)* Bump the ruleset to v1.6.0 for the known-data catch-up
+- *(specdrift)* Add the runtime validator and the rendered spec page
+- *(cli)* Print the spec version and carry it in rules --json
+
+### Bug Fixes
+
+- Stop gitignore swallowing internal/upstream/coverage.go
+
+### Refactor
+
+- *(artifact)* Name the keys the parsers read
+
 ### Documentation
 
 - DESIGN-0006 + IMPL-0005 upstream spec drift detection ([#58](https://github.com/donaldgifford/claudelint/issues/58))
+- *(impl)* Mark IMPL-0005 in progress and DESIGN-0006 approved
+- *(impl)* Record PR #59 against the Phase 1 PR task
+- *(rules)* Document the 33 hook events and the deprecated-tool table
+- *(design)* Add the two guardrail rows Phase 2 discovered
+- Record the Phase 2 guardrail contract in CLAUDE.md
+- Mark DESIGN-0006 implemented and refresh the project status
+- *(impl)* Close out IMPL-0005
+- *(impl)* Record the CI runtime validation result
+- *(impl)* Mark IMPL-0005 completed in the body status block
+
+### Styling
+
+- *(cli)* Pass the rules JSON envelope by pointer
+
+### Testing
+
+- *(upstream)* Assert exit 2 when an anchor is gone
+- *(cli)* Lint a doc-valid fixture tree and require it clean
+- *(artifact)* Check the deprecated-tools doc table against the map
+
+### Miscellaneous Tasks
+
+- Run the runtime validator beside the drift check
 
 ## [0.3.0] - 2026-07-11
 

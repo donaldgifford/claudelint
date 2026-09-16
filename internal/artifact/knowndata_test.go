@@ -65,15 +65,18 @@ func TestIsKnownHookEvent(t *testing.T) {
 }
 
 // TestKnownHookEventsMatchesReference pins the expansion to the hooks
-// reference (30 events as of 2026-07). A count change means the docs
+// reference (33 events as of 2026-09). A count change means the docs
 // moved — update the list, this test, and the rules-doc table together.
+// The upstream guardrail in internal/upstream catches the drift; this
+// test catches an edit that forgets the rules doc.
 func TestKnownHookEventsMatchesReference(t *testing.T) {
-	if got := len(KnownHookEvents); got != 30 {
-		t.Errorf("len(KnownHookEvents) = %d, want 30", got)
+	if got := len(KnownHookEvents); got != 33 {
+		t.Errorf("len(KnownHookEvents) = %d, want 33", got)
 	}
 	for _, name := range []string{
 		"Setup", "PermissionRequest", "SubagentStart", "PostToolBatch",
 		"UserPromptExpansion", "WorktreeCreate", "ElicitationResult",
+		"DirectoryAdded", "PreModelSwitch", "PostModelSwitch",
 	} {
 		if !IsKnownHookEvent(name) {
 			t.Errorf("IsKnownHookEvent(%q) = false, want true", name)
