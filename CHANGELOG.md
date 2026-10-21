@@ -10,7 +10,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Bug Fixes
 
-- *(upstream)* Stop the validator tests racing on "text file busy"
+- *(upstream)* Stop the validator tests racing on "text file busy" ([#72](https://github.com/donaldgifford/claudelint/issues/72))
 
 ## [0.4.0] - 2026-09-16
 
