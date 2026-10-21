@@ -1,6 +1,6 @@
 module github.com/donaldgifford/claudelint
 
-go 1.26.6
+go 1.26.10
 
 require (
 	github.com/buger/jsonparser v1.6.1

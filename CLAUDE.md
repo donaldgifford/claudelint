@@ -95,7 +95,7 @@ Running a single Go test: `go test -run TestFoo ./internal/rules/skills` (or use
 
 ## Tooling
 
-- `mise.toml` pins Go (currently `1.26.1`), linters, formatters, and dev tools. Run `mise install` to bootstrap. When adding a tool to the project, update `mise.toml` rather than installing it globally.
+- `mise.toml` pins Go (currently `1.26.10`), linters, formatters, and dev tools. Run `mise install` to bootstrap. When adding a tool to the project, update `mise.toml` rather than installing it globally.
 - `.golangci.yml` is derived from Uber's Go Style Guide — do not relax rules casually; prefer fixing the code.
 - Commit-time hooks are not configured; CI runs on push/PR to `main` via `.github/workflows/ci.yml` (labeler + lint + test).
 
