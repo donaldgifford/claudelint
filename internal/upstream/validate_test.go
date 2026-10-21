@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -24,29 +25,91 @@ import (
 // The fake is a shell script, so these tests do not run on Windows.
 // Neither does the repo's justfile, so that is not a new constraint.
 
-// fakeClaude writes a script that prints body for any `plugin validate`
-// invocation and a version string for `--version`, then returns its
-// path. exitCode is what it exits with after a validate, which is how a
-// test proves the exit code is not the signal.
-func fakeClaude(t *testing.T, body string, exitCode int) string {
-	t.Helper()
-
-	dir := t.TempDir()
-	path := filepath.Join(dir, "claude")
-
-	script := fmt.Sprintf(`#!/bin/sh
+// fakeScriptBody is the only executable these tests run. It takes its
+// behaviour from plain files beside the path it was invoked through, so
+// one script serves every test.
+const fakeScriptBody = `#!/bin/sh
+dir=$(dirname "$0")
 if [ "$1" = "--version" ]; then
   echo "2.1.259 (Claude Code)"
   exit 0
 fi
-cat <<'PAYLOAD'
-%s
-PAYLOAD
-exit %d
-`, body, exitCode)
+if [ -f "$dir/hang" ]; then
+  sleep 30
+fi
+cat "$dir/payload"
+exit "$(cat "$dir/exit_code")"
+`
 
-	if err := os.WriteFile(path, []byte(script), 0o700); err != nil {
-		t.Fatalf("write the fake claude: %v", err)
+// fakeScript is the path TestMain wrote fakeScriptBody to.
+var fakeScript string
+
+// TestMain writes the fake before any test starts, and that is the whole
+// point. Writing an executable inside a parallel test and then running it
+// fails on Linux with "text file busy" whenever another test forks in
+// between: the child inherits the still-open write descriptor until it
+// execs (golang/go#22315). Written here, the file is closed long before
+// anything forks, and tests only ever write data files.
+func TestMain(m *testing.M) {
+	os.Exit(runTests(m))
+}
+
+func runTests(m *testing.M) int {
+	dir, err := os.MkdirTemp("", "fake-claude-")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "create the fake claude dir:", err)
+
+		return 1
+	}
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			fmt.Fprintln(os.Stderr, "remove the fake claude dir:", err)
+		}
+	}()
+
+	fakeScript = filepath.Join(dir, "claude")
+	if err := os.WriteFile(fakeScript, []byte(fakeScriptBody), 0o700); err != nil {
+		fmt.Fprintln(os.Stderr, "write the fake claude:", err)
+
+		return 1
+	}
+
+	return m.Run()
+}
+
+// fakeClaude returns a `claude` that prints body for any `plugin
+// validate` invocation and a version string for `--version`. exitCode is
+// what it exits with after a validate, which is how a test proves the
+// exit code is not the signal.
+func fakeClaude(t *testing.T, body string, exitCode int) string {
+	t.Helper()
+
+	return newFake(t, body, exitCode, false)
+}
+
+// newFake links the shared script into a fresh directory and writes the
+// data files that drive it. hang makes a validate sleep past any sane
+// timeout.
+func newFake(t *testing.T, body string, exitCode int, hang bool) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	files := map[string]string{
+		"payload":   body + "\n",
+		"exit_code": strconv.Itoa(exitCode),
+	}
+	if hang {
+		files["hang"] = ""
+	}
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o600); err != nil {
+			t.Fatalf("write the fake claude's %s: %v", name, err)
+		}
+	}
+
+	path := filepath.Join(dir, "claude")
+	if err := os.Symlink(fakeScript, path); err != nil {
+		t.Fatalf("link the fake claude: %v", err)
 	}
 
 	return path
@@ -306,15 +369,8 @@ func TestValidateRejectsAnEscapingFixturePath(t *testing.T) {
 func TestValidateHonoursTheTimeout(t *testing.T) {
 	t.Parallel()
 
-	dir := t.TempDir()
-	bin := filepath.Join(dir, "claude")
-	script := "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then echo v; exit 0; fi\nsleep 30\n"
-	if err := os.WriteFile(bin, []byte(script), 0o700); err != nil {
-		t.Fatalf("write the fake claude: %v", err)
-	}
-
 	_, err := upstream.ValidateFixtures(context.Background(), &upstream.ValidateOptions{
-		Claude:   bin,
+		Claude:   newFake(t, "", 0, true),
 		Root:     filepath.Join("..", ".."),
 		Fixtures: oneFixture(upstream.ExpectPass),
 		Timeout:  500 * time.Millisecond,
